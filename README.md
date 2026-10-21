@@ -21,7 +21,7 @@ Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-i
 
 ## Set up Supabase
 
-1. Apply `supabase/migrations/20261021000100_admin_foundation.sql` through the Supabase SQL Editor (once), or through your configured migration workflow. **Do not run it again if the GitHub integration has already applied it.** This creates tables, constraints, default reminder categories, and row-level security policies. No customer or horse data is seeded.
+1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The foundation migration creates tables, constraints, default reminder categories, and row-level security policies. The horse/customer migration adds the atomic save function. No customer or horse data is seeded. Existing installations only need the new `20261021000200_horse_customer_save.sql` migration.
 2. In Supabase Authentication → Users, create your administrator account with an email and password. Confirm its email through the dashboard if needed. There is no public sign-up flow.
 3. Grant administrator access from the SQL Editor, replacing the example email with the exact account email:
 
@@ -41,6 +41,7 @@ You can use the app without the Supabase GitHub integration; that integration ma
 
 - Admin-only dashboard, live record counts, and empty states.
 - Create, view, edit, and delete customers and horse profiles.
+- Require at least one customer when saving a horse. Support shared ownership, editable customer links after a sale, and linked horses in the customer list. Horse/customer saves are atomic; changing ownership does not change existing training stays or billing responsibility. Existing horses without a customer can be linked by editing their profile.
 - Training stays with one billing customer, dates, a monthly rate stored in cents, billing day, and a recorded partial-month policy.
 - Database-enforced prevention of overlapping stays for one horse.
 - Reminder and category CRUD, completion/reopening, optional horse links, and overdue status.
@@ -51,7 +52,7 @@ Billing days currently support 1–28. End-of-month billing conventions can be a
 
 ## Deliberately not implemented yet
 
-Training sessions/progress notes, the horse ownership editor (its join table is prepared), invoices/payments, expense receipts and file storage, customer accounts, public marketing pages, and PWA installation/offline features. Training stay policies are recorded only; no charges or proration are calculated. Reminders do not send messages or notifications. No fake records are displayed.
+Training sessions/progress notes, ownership transfer history, invoices/payments, expense receipts and file storage, customer accounts, public marketing pages, and PWA installation/offline features. Training stay policies are recorded only; no charges or proration are calculated. Reminders do not send messages or notifications. No fake records are displayed.
 
 ## Verify
 
@@ -61,7 +62,7 @@ npm run typecheck
 npm run build
 ```
 
-The tests cover server-side amount/date validation. They do not replace live Supabase permission and CRUD testing. The migration must be applied to a development project before end-to-end database checks are possible.
+The tests cover server-side validation and run the actual SQL migrations in a local PostgreSQL runtime (PGlite) with simulated Supabase auth roles. Database tests verify shared customer links, ownership changes, retained billing responsibility, rollback on failed saves, and denial of non-admin access. They do not replace live Supabase/browser end-to-end testing.
 
 Development and production builds use Next.js's webpack engine because Turbopack's worker port binding is restricted in the local execution environment.
 

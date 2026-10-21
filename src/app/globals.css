@@ -1,5 +1,54 @@
 @import "tailwindcss";
 
+.customer-picker {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.customer-picker legend {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4f493d;
+  padding: 0;
+  margin-bottom: 7px;
+}
+.customer-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 14px;
+  padding: 3px;
+}
+.customer-options label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #d6d0c4;
+  border-radius: 4px;
+  background: #fffefa;
+  cursor: pointer;
+}
+.customer-options label:has(:checked) {
+  background: #eee5d6;
+  border-color: #a67e50;
+}
+.customer-options input {
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #805334;
+}
+.customer-options span {
+  overflow-wrap: anywhere;
+}
+
 @theme inline {
   --color-background: #f6f4ee;
   --color-foreground: #302c24;

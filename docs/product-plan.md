@@ -8,7 +8,7 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## First release
 
-Current implementation increment: admin sign-in, dashboard, customer/horse CRUD, training stays, and reminder/category CRUD. The initial database migration is prepared locally and has not been applied to the connected project. Billing, receipt uploads, ownership editing, training sessions/notes, customer access, marketing, and PWA installation remain subsequent work.
+Current implementation increment: admin sign-in, dashboard, customer/horse CRUD, editable horse/customer links (including shared ownership and sales), training stays, and reminder/category CRUD. Horse and customer relationships save atomically. Ownership changes preserve billing responsibility on existing training stays. Apply pending migrations through the connected deployment workflow. Billing, receipt uploads, ownership transfer history, training sessions/notes, customer access, marketing, and PWA installation remain subsequent work.
 
 1. Authentication and an admin-only application shell.
 2. Customers and horse profiles, including multiple horses per customer and multiple customer relationships per horse. Assign one billing customer per training stay; preserve historical assignments.

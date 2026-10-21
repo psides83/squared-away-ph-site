@@ -17,7 +17,13 @@ export default async function Customers({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const { data, error } = await db.from("customers").select("*").order("name");
+  const [customers, relationships, horses] = await Promise.all([
+    db.from("customers").select("*").order("name"),
+    db.from("horse_customers").select("horse_id, customer_id"),
+    db.from("horses").select("id, barn_name").order("barn_name"),
+  ]);
+  const { data } = customers;
+  const error = customers.error || relationships.error || horses.error;
   const selected = data?.find((row) => row.id === params.edit);
   const showForm = params.new === "1" || Boolean(selected);
   return (
@@ -110,6 +116,7 @@ export default async function Customers({
                 <tr>
                   <th>Name</th>
                   <th>Contact</th>
+                  <th>Horses</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -138,6 +145,26 @@ export default async function Customers({
                       </div>
                     </td>
                     <td>
+                      <div className="contact-cell">
+                        {(relationships.data ?? [])
+                          .filter((link) => link.customer_id === row.id)
+                          .map((link) => (
+                            <Link
+                              key={link.horse_id}
+                              className="text-link"
+                              href={`/admin/horses?edit=${link.horse_id}#record-form`}
+                            >
+                              {horses.data?.find(
+                                (horse) => horse.id === link.horse_id,
+                              )?.barn_name ?? "Horse"}
+                            </Link>
+                          ))}
+                        {!relationships.data?.some(
+                          (link) => link.customer_id === row.id,
+                        ) && <span className="muted">No horses linked</span>}
+                      </div>
+                    </td>
+                    <td>
                       <div className="row-actions">
                         <Link
                           className="text-button"
@@ -161,7 +188,7 @@ export default async function Customers({
             <EmptyState
               icon={UsersRound}
               title="Make room for good people."
-              description="Add your first customer, then connect them to a horse’s training stay."
+              description="Add your first customer, then connect them when adding a horse."
               href="/admin/customers?new=1#record-form"
               label="Add your first customer"
             />

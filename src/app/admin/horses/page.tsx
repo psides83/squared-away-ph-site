@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
 import { DeleteButton, SubmitButton } from "@/components/submit-button";
 import { deleteRecord, saveRecord } from "@/app/admin/actions";
+import { CustomerPicker } from "@/components/customer-picker";
 
 export default async function Horses({
   searchParams,
@@ -17,10 +18,13 @@ export default async function Horses({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const { data, error } = await db
-    .from("horses")
-    .select("*")
-    .order("barn_name");
+  const [horses, customers, relationships] = await Promise.all([
+    db.from("horses").select("*").order("barn_name"),
+    db.from("customers").select("id, name").order("name"),
+    db.from("horse_customers").select("horse_id, customer_id"),
+  ]);
+  const { data } = horses;
+  const error = horses.error || customers.error || relationships.error;
   const selected = data?.find((row) => row.id === params.edit);
   const showForm = params.new === "1" || Boolean(selected);
   return (
@@ -45,7 +49,16 @@ export default async function Horses({
         }
         success={params.success}
       />
-      {showForm && (
+      {showForm && !error && !customers.data?.length && (
+        <p className="notice">
+          Add a customer before adding or updating a horse.{" "}
+          <Link href="/admin/customers?new=1#record-form">
+            Add your first customer
+          </Link>
+          .
+        </p>
+      )}
+      {showForm && !error && Boolean(customers.data?.length) && (
         <section className="panel editor-panel" id="record-form">
           <div className="panel-heading">
             <h2>
@@ -62,6 +75,13 @@ export default async function Horses({
             className="record-form"
           >
             <input type="hidden" name="id" value={selected?.id ?? ""} />
+            <CustomerPicker
+              key={selected?.id ?? "new"}
+              customers={customers.data ?? []}
+              selectedIds={(relationships.data ?? [])
+                .filter((link) => link.horse_id === selected?.id)
+                .map((link) => link.customer_id)}
+            />
             <div className="form-grid">
               <Field
                 name="barn_name"
@@ -135,7 +155,8 @@ export default async function Horses({
               </label>
             ))}
             <p className="muted form-hint">
-              Assign the billing customer when you create a training stay.
+              Update the customers here if the horse is sold. Billing customers
+              on existing training stays remain unchanged.
             </p>
             <div className="form-actions">
               <SubmitButton>
@@ -175,6 +196,19 @@ export default async function Horses({
                   {horse.registered_name || "Registered name not added"}
                 </p>
                 <div className="horse-details">
+                  <span>
+                    Customers:{" "}
+                    {(relationships.data ?? [])
+                      .filter((link) => link.horse_id === horse.id)
+                      .map(
+                        (link) =>
+                          customers.data?.find(
+                            (customer) => customer.id === link.customer_id,
+                          )?.name,
+                      )
+                      .filter(Boolean)
+                      .join(", ") || "Not assigned — edit to add"}
+                  </span>
                   <span>{horse.breed || "Breed not added"}</span>
                   <span>
                     {horse.birth_year
@@ -202,7 +236,7 @@ export default async function Horses({
             <EmptyState
               icon={Fence}
               title="Every good horse deserves good records."
-              description="Start with a barn name. Add registration, feeding, health, and training details as you go."
+              description="Select a customer and add a barn name. Fill in registration, feeding, health, and training details as you go."
               href="/admin/horses?new=1#record-form"
               label="Add your first horse"
             />

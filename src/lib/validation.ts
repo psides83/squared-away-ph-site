@@ -27,6 +27,21 @@ export function identifier(form: FormData, name: string, required = false) {
     throw new Error("Please select a valid record.");
   return value;
 }
+export function customerIdentifiers(form: FormData) {
+  const values = form.getAll("customer_ids");
+  if (!values.length)
+    throw new Error("Select at least one customer for this horse.");
+  if (values.length > 100) throw new Error("Too many customers selected.");
+  return [
+    ...new Set(
+      values.map((value) => {
+        const single = new FormData();
+        single.set("customer_id", value);
+        return identifier(single, "customer_id", true)!;
+      }),
+    ),
+  ];
+}
 export function dateValue(form: FormData, name: string, required = false) {
   const value = text(form, name, required, 10);
   if (

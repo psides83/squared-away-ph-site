@@ -2,7 +2,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { cents, choice, dateValue, identifier, text } from "@/lib/validation";
+import {
+  cents,
+  choice,
+  customerIdentifiers,
+  dateValue,
+  identifier,
+  text,
+} from "@/lib/validation";
 
 type Entity =
   | "customers"
@@ -25,6 +32,7 @@ export async function saveRecord(entity: Entity, form: FormData) {
   try {
     const id = identifier(form, "id");
     let values: Record<string, unknown> = {};
+    let customerIds: string[] = [];
     switch (entity) {
       case "customers": {
         const email = text(form, "email", false, 254);
@@ -39,6 +47,7 @@ export async function saveRecord(entity: Entity, form: FormData) {
         break;
       }
       case "horses": {
+        customerIds = customerIdentifiers(form);
         const birth = text(form, "birth_year", false, 4);
         if (
           birth &&
@@ -97,9 +106,21 @@ export async function saveRecord(entity: Entity, form: FormData) {
         values = { name: text(form, "name", true, 100) };
         break;
     }
-    const result = id
-      ? await db.from(entity).update(values).eq("id", id).select("id").single()
-      : await db.from(entity).insert(values).select("id").single();
+    const result =
+      entity === "horses"
+        ? await db.rpc("save_horse_with_customers", {
+            p_id: id,
+            p_horse: values,
+            p_customer_ids: customerIds,
+          })
+        : id
+          ? await db
+              .from(entity)
+              .update(values)
+              .eq("id", id)
+              .select("id")
+              .single()
+          : await db.from(entity).insert(values).select("id").single();
     if (result.error) {
       problem = ["23505", "23P01"].includes(result.error.code)
         ? "That record overlaps or duplicates an existing record. Check existing entries."
