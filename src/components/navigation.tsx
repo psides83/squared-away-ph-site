@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ClipboardList,
   BookOpen,
+  Settings,
 } from "lucide-react";
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -16,6 +17,7 @@ const links = [
   { href: "/admin/training", label: "Training stays", icon: ClipboardList },
   { href: "/admin/log", label: "Training log", icon: BookOpen },
   { href: "/admin/reminders", label: "Reminders", icon: CalendarDays },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 export function Navigation() {
   const path = usePathname();

@@ -21,7 +21,7 @@ Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-i
 
 ## Set up Supabase
 
-1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The foundation migration creates tables, constraints, default reminder categories, and row-level security policies. The horse/customer migration adds the atomic save function. The training-log migration adds private session/note history. No customer or horse data is seeded. Installations already using horse/customer selection only need the new `20261021000300_training_log.sql` migration.
+1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer atomic save, private training log, and business settings. No customer or horse data is seeded. Installations already using the training log only need the new `20261021000400_business_settings.sql` migration before using Settings or saving updated training stays.
 2. In Supabase Authentication → Users, create your administrator account with an email and password. Confirm its email through the dashboard if needed. There is no public sign-up flow.
 3. Grant administrator access from the SQL Editor, replacing the example email with the exact account email:
 
@@ -48,8 +48,11 @@ You can use the app without the Supabase GitHub integration; that integration ma
 - Private training log with dated sessions and progress notes, optional session duration, create/edit/delete, horse filtering, and 25-entry pagination. Quick entry links are available on the dashboard and horse cards. Training history remains with the horse after sales and prevents accidental horse deletion.
 - Mobile layouts, accessible form labels, pending submission states, and delete confirmations.
 - Server-side authorization and database row-level security.
+- Admin-only business settings for contact information, optional default monthly rate, billing day, partial-month policy, payment terms, and payment instructions/links. New stays prefill from those settings while existing stays retain recorded values. Payment instructions are stored for future billing screens; this does not implement invoices or collect payments.
 
 Billing days currently support 1–28. End-of-month billing conventions can be added when billing is implemented. Dashboard active stays include arrival and departure dates and exclude future stays. Business dates use America/Chicago.
+
+Open **Settings** to enter your business values. A blank default training rate means not set; a zero rate remains a valid explicit choice. Terms use whole days with 0 meaning due upon receipt. Existing stays without previously recorded payment terms show an empty term field when edited, requiring an explicit choice rather than silently adopting today's default.
 
 ## Deliberately not implemented yet
 

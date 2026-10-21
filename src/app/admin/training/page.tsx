@@ -5,6 +5,7 @@ import { dateLabel, money, today } from "@/lib/format";
 import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
 import { DeleteButton, SubmitButton } from "@/components/submit-button";
 import { deleteRecord, saveRecord } from "@/app/admin/actions";
+import { stayFormDefaults } from "@/lib/business-settings";
 
 export default async function Training({
   searchParams,
@@ -18,16 +19,21 @@ export default async function Training({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const [stays, horses, customers] = await Promise.all([
+  const [stays, horses, customers, settings] = await Promise.all([
     db
       .from("training_stays")
       .select("*")
       .order("arrival_date", { ascending: false }),
     db.from("horses").select("id, barn_name").order("barn_name"),
     db.from("customers").select("id, name").order("name"),
+    db.from("business_settings").select("*").single(),
   ]);
   const selected = stays.data?.find((row) => row.id === params.edit);
-  const failed = stays.error || horses.error || customers.error;
+  const failed =
+    stays.error || horses.error || customers.error || settings.error;
+  const defaults = settings.data
+    ? stayFormDefaults(selected, settings.data)
+    : null;
   const canAdd = Boolean(horses.data?.length && customers.data?.length);
   return (
     <>
@@ -52,6 +58,7 @@ export default async function Training({
         success={params.success}
       />
       {(params.new === "1" || selected) &&
+        !failed &&
         (canAdd ? (
           <section className="panel editor-panel" id="record-form">
             <div className="panel-heading">
@@ -121,11 +128,7 @@ export default async function Training({
                   min={0}
                   max={1000000}
                   step="0.01"
-                  defaultValue={
-                    selected
-                      ? (selected.monthly_rate_cents / 100).toFixed(2)
-                      : undefined
-                  }
+                  defaultValue={defaults?.monthlyRate}
                 />
                 <Field
                   name="billing_day"
@@ -135,14 +138,11 @@ export default async function Training({
                   min={1}
                   max={28}
                   step="1"
-                  defaultValue={selected?.billing_day ?? 1}
+                  defaultValue={defaults?.billingDay}
                 />
                 <label>
                   Partial month policy
-                  <select
-                    name="proration"
-                    defaultValue={selected?.proration ?? "manual"}
-                  >
+                  <select name="proration" defaultValue={defaults?.proration}>
                     <option value="manual">Decide manually</option>
                     <option value="calendar_days">
                       Prorate by calendar days
@@ -150,6 +150,16 @@ export default async function Training({
                     <option value="none">No proration</option>
                   </select>
                 </label>
+                <Field
+                  name="invoice_due_days"
+                  label="Payment due within days (0 = upon receipt)"
+                  type="number"
+                  min={0}
+                  max={365}
+                  step="1"
+                  required
+                  defaultValue={defaults?.invoiceDueDays}
+                />
               </div>
               <label>
                 Agreement / private notes
@@ -161,8 +171,9 @@ export default async function Training({
                 />
               </label>
               <p className="notice">
-                This records your agreement. Automatic invoices and proration
-                calculations will come with billing.
+                New stays use your business settings as a starting point. You
+                can override them here. This records your agreement; automatic
+                invoices and proration calculations will come with billing.
               </p>
               <div className="form-actions">
                 <SubmitButton>

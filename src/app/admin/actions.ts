@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { trainingEntryValues } from "@/lib/training-entry";
+import { wholeNumber } from "@/lib/business-settings";
 import {
   cents,
   choice,
@@ -90,6 +91,7 @@ export async function saveRecord(entity: Entity, form: FormData) {
           departure_date: departure,
           monthly_rate_cents: cents(form, "monthly_rate"),
           billing_day: billingDay,
+          invoice_due_days: wholeNumber(form, "invoice_due_days", 0, 365),
           proration: choice(form, "proration", [
             "manual",
             "calendar_days",

@@ -42,6 +42,7 @@ test("horse/customer migration and sales workflow", async (t) => {
       "20261021000100_admin_foundation.sql",
       "20261021000200_horse_customer_save.sql",
       "20261021000300_training_log.sql",
+      "20261021000400_business_settings.sql",
     ]) {
       await db.exec(
         await readFile(
@@ -248,7 +249,49 @@ test("horse/customer migration and sales workflow", async (t) => {
       },
     );
     await t.test(
-      "non-admin users cannot save horses or access private training entries",
+      "business settings are editable by admin and do not rewrite existing stay terms",
+      async () => {
+        const original = await db.query(
+          "select id, monthly_rate_cents, billing_day, proration, invoice_due_days from public.training_stays",
+        );
+        await db.exec(
+          "update public.business_settings set default_monthly_rate_cents = 175000, default_billing_day = 15, default_invoice_due_days = 14, business_email = 'barn@example.com' where singleton",
+        );
+        assert.deepEqual(
+          (
+            await db.query(
+              "select default_monthly_rate_cents, default_invoice_due_days from public.business_settings",
+            )
+          ).rows,
+          [
+            {
+              default_monthly_rate_cents: 175000,
+              default_invoice_due_days: 14,
+            },
+          ],
+        );
+        assert.deepEqual(
+          (
+            await db.query(
+              "select id, monthly_rate_cents, billing_day, proration, invoice_due_days from public.training_stays",
+            )
+          ).rows,
+          original.rows,
+        );
+        await assert.rejects(
+          db.exec(
+            "insert into public.business_settings(singleton) values (false)",
+          ),
+          /check constraint/,
+        );
+        await assert.rejects(
+          db.exec("delete from public.business_settings"),
+          /permission denied/,
+        );
+      },
+    );
+    await t.test(
+      "non-admin users cannot access private records or change business settings",
       async () => {
         await db.query(
           "select set_config('request.jwt.claim.sub', $1, false)",
@@ -266,6 +309,24 @@ test("horse/customer migration and sales workflow", async (t) => {
           (await db.query("select id from public.training_entries")).rows,
           [],
         );
+        assert.deepEqual(
+          (await db.query("select * from public.business_settings")).rows,
+          [],
+        );
+        assert.deepEqual(
+          (
+            await db.query(
+              "update public.business_settings set default_monthly_rate_cents = 1 returning singleton",
+            )
+          ).rows,
+          [],
+        );
+        await assert.rejects(
+          db.exec(
+            "insert into public.business_settings(singleton) values (true) on conflict (singleton) do update set default_monthly_rate_cents = 1",
+          ),
+          /row-level security/,
+        );
         await assert.rejects(
           db.query(
             "insert into public.training_entries(horse_id, kind, entry_date, title, notes) values ($1, 'note', '2026-10-21', 'Unauthorized', 'Private')",
@@ -277,6 +338,10 @@ test("horse/customer migration and sales workflow", async (t) => {
         await assert.rejects(save("Anonymous", [owner]), /permission denied/);
         await assert.rejects(
           db.query("select id from public.training_entries"),
+          /permission denied/,
+        );
+        await assert.rejects(
+          db.query("select * from public.business_settings"),
           /permission denied/,
         );
       },

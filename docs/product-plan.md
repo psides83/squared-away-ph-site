@@ -46,6 +46,14 @@ Features in this section are present in the application source. A feature being 
 - Entries remain tied to the horse after ownership changes. Horses with training entries cannot be deleted accidentally.
 - Entries are private to administrators; customer-visible publishing is not implemented.
 
+### Master admin settings
+
+- Admin-only Settings page for public business phone/email, optional default monthly rate, billing day (1–28), partial-month policy, and invoice payment terms in days (0 means due upon receipt).
+- Saved general payment instructions, HTTPS Venmo/PayPal links, and Apple Cash instructions. Invoice/public-page display of these details remains planned.
+- New training stays prefill from settings and allow individual overrides. The rate, billing day, partial-month policy, and payment terms are stored on the stay; changing defaults does not change existing agreements.
+- Legacy stays retain their recorded values. Previously unrecorded payment terms remain unknown until explicitly entered when editing.
+- No business dollar rate or contact detail is hard-coded. Settings validation preserves blank or zero rates, validates payment links, and retains typed form values when saving fails.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -55,15 +63,22 @@ Features in this section are present in the application source. A feature being 
 - Invoices, line items, recorded payments, partial payments, adjustments, and derived outstanding balances.
 - Optional Venmo, Apple Cash, and PayPal payment instructions/links where supported. Visiting a link must not count as payment confirmation.
 - Configurable billing schedules beyond the current 1–28 range, automated training charges, and explicit partial-month calculations.
+- Per-horse daily billing calendar with explicit worked, billable-rest, and non-billable statuses. Unmarked dates remain unclassified; they must not silently become billable, and multiple sessions on one date must not create duplicate billable days.
+- Populate future invoices/public pages from business settings, with contact/payment-instruction snapshots on finalized invoices so later settings changes do not rewrite history.
+- Per-horse/per-stay feed and boarding agreements: included in training or separately billed, with individual rates and overrides.
 - Dashboard outstanding balances and recent activity beyond the current horse/reminder overview.
 
 #### Feed, boarding, and profitability details
 
-- Record feed, hay, supplements, boarding/facility rent, bedding, and other operating expenses, including date, vendor, category, amount, notes, and private receipt attachments. Support recurring costs and optional quantity/unit-cost detail for feed purchases.
+- Record feed, hay, supplements, boarding/facility rent, bedding, and other operating expenses, including date, vendor, category, amount, notes, and private receipt attachments. Support recurring costs and quantity/unit-cost detail for inventory purchases.
+- Include feed inventory in the initial expense/inventory build: all feed products, hay, and supplement types; purchase receipts, stock received, on-hand quantities, horse consumption, waste, and explicit stock adjustments. Define product units and conversions so bags, bales, weight, and measured servings are not treated as interchangeable without a configured conversion.
+- Support pounds, weight ounces, bags, bales, flakes, scoops, tubs, and other configurable product units. Pounds/weight ounces have a fixed conversion (1 lb = 16 oz); package and serving conversions are configured per product, such as pounds per bag, ounces per scoop, or pounds per flake. Hay batch/package-size variation can override the applicable conversion. Never assume all scoops or flakes have the same weight, and do not equate fluid ounces with weight ounces.
+- Preserve the entered quantity/unit and the conversion used on each stock or feeding transaction. Later conversion edits must not recalculate historical consumption or balances. Allow fractional quantities and require a valid conversion before subtracting inventory in a different unit.
+- Save daily rations per horse with quick confirmation of actual feeding, plus manual entries for extras and changes. Creating or editing a ration alone does not consume stock. Confirmed feedings deduct inventory once; corrections must reconcile the stock movement rather than silently double-deducting or rewriting history.
 - Assign direct expenses to a horse or training stay. Record shared barn costs once, with optional allocations across horses. Each allocation must reconcile to the original expense so business totals never count it twice.
 - Distinguish costs absorbed by the business from costs charged back to customers. Link reimbursable expenses to their eventual invoice items; do not count a reimbursement twice as both separate revenue and the same invoice revenue.
 - Report revenue, total costs, and net profit (revenue minus costs) for a selected period. Show horse/stay margins with clear treatment of shared costs, plus overall business profitability. Do not label horse-level profit as complete when shared costs have not been allocated.
-- Keep cash received and outstanding invoices separate. Choose and label the reporting basis before implementing profit calculations, so billed revenue and collected payments are not mixed or counted twice. Show gross feed purchases separately from allocated feed cost where those differ.
+- Begin with clearly labeled cash reporting: payments received minus expenses paid, with unpaid invoices separate. Show inventory consumption costs separately from cash spent on feed purchases; do not deduct both in the same profit calculation. Show horse-level cost allocations with their basis stated.
 - Keep this reporting private to the administrator. Expense/profitability screens and calculations are roadmap items, not implemented features yet.
 
 ### Horse records and customer portal
@@ -91,20 +106,36 @@ Features in this section are present in the application source. A feature being 
 - Keep preview/development databases separate from production. Apply migrations through a reviewed deployment workflow.
 - On every completed feature, move its delivered scope from Planned to Implemented and record verification/deployment limitations below.
 
+## Agreed decisions (implementation remains planned unless listed above)
+
+- Repository: https://github.com/psides83/squared-away-ph-site. The owner confirmed that the source code is public. Repository visibility is separate from deployed app access; no visibility change has been requested.
+- Billing schedules vary by training stay: first of month, arrival anniversary, or another agreed date.
+- Partial months use actual calendar days as the proration denominator, with a manual override. Billable days are days actually worked plus rest days in between; merely being present on arrival or departure is not automatically billable. Physical boarding dates and billable training dates must be tracked separately.
+- Mark each horse's training calendar explicitly as worked, billable rest, or non-billable, including illness and extended breaks. Do not automatically classify unmarked dates as billable.
+- Vet, farrier, and hauling reimbursements default to actual cost; allow an explicitly entered markup or handling fee.
+- Invoice payment terms are configurable, with due upon receipt as the starting default. Permit multiple/partial payments and show the remaining balance.
+- No training deposit.
+- Feed and boarding inclusion/separate billing is determined for each horse/training agreement.
+- Feed inventory includes hay and all supplement types from the start, alongside purchases, receipts, and consumption tracking.
+- Support all discussed purchase/feeding units with product-specific relationships between pounds/weight ounces and scoops, flakes, bags, bales, tubs, and other measures. Conversion values are configurable rather than universal assumptions, and historical transactions retain their conversion snapshots.
+- Feeding workflow: saved daily rations per horse, quick confirmation of actual feeding, and manual entries for extras or changes. Only confirmed consumption affects inventory; ration changes apply prospectively.
+- Inventory valuation uses weighted average cost per product in its base stock unit. New receipts update the average from the existing stock value plus the received stock cost, divided by total stock quantity. Confirmed consumption retains the applicable unit-cost snapshot; later purchases do not reprice previous feedings. Cash reporting continues to track actual purchases paid and does not deduct consumption cost again.
+- Include the owner's own horses when allocating shared barn costs. Default shared-cost allocation is by boarding days during the expense period, with the allocation basis visible and no double counting.
+- Initial profit reporting uses cash received minus expenses paid. Inventory consumption and valuation are separate operational cost views.
+- Default rates, payment terms, business phone/email, and payment instructions belong in master admin settings, with applicable horse/stay overrides and historical snapshots. Do not hard-code a business rate or contact value.
+
 ## Decisions still needed
 
-- Repository confirmed: https://github.com/psides83/squared-away-ph-site. Repository visibility remains unverified.
-- Whether partial first/last months are prorated and which calculation applies. Partial payments are a confirmed requirement, with implementation still planned.
-- Outside-expense markup or at-cost reimbursement policy.
-- Default rates, invoice due dates, payment instructions, and business contact details.
-- Profit reporting basis (cash received/paid or earned/incurred), whether feed is tracked as purchases or consumption, and the method for allocating shared feed and boarding costs.
+- Product names, actual package/serving conversion values, and opening quantities will be entered during inventory setup. Supported units and configurable conversions are agreed; actual scoop/flake weights must come from the relevant product or measured batch.
+- Actual starting rates, contact details, and payment instructions can now be entered by the owner in Settings. These are business setup values, not unresolved development decisions.
 
 ## Next build sequence
 
-Expense tracking and private receipts → invoices and recorded payments → revenue/cost/profit reporting → customer portal → public marketing website → PWA installation and refinements.
+Expense tracking, private receipts, and feed/hay/supplement inventory → invoices and recorded payments (using implemented admin settings) → revenue/cost/profit reporting → customer portal → public marketing website → PWA installation and refinements.
 
 ## Verification and deployment status
 
 - Foundation and horse/customer updates were pushed to `main`; the production sign-in page and signed-out redirects were checked. Full authenticated production CRUD has not been exercised by the agent.
 - Training log implementation includes migration `20261021000300_training_log.sql`. Apply it before using the new feature; production migration completion has not been confirmed.
 - Training log increment: all 15 tests, TypeScript checks, and the production build pass. Database tests run the actual migrations locally and verify admin permissions, CRUD, duration constraints, retained history, and ownership/billing safeguards. The authenticated training-log UI has not been exercised against production. No production records were created for testing.
+- Settings increment includes migration `20261021000400_business_settings.sql`; apply it before using Settings or the updated training-stay form. All 19 tests, TypeScript checks, and the production build pass, including administrator access controls and protection of historical stay terms. The authenticated Settings UI has not been exercised against production; live deployment/migration completion has not been confirmed.

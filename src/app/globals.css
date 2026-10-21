@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+.settings-fieldset {
+  display: grid;
+  gap: 24px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.sidebar {
+  overflow-y: auto;
+}
+.settings-save {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
 .log-filter {
   display: flex;
   align-items: end;
