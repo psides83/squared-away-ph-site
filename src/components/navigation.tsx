@@ -9,6 +9,9 @@ import {
   ClipboardList,
   BookOpen,
   Settings,
+  Receipt,
+  Package,
+  Wheat,
 } from "lucide-react";
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -17,6 +20,9 @@ const links = [
   { href: "/admin/training", label: "Training stays", icon: ClipboardList },
   { href: "/admin/log", label: "Training log", icon: BookOpen },
   { href: "/admin/reminders", label: "Reminders", icon: CalendarDays },
+  { href: "/admin/expenses", label: "Expenses", icon: Receipt },
+  { href: "/admin/inventory", label: "Inventory", icon: Package },
+  { href: "/admin/feeding", label: "Feeding", icon: Wheat },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 export function Navigation() {

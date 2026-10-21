@@ -54,12 +54,29 @@ Features in this section are present in the application source. A feature being 
 - Legacy stays retain their recorded values. Previously unrecorded payment terms remain unknown until explicitly entered when editing.
 - No business dollar rate or contact detail is hard-coded. Settings validation preserves blank or zero rates, validates payment links, and retains typed form values when saving fails.
 
+### Expenses and private receipts
+
+- Paginated expense book with date, vendor, category, amount, horse/shared-barn assignment, paid date, and customer charge-back flag. Categories can be added, renamed, or removed when unused.
+- Standalone expenses can be edited or voided while retaining the record. Purchase expense amounts are protected because they are linked to inventory; purchase payment dates remain editable.
+- Private JPEG/PNG/WebP/PDF receipt attachments up to 3 MB, with signature/type checks, authenticated downloads using short-lived signed links, and removal. Attach receipts after saving an expense or stock purchase.
+- Stock purchases create their expense and inventory movement together. Opening inventory, feeding, waste, and inventory corrections do not create another cash expense. Charge-back flags do not yet generate invoices or record reimbursement.
+
+### Feed inventory and daily feeding
+
+- Feed, hay, and supplement products, editable metadata, and archival that retains history.
+- Fixed weight ounces and pounds (16 oz per lb), plus configurable product-specific units for bags, bales, scoops, flakes, tubs, or other named measures. Separate batch-named conversions handle differing weights; no universal scoop/flake weight is assumed.
+- Opening stock, purchases, manual feeding/extras, waste, and reasoned stock additions/reductions. Balances cannot become negative.
+- Weighted average inventory value, quantity on hand, and transaction history. Inventory uses weight ounces as its base unit, six-decimal quantity/value precision, and valuation in recording order rather than retroactively replaying backdated entries.
+- Transactions snapshot their entered quantity/unit, weight conversion, and inventory cost. Later conversion or price changes do not reprice history. Purchases update cash expense records exactly once on retry.
+- Saved active/paused daily rations per horse/product, with editable quantities and units. Saving a ration never consumes stock.
+- Explicit confirmation of the entire daily ration for a horse/date, once per date. A shortage in any line rolls back the complete confirmation. Manual entries handle extras, partial feeding, and corrections.
+- Outgoing stock can be reversed once, returning quantity and original cost with a linked correction entry. The original movement remains visible. Reversing a daily line does not make the day available for another full confirmation; record the corrected quantity manually.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
 
-- User-managed expense categories for feed, hay, supplements, boarding/facility rent, bedding, vet, farrier, hauling, and other costs.
-- Private receipt uploads attached to expenses, with customer reimbursement tracked separately from the original expense.
+- Expense search and date/horse filters, recurring expense scheduling, and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
 - Invoices, line items, recorded payments, partial payments, adjustments, and derived outstanding balances.
 - Optional Venmo, Apple Cash, and PayPal payment instructions/links where supported. Visiting a link must not count as payment confirmation.
 - Configurable billing schedules beyond the current 1–28 range, automated training charges, and explicit partial-month calculations.
@@ -70,16 +87,11 @@ Features in this section are present in the application source. A feature being 
 
 #### Feed, boarding, and profitability details
 
-- Record feed, hay, supplements, boarding/facility rent, bedding, and other operating expenses, including date, vendor, category, amount, notes, and private receipt attachments. Support recurring costs and quantity/unit-cost detail for inventory purchases.
-- Include feed inventory in the initial expense/inventory build: all feed products, hay, and supplement types; purchase receipts, stock received, on-hand quantities, horse consumption, waste, and explicit stock adjustments. Define product units and conversions so bags, bales, weight, and measured servings are not treated as interchangeable without a configured conversion.
-- Support pounds, weight ounces, bags, bales, flakes, scoops, tubs, and other configurable product units. Pounds/weight ounces have a fixed conversion (1 lb = 16 oz); package and serving conversions are configured per product, such as pounds per bag, ounces per scoop, or pounds per flake. Hay batch/package-size variation can override the applicable conversion. Never assume all scoops or flakes have the same weight, and do not equate fluid ounces with weight ounces.
-- Preserve the entered quantity/unit and the conversion used on each stock or feeding transaction. Later conversion edits must not recalculate historical consumption or balances. Allow fractional quantities and require a valid conversion before subtracting inventory in a different unit.
-- Save daily rations per horse with quick confirmation of actual feeding, plus manual entries for extras and changes. Creating or editing a ration alone does not consume stock. Confirmed feedings deduct inventory once; corrections must reconcile the stock movement rather than silently double-deducting or rewriting history.
-- Assign direct expenses to a horse or training stay. Record shared barn costs once, with optional allocations across horses. Each allocation must reconcile to the original expense so business totals never count it twice.
+- Extend current horse/shared-barn expense assignments with training-stay attribution and allocations of shared costs across horses. Each allocation must reconcile to the original expense so business totals never count it twice, including the owner's horses.
 - Distinguish costs absorbed by the business from costs charged back to customers. Link reimbursable expenses to their eventual invoice items; do not count a reimbursement twice as both separate revenue and the same invoice revenue.
 - Report revenue, total costs, and net profit (revenue minus costs) for a selected period. Show horse/stay margins with clear treatment of shared costs, plus overall business profitability. Do not label horse-level profit as complete when shared costs have not been allocated.
 - Begin with clearly labeled cash reporting: payments received minus expenses paid, with unpaid invoices separate. Show inventory consumption costs separately from cash spent on feed purchases; do not deduct both in the same profit calculation. Show horse-level cost allocations with their basis stated.
-- Keep this reporting private to the administrator. Expense/profitability screens and calculations are roadmap items, not implemented features yet.
+- Keep profitability reporting private to the administrator. Profit reports are not implemented; the current expense, inventory, and feeding screens do not claim to show overall profit.
 
 ### Horse records and customer portal
 
@@ -101,7 +113,7 @@ Features in this section are present in the application source. A feature being 
 
 - Store money as integer cents, service/billing dates as dates, and recorded activity times as timezone-aware timestamps. Business dates use America/Chicago.
 - Future invoice line items must retain the billed customer, description, and amount even if current profiles or rates change. Use adjustments rather than silently overwriting finalized invoices.
-- Proposed financial entities: expenses, receipt_attachments, invoices, invoice_items, payments, and payment_allocations. Sessions and progress notes currently share the implemented `training_entries` table.
+- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Proposed billing entities include invoices, invoice_items, payments, and payment_allocations. Sessions and progress notes share `training_entries`.
 - Enforce access in the database as well as the UI. Never commit credentials or expose server-only keys to the browser.
 - Keep preview/development databases separate from production. Apply migrations through a reviewed deployment workflow.
 - On every completed feature, move its delivered scope from Planned to Implemented and record verification/deployment limitations below.
@@ -131,7 +143,7 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Expense tracking, private receipts, and feed/hay/supplement inventory → invoices and recorded payments (using implemented admin settings) → revenue/cost/profit reporting → customer portal → public marketing website → PWA installation and refinements.
+Worked/rest-day billing calendar and per-horse feed/boarding agreements → invoices, charge-backs, and recorded payments (using implemented settings/expenses) → revenue/cost/profit reporting and shared-cost allocations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
 
@@ -139,3 +151,4 @@ Expense tracking, private receipts, and feed/hay/supplement inventory → invoic
 - Training log implementation includes migration `20261021000300_training_log.sql`. Apply it before using the new feature; production migration completion has not been confirmed.
 - Training log increment: all 15 tests, TypeScript checks, and the production build pass. Database tests run the actual migrations locally and verify admin permissions, CRUD, duration constraints, retained history, and ownership/billing safeguards. The authenticated training-log UI has not been exercised against production. No production records were created for testing.
 - Settings increment includes migration `20261021000400_business_settings.sql`; apply it before using Settings or the updated training-stay form. All 19 tests, TypeScript checks, and the production build pass, including administrator access controls and protection of historical stay terms. The authenticated Settings UI has not been exercised against production; live deployment/migration completion has not been confirmed.
+- Expenses/inventory increment includes migrations `20261021000500_expenses_inventory.sql` and `20261021000600_private_receipts.sql`. All 30 tests, TypeScript checks, and the production build pass. Local PostgreSQL tests cover actual migrations, weighted costing, insufficient-stock rollback, daily retry safety, historical conversion snapshots, reversals, protected purchase amounts, private receipt policies, and denied non-admin access. Storage tables are simulated in local policy tests; actual uploads/downloads and authenticated browser flows still need verification against Supabase. No production expenses or stock were created for testing.

@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.inline-checkbox input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--leather);
+}
+.separated {
+  border-top: 1px solid var(--line);
+}
+.management-details {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+.management-details > summary {
+  padding: 20px 24px;
+  cursor: pointer;
+  font-family: Georgia, serif;
+  font-size: 21px;
+}
+.conversion-row {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.conversion-row label {
+  flex: 1;
+  min-width: 140px;
+}
+.conversion-row > select {
+  width: auto;
+}
+.inventory-grid {
+  padding: 0;
+  margin-bottom: 24px;
+}
+
 .settings-fieldset {
   display: grid;
   gap: 24px;

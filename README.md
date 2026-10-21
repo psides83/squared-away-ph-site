@@ -21,7 +21,7 @@ Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-i
 
 ## Set up Supabase
 
-1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer atomic save, private training log, and business settings. No customer or horse data is seeded. Installations already using the training log only need the new `20261021000400_business_settings.sql` migration before using Settings or saving updated training stays.
+1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer atomic save, training log, settings, expenses/inventory, and private receipt storage. No horse, customer, expense, or stock records are seeded. Installations already using Settings need `20261021000500_expenses_inventory.sql` and `20261021000600_private_receipts.sql` for the new screens.
 2. In Supabase Authentication → Users, create your administrator account with an email and password. Confirm its email through the dashboard if needed. There is no public sign-up flow.
 3. Grant administrator access from the SQL Editor, replacing the example email with the exact account email:
 
@@ -49,6 +49,9 @@ You can use the app without the Supabase GitHub integration; that integration ma
 - Mobile layouts, accessible form labels, pending submission states, and delete confirmations.
 - Server-side authorization and database row-level security.
 - Admin-only business settings for contact information, optional default monthly rate, billing day, partial-month policy, payment terms, and payment instructions/links. New stays prefill from those settings while existing stays retain recorded values. Payment instructions are stored for future billing screens; this does not implement invoices or collect payments.
+- Expenses with user-managed categories, horse/shared-barn assignments, paid dates, charge-back flags, editing/voids of standalone costs, and private receipt attachments (JPEG/PNG/WebP/PDF, 3 MB maximum).
+- Feed/hay/supplement inventory with product-specific weight conversions, purchases/opening stock, weighted average valuation, waste/adjustments, and retained transaction snapshots. Stock purchases create their expense and quantity/value movement atomically; repeated requests cannot duplicate them.
+- Saved daily rations and once-per-horse/date confirmation. Extras and partial feeding use manual inventory entries. Insufficient stock rolls back every line of a confirmation; saving a ration does not deduct anything. Outgoing stock reversals retain history and restore original cost once.
 
 Billing days currently support 1–28. End-of-month billing conventions can be added when billing is implemented. Dashboard active stays include arrival and departure dates and exclude future stays. Business dates use America/Chicago.
 
@@ -56,7 +59,17 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Ownership transfer history, invoices/payments, expense receipts and file storage, profitability reports, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Training stay policies are recorded only; no charges or proration are calculated. Reminders do not send messages or notifications. No fake records are displayed.
+Ownership transfer history, invoices/payments, worked/rest-day billing calendars, per-horse feed/boarding agreements, shared-cost allocations, profitability reports, recurring expenses, expense filters, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Training stay policies are recorded only; no charges or proration are calculated. Reminders do not send notifications. Charge-back flags do not generate invoices. No fake records are displayed.
+
+## Expense and inventory workflow
+
+1. Add products in **Inventory** and configure the actual weight of each bag, scoop, flake, or other unit. Pounds and ounces are fixed weight units; custom serving units need their own conversion. Use separate batch-named units where hay/package weights differ.
+2. Record existing stock as **Opening stock** with its current value (no cash expense). Record new purchases as **Purchase stock** to save the expense and inventory together. Do not separately re-enter the purchase as an expense. Purchase payment dates can be updated from Expenses.
+3. Attach receipts from the saved expense/purchase record. Files are private and downloaded through authenticated routes with signed URLs that expire after 60 seconds. Actual receipt uploads require the storage migration, not just the expense tables.
+4. Save each horse's daily ration in **Feeding**, then confirm only after the whole daily ration was actually fed. Confirming the same horse/date again is safe. Use manual feeding entries for partial rations or extras. A ration edit changes future confirmations only.
+5. Correct feeding/waste/reductions from stock history with a reason. Reversals return stock at the original cost once, and retain the original entry. Reversing a daily entry does not reset that day's confirmation; record corrected feeding manually.
+
+Inventory quantities and values use six-decimal precision, with weighted average valuation in recording order. A backdated entry does not replay previous valuations. Purchase costs/inbound entries are protected and cannot yet be reversed or edited; do not use an unrelated cash expense to silently change stock value. Cash reports (when added) must use expenses paid; they must not also deduct feeding consumption cost.
 
 ## Verify
 
@@ -66,7 +79,7 @@ npm run typecheck
 npm run build
 ```
 
-The tests cover server-side validation and run the actual SQL migrations in a local PostgreSQL runtime (PGlite) with simulated Supabase auth roles. Database tests verify shared customer links, ownership changes, retained billing responsibility, rollback on failed saves, training log CRUD and retained history, duration constraints, and denial of non-admin access. They do not replace live Supabase/browser end-to-end testing.
+The tests cover server-side validation and run actual SQL migrations in a local PostgreSQL runtime (PGlite) with simulated Supabase auth roles. They cover horse/customer history, private training records and settings, weighted inventory costing, insufficient-stock rollback, purchase/expense atomicity, idempotent daily confirmations and reversals, fixed unit conversions, receipt type/size checks, and non-admin denial. Local receipt policy tests use simulated storage tables; they do not exercise Supabase's upload service or replace authenticated browser testing.
 
 Development and production builds use Next.js's webpack engine because Turbopack's worker port binding is restricted in the local execution environment.
 
