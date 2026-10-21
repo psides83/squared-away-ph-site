@@ -2,50 +2,109 @@
 
 ## Direction
 
-Traditional western branding for a Granbury, Texas horse training business. Services: full-time training, colt starting, calf roping training and seasoning, and sale horses. Public calls to action: call/text and training inquiry. No logo, media, domain, or existing records yet.
+Traditional western branding for a Granbury, Texas horse training business. Services: full-time training, colt starting, calf roping training and seasoning, and sale horses. Public calls to action: call/text and training inquiry. Logo, media, and a custom domain are still to be supplied. No data import was needed at kickoff.
 
 Build the admin experience first, for one administrator and up to ten horses in training. Use Next.js, TypeScript, Tailwind CSS, Supabase, GitHub, and Vercel. Customer access and the marketing site follow. No offline editing requirement.
 
-## First release
+## Implemented
 
-Current implementation increment: admin sign-in, dashboard, customer/horse CRUD, editable horse/customer links (including shared ownership and sales), training stays, and reminder/category CRUD. Horse and customer relationships save atomically. Ownership changes preserve billing responsibility on existing training stays. Apply pending migrations through the connected deployment workflow. Billing, receipt uploads, ownership transfer history, training sessions/notes, customer access, marketing, and PWA installation remain subsequent work.
+Features in this section are present in the application source. A feature being implemented does not by itself confirm that its database migration or Vercel deployment has completed. Move only the delivered portion of a feature here; leave unfinished portions under Planned.
 
-1. Authentication and an admin-only application shell.
-2. Customers and horse profiles, including multiple horses per customer and multiple customer relationships per horse. Assign one billing customer per training stay; preserve historical assignments.
-3. Training stays with configurable monthly rates, billing dates, arrival/departure dates, and explicit proration settings. Record both dated progress notes and individual riding sessions with a quick mobile entry flow.
-4. User-managed reminder categories and reminder CRUD: create, view, update, delete, and complete. Initial suggestions include farrier, vaccinations, deworming, dental, and medications. A reminder is not automatically a delivered notification.
-5. Expenses for vet, farrier, hauling, and other categories. Store receipts privately and attach them to expense records. Track customer reimbursement separately from the original expense.
-6. Invoices, line items, and recorded payments with partial payment support. Derive balances from payments and adjustments. Configure optional external payment links; do not treat visiting a link as payment confirmation.
-7. Dashboard showing active horses, upcoming/overdue reminders, open balances, and recent activity. All initial records are real user entries; show helpful empty states.
+### App foundation and security
 
-## Horse profile
+- Next.js App Router, TypeScript, Tailwind CSS, a traditional western design, and responsive admin layouts.
+- Email/password sign-in and sign-out, trusted administrator provisioning, server-side authorization on pages and actions, and session refresh.
+- Supabase migrations in version control, admin-only row-level security, and environment files excluded from Git.
+- Live dashboard counts for active training stays, horses, and customers; upcoming/overdue reminders; useful empty states and quick actions.
+- GitHub repository and Vercel/Supabase integrations connected by the owner. Production address: https://squaredawayperformancehorses.vercel.app/.
 
-Barn name, registered name, registration number, birth year, sex, breed, linked customers, training goals, feeding instructions, health notes, and optional photos.
+### Customers and horses
 
-## Data and access foundation
+- Customer create/view/edit/delete with contact details and private notes.
+- Horse create/view/edit/delete with barn name, registered name, registration number, birth year, sex, breed, training goals, feeding instructions, and private health notes.
+- Required customer selection on horse saves, multiple horses per customer, and multiple customers per horse.
+- Editable customer relationships after a sale, saved atomically with the horse profile. Existing training stays keep their billing responsibility.
+- Customer names on horse cards, linked horses in the customer list, and deletion restrictions for retained history.
 
-Suggested entities: customers, horses, horse_customers, training_stays, training_sessions, horse_notes, reminder_categories, reminders, expenses, receipt_attachments, invoices, invoice_items, payments, and payment_allocations.
+### Training stays
 
-Store money as integer cents. Use date-only fields for billing/service dates and timezone-aware timestamps for recorded activity. Historical invoice line items retain the billed description, customer, and amounts even if current profiles or rates change. Finalized invoices use adjustments rather than silent overwrites.
+- Create/view/edit/delete stays with arrival/departure dates, one billing customer, individual monthly rates, billing day (1–28), private agreement notes, and a recorded partial-month policy.
+- Database prevention of overlapping stays for a horse and retention of historical billing assignments.
+- These are agreement records only. Automatic invoices, charges, and proration calculations remain planned.
 
-Supabase migrations live in version control. Enforce access through database row-level security and private storage policies, not navigation visibility. Administrator status is assigned through a trusted server-controlled mechanism. Future customer accounts link explicitly to customer records and may only retrieve approved records and attachments. Private notes and customer-visible updates are distinct.
+### Reminders
 
-Production, local development, and previews need explicitly configured environments. Preview deployments must not implicitly write to production data. Never commit credentials or expose server-only keys to the browser.
+- Create/view/edit/delete reminders and categories; complete or reopen reminders.
+- Optional horse links, private notes, due dates, and overdue status.
+- Editable default categories for farrier, vaccinations, deworming, dental, medications, and general tasks. Notification delivery remains planned.
 
-## Later releases
+### Training log
 
-- Invite-only customer dashboard: horses, shared training updates, media, care, documents, invoices, and payment history.
+- Create/view/edit/delete dated training sessions and progress notes linked to a horse.
+- Session focus/title, notes, and optional duration in whole minutes. Progress notes have no session duration.
+- Quick entry from the dashboard and horse cards, horse-specific history, horse filtering, and paginated history (25 entries per page).
+- Entries remain tied to the horse after ownership changes. Horses with training entries cannot be deleted accidentally.
+- Entries are private to administrators; customer-visible publishing is not implemented.
+
+## Planned (not implemented)
+
+### Expenses, receipts, billing, and profitability
+
+- User-managed expense categories for feed, hay, supplements, boarding/facility rent, bedding, vet, farrier, hauling, and other costs.
+- Private receipt uploads attached to expenses, with customer reimbursement tracked separately from the original expense.
+- Invoices, line items, recorded payments, partial payments, adjustments, and derived outstanding balances.
+- Optional Venmo, Apple Cash, and PayPal payment instructions/links where supported. Visiting a link must not count as payment confirmation.
+- Configurable billing schedules beyond the current 1–28 range, automated training charges, and explicit partial-month calculations.
+- Dashboard outstanding balances and recent activity beyond the current horse/reminder overview.
+
+#### Feed, boarding, and profitability details
+
+- Record feed, hay, supplements, boarding/facility rent, bedding, and other operating expenses, including date, vendor, category, amount, notes, and private receipt attachments. Support recurring costs and optional quantity/unit-cost detail for feed purchases.
+- Assign direct expenses to a horse or training stay. Record shared barn costs once, with optional allocations across horses. Each allocation must reconcile to the original expense so business totals never count it twice.
+- Distinguish costs absorbed by the business from costs charged back to customers. Link reimbursable expenses to their eventual invoice items; do not count a reimbursement twice as both separate revenue and the same invoice revenue.
+- Report revenue, total costs, and net profit (revenue minus costs) for a selected period. Show horse/stay margins with clear treatment of shared costs, plus overall business profitability. Do not label horse-level profit as complete when shared costs have not been allocated.
+- Keep cash received and outstanding invoices separate. Choose and label the reporting basis before implementing profit calculations, so billed revenue and collected payments are not mixed or counted twice. Show gross feed purchases separately from allocated feed cost where those differ.
+- Keep this reporting private to the administrator. Expense/profitability screens and calculations are roadmap items, not implemented features yet.
+
+### Horse records and customer portal
+
+- Horse photos/media, documents, and an ownership transfer history.
+- Invite-only customer dashboard with horses, shared training updates, media, care, documents, invoices, and payment history.
+- An explicit publishing flow that separates private notes from customer updates, with database-enforced customer access rules.
+
+### Marketing website
+
 - Public Home, About, Training, Sale Horses, and Contact/Inquiry pages.
-- Installable PWA with appropriate icons and manifest; do not cache private responses in a service worker by default.
+- Call/text and inquiry actions, business contact details, domain, logo, and real photography/video.
+
+### PWA and later improvements
+
+- Installable PWA with icons and manifest; no private-response service-worker caching by default.
 - Optional online payment processing, delivered notifications, and accounting export after core workflows are established.
+
+## Implementation conventions
+
+- Store money as integer cents, service/billing dates as dates, and recorded activity times as timezone-aware timestamps. Business dates use America/Chicago.
+- Future invoice line items must retain the billed customer, description, and amount even if current profiles or rates change. Use adjustments rather than silently overwriting finalized invoices.
+- Proposed financial entities: expenses, receipt_attachments, invoices, invoice_items, payments, and payment_allocations. Sessions and progress notes currently share the implemented `training_entries` table.
+- Enforce access in the database as well as the UI. Never commit credentials or expose server-only keys to the browser.
+- Keep preview/development databases separate from production. Apply migrations through a reviewed deployment workflow.
+- On every completed feature, move its delivered scope from Planned to Implemented and record verification/deployment limitations below.
 
 ## Decisions still needed
 
 - Repository confirmed: https://github.com/psides83/squared-away-ph-site. Repository visibility remains unverified.
-- Whether partial first/last months are prorated and which calculation applies; partial payments are already supported as a separate requirement.
+- Whether partial first/last months are prorated and which calculation applies. Partial payments are a confirmed requirement, with implementation still planned.
 - Outside-expense markup or at-cost reimbursement policy.
 - Default rates, invoice due dates, payment instructions, and business contact details.
+- Profit reporting basis (cash received/paid or earned/incurred), whether feed is tracked as purchases or consumption, and the method for allocating shared feed and boarding costs.
 
-## Delivery sequence
+## Next build sequence
 
-Create GitHub repository; connect Supabase and Vercel; scaffold the application and design system; implement authentication and customer/horse workflows; add stays/training/reminders; add receipts and billing; then customer portal and public marketing site. Apply database migrations through a deliberate reviewed deployment process.
+Expense tracking and private receipts → invoices and recorded payments → revenue/cost/profit reporting → customer portal → public marketing website → PWA installation and refinements.
+
+## Verification and deployment status
+
+- Foundation and horse/customer updates were pushed to `main`; the production sign-in page and signed-out redirects were checked. Full authenticated production CRUD has not been exercised by the agent.
+- Training log implementation includes migration `20261021000300_training_log.sql`. Apply it before using the new feature; production migration completion has not been confirmed.
+- Training log increment: all 15 tests, TypeScript checks, and the production build pass. Database tests run the actual migrations locally and verify admin permissions, CRUD, duration constraints, retained history, and ownership/billing safeguards. The authenticated training-log UI has not been exercised against production. No production records were created for testing.

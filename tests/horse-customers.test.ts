@@ -41,6 +41,7 @@ test("horse/customer migration and sales workflow", async (t) => {
     for (const name of [
       "20261021000100_admin_foundation.sql",
       "20261021000200_horse_customer_save.sql",
+      "20261021000300_training_log.sql",
     ]) {
       await db.exec(
         await readFile(
@@ -183,7 +184,71 @@ test("horse/customer migration and sales workflow", async (t) => {
       },
     );
     await t.test(
-      "non-admin users cannot call the save function or read horse records",
+      "training entries support sessions, notes, edits, deletion, and retained horse history",
+      async () => {
+        const result = await db.query<{ id: string }>(
+          "insert into public.training_entries(horse_id, kind, entry_date, title, notes, duration_minutes) values ($1, 'session', '2026-10-21', 'Rating cattle', 'Stayed quiet. Work on the stop next time.', 40) returning id",
+          [horseId],
+        );
+        const sessionId = result.rows[0].id;
+        const note = await db.query<{ id: string }>(
+          "insert into public.training_entries(horse_id, kind, entry_date, title, notes) values ($1, 'note', '2026-10-21', 'Progress', 'More confidence this week.') returning id",
+          [horseId],
+        );
+        await db.query(
+          "update public.training_entries set notes = 'Updated session notes' where id = $1",
+          [sessionId],
+        );
+        await save("Dusty after another sale", [owner], horseId);
+        assert.deepEqual(
+          (
+            await db.query(
+              "select horse_id, notes, duration_minutes from public.training_entries where id = $1",
+              [sessionId],
+            )
+          ).rows,
+          [
+            {
+              horse_id: horseId,
+              notes: "Updated session notes",
+              duration_minutes: 40,
+            },
+          ],
+        );
+        await db.query("delete from public.training_entries where id = $1", [
+          note.rows[0].id,
+        ]);
+        assert.equal(
+          (await db.query("select id from public.training_entries")).rows
+            .length,
+          1,
+        );
+        for (const [kind, duration] of [
+          ["note", 15],
+          ["session", 0],
+          ["session", 1441],
+          ["other", null],
+        ]) {
+          await assert.rejects(
+            db.query(
+              "insert into public.training_entries(horse_id, kind, entry_date, title, notes, duration_minutes) values ($1, $2, '2026-10-21', 'Title', 'Notes', $3)",
+              [horseId, kind, duration],
+            ),
+          );
+        }
+        const historyHorse = await save("History only", [owner]);
+        await db.query(
+          "insert into public.training_entries(horse_id, kind, entry_date, title, notes) values ($1, 'note', '2026-10-21', 'First day', 'Settled in.')",
+          [historyHorse],
+        );
+        await assert.rejects(
+          db.query("delete from public.horses where id = $1", [historyHorse]),
+          /foreign key/,
+        );
+      },
+    );
+    await t.test(
+      "non-admin users cannot save horses or access private training entries",
       async () => {
         await db.query(
           "select set_config('request.jwt.claim.sub', $1, false)",
@@ -197,8 +262,23 @@ test("horse/customer migration and sales workflow", async (t) => {
           (await db.query("select id from public.horses")).rows,
           [],
         );
+        assert.deepEqual(
+          (await db.query("select id from public.training_entries")).rows,
+          [],
+        );
+        await assert.rejects(
+          db.query(
+            "insert into public.training_entries(horse_id, kind, entry_date, title, notes) values ($1, 'note', '2026-10-21', 'Unauthorized', 'Private')",
+            [horseId],
+          ),
+          /row-level security/,
+        );
         await db.exec("reset role; set role anon;");
         await assert.rejects(save("Anonymous", [owner]), /permission denied/);
+        await assert.rejects(
+          db.query("select id from public.training_entries"),
+          /permission denied/,
+        );
       },
     );
   } finally {

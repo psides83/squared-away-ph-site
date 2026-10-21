@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
+import { trainingEntryValues } from "@/lib/training-entry";
 import {
   cents,
   choice,
@@ -15,12 +16,14 @@ type Entity =
   | "customers"
   | "horses"
   | "training_stays"
+  | "training_entries"
   | "reminders"
   | "reminder_categories";
 const routes: Record<Entity, string> = {
   customers: "/admin/customers",
   horses: "/admin/horses",
   training_stays: "/admin/training",
+  training_entries: "/admin/log",
   reminders: "/admin/reminders",
   reminder_categories: "/admin/reminders",
 };
@@ -34,6 +37,9 @@ export async function saveRecord(entity: Entity, form: FormData) {
     let values: Record<string, unknown> = {};
     let customerIds: string[] = [];
     switch (entity) {
+      case "training_entries":
+        values = trainingEntryValues(form);
+        break;
       case "customers": {
         const email = text(form, "email", false, 254);
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))

@@ -196,6 +196,18 @@ export default async function Horses({
                   {horse.registered_name || "Registered name not added"}
                 </p>
                 <div className="horse-details">
+                  <Link
+                    className="text-link"
+                    href={`/admin/log?horse=${horse.id}`}
+                  >
+                    Training history
+                  </Link>
+                  <Link
+                    className="text-link"
+                    href={`/admin/log?horse=${horse.id}&new=1#record-form`}
+                  >
+                    Log a session / note
+                  </Link>
                   <span>
                     Customers:{" "}
                     {(relationships.data ?? [])

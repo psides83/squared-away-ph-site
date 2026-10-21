@@ -7,12 +7,14 @@ import {
   Fence,
   CalendarDays,
   ClipboardList,
+  BookOpen,
 } from "lucide-react";
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/horses", label: "Horses", icon: Fence },
   { href: "/admin/customers", label: "Customers", icon: UsersRound },
   { href: "/admin/training", label: "Training stays", icon: ClipboardList },
+  { href: "/admin/log", label: "Training log", icon: BookOpen },
   { href: "/admin/reminders", label: "Reminders", icon: CalendarDays },
 ];
 export function Navigation() {

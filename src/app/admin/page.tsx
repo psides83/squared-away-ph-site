@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Plus,
   Sun,
+  BookOpen,
 } from "lucide-react";
 
 export default async function Dashboard() {
@@ -203,10 +204,10 @@ export default async function Dashboard() {
                   icon: UsersRound,
                 },
                 {
-                  href: "/admin/training?new=1",
-                  label: "Start a training stay",
-                  sub: "Set dates and a monthly rate",
-                  icon: ClipboardList,
+                  href: "/admin/log?new=1",
+                  label: "Log a session / note",
+                  sub: "Capture the work while it’s fresh",
+                  icon: BookOpen,
                 },
                 {
                   href: "/admin/reminders?new=1",
