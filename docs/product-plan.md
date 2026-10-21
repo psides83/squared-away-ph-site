@@ -8,6 +8,8 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## First release
 
+Current implementation increment: admin sign-in, dashboard, customer/horse CRUD, training stays, and reminder/category CRUD. The initial database migration is prepared locally and has not been applied to the connected project. Billing, receipt uploads, ownership editing, training sessions/notes, customer access, marketing, and PWA installation remain subsequent work.
+
 1. Authentication and an admin-only application shell.
 2. Customers and horse profiles, including multiple horses per customer and multiple customer relationships per horse. Assign one billing customer per training stay; preserve historical assignments.
 3. Training stays with configurable monthly rates, billing dates, arrival/departure dates, and explicit proration settings. Record both dated progress notes and individual riding sessions with a quick mobile entry flow.
@@ -39,7 +41,7 @@ Production, local development, and previews need explicitly configured environme
 
 ## Decisions still needed
 
-- GitHub account/organization, repository name, and visibility.
+- Repository confirmed: https://github.com/psides83/squared-away-ph-site. Repository visibility remains unverified.
 - Whether partial first/last months are prorated and which calculation applies; partial payments are already supported as a separate requirement.
 - Outside-expense markup or at-cost reimbursement policy.
 - Default rates, invoice due dates, payment instructions, and business contact details.
