@@ -2496,3 +2496,14 @@ input[type="number"] {
 .customer-invoice-row .row-actions {
   flex-wrap: wrap;
 }
+.readiness-form {
+  padding: 18px 0;
+}
+.readiness-form .inline-checkbox {
+  align-items: flex-start;
+  max-width: 65ch;
+}
+.readiness-form .inline-checkbox input {
+  flex-shrink: 0;
+  margin-top: 3px;
+}

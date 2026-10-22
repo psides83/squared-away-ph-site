@@ -42,6 +42,20 @@ export async function invoiceAction(operation: string, form: FormData) {
     let rpc: string;
     let args: Record<string, unknown>;
     switch (operation) {
+      case "cost-ready":
+        if (form.get("ready") === "yes" && form.get("confirmed") !== "on")
+          throw new Error(
+            "Confirm that all period records and charges have been reviewed.",
+          );
+        rpc = "set_invoice_cost_ready";
+        args = {
+          p_invoice: invoice,
+          p_service: choice(form, "service", ["feed", "boarding"]),
+          p_ready: choice(form, "ready", ["yes", "no"]) === "yes",
+          p_reason: text(form, "reason", true, 2000),
+        };
+        break;
+
       case "monthly-feed":
       case "monthly-boarding":
         rpc = "add_monthly_service";
@@ -155,6 +169,6 @@ export async function invoiceAction(operation: string, form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `${invoice ? `/admin/invoices/${invoice}` : "/admin/invoices"}?${issue ? `error=${encodeURIComponent(issue)}` : "success=Invoice+updated."}`,
+    `${invoice ? `/admin/invoices/${invoice}` : "/admin/invoices"}?${issue ? `error=${encodeURIComponent(issue)}` : "success=Invoice+updated."}${operation === "cost-ready" ? "#invoice-charges" : ""}`,
   );
 }

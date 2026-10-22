@@ -1,3 +1,7 @@
+import {
+  InvoiceCostReadiness,
+  type CostReadiness,
+} from "@/components/invoice-cost-readiness";
 import { SectionTabs } from "@/components/section-tabs";
 import { phoneDisplay } from "@/lib/input-format";
 import { CustomerInvoiceLines } from "@/components/customer-invoice-lines";
@@ -106,6 +110,20 @@ export default async function Invoice({
     invoice.status === "draft" && invoice.stay_id
       ? await db.rpc("invoice_service_options", { p_invoice: id })
       : { data: null, error: null };
+  const readiness =
+    invoice.status === "draft" &&
+    stay.data &&
+    (stay.data.feed_billing === "at_cost" ||
+      stay.data.boarding_billing === "at_cost")
+      ? await db.rpc("invoice_cost_readiness", { p_invoice: id })
+      : { data: [], error: null };
+  const reviews = await db
+    .from("invoice_cost_review_events")
+    .select("service,ready,reason,created_at")
+    .eq("invoice_id", id)
+    .order("created_at", { ascending: false })
+    .order("id")
+    .limit(20);
   const failed = [
     lines,
     payments,
@@ -344,6 +362,19 @@ export default async function Invoice({
             label: "Charges",
             content: (
               <>
+                {(draft || reviews.data?.length) && (
+                  <InvoiceCostReadiness
+                    invoice={id}
+                    rows={(readiness.data ?? []) as CostReadiness[]}
+                    events={reviews.data ?? []}
+                    period={
+                      invoice.period_from && invoice.period_to
+                        ? { from: invoice.period_from, to: invoice.period_to }
+                        : undefined
+                    }
+                    error={Boolean(readiness.error || reviews.error)}
+                  />
+                )}
                 <section className="panel" id="invoice-breakdown">
                   <div className="panel-heading">
                     <h2>Detailed charges</h2>

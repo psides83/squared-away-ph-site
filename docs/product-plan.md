@@ -224,12 +224,19 @@ Features in this section are present in the application source. A feature being 
 - Costs use historical weighted ledger values, not current purchase prices. Corrections are credited on their ledger dates and can produce negative net usage in a later period. Correction credits are displayed for reference and are already included in the relevant net totals. Product-line counts are explicitly distinguished from meals/days.
 - Owner horses are included without requiring a training stay. Operational consumption costs remain separate from cash-profit calculations; purchases and consumption are never deducted together. Purchase/opening/inbound stock entries are excluded from usage totals.
 
+### Actual-cost period readiness
+
+- Draft invoice Charges tabs show separate feed/boarding reviews for actual-cost agreements and the invoice period. Administrators explicitly confirm all relevant records and charges, including intentional zero costs, and enter a review note. They can reopen reviews; recent audit events remain visible on issued invoices.
+- Reviews retain a source/agreement/charge snapshot. New/reversed feed, changed boarding assignments/claims, stay dates/customer changes, or changed service lines make a prior review stale. Boarding review conservatively includes all assigned stay costs, including dates outside the invoice period; the UI makes this explicit.
+- Guarded database finalization requires every applicable review to match current records and rejects unbilled feed/eligible boarding costs. Review writes are administrator-only, retry-safe for unchanged state, and audited. Direct helper/table writes are denied. Explicit manual finalization retains its existing behavior.
+- Scheduling and automatic generation are not implemented by this increment. The future recurring runner must use the guarded path and independently verify complete training calendars, service agreements, and billing-cycle coverage.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
 
 - Recurring expense scheduling and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
-- Configurable billing schedules beyond the current 1–28 range, scheduled invoice generation, and additional automatic calculations for policies beyond calendar-day proration. Add an administrator-controlled readiness review for actual-cost feed/boarding periods and block automatic finalization until the required period is marked ready.
+- Configurable billing schedules beyond the current 1–28 range, scheduled invoice generation, and additional automatic calculations for policies beyond calendar-day proration. Connect scheduled generation to the implemented actual-cost review guard; automatic finalization must also check training-calendar and other service completeness.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
 #### Feed, boarding, and profitability details
@@ -279,7 +286,7 @@ Features in this section are present in the application source. A feature being 
 - Invoice payment terms are configurable, with due upon receipt as the starting default. Permit multiple/partial payments and show the remaining balance.
 - No training deposit.
 - Recurring billing: dates on the 29th–31st use the last day of shorter months and return to the original anchor in longer months. Automatically finalize invoices only when required billing records are complete; otherwise leave them for review. Confirmed October 21, 2026.
-- Automatic actual-cost billing requires the administrator to explicitly mark feed/boarding records ready for the billing period before automatic finalization. A period reaching its billing date alone does not establish completeness. Confirmed October 21, 2026; readiness workflow and enforcement remain planned.
+- Automatic actual-cost billing requires the administrator to explicitly mark feed/boarding records ready for the billing period before automatic finalization. A period reaching its billing date alone does not establish completeness. Confirmed October 21, 2026; invoice-period review and the guarded finalization function are implemented above. Scheduled billing integration remains planned.
 - Customer portal: explicitly granted customers share published horse updates, but each customer sees only invoices and payments billed to their own customer record. Horse portal access is granted/revoked manually by the administrator; ownership edits do not automatically grant access. Confirmed October 21, 2026.
 - Feed and boarding inclusion/separate billing is determined for each horse/training agreement. Separately billed monthly feed and boarding use all physical boarding days, with actual calendar days as the monthly denominator. Actual-cost feed uses recorded weighted consumption costs; actual-cost boarding uses reviewed costs assigned to the stay. The owner confirmed these calculation bases on October 21, 2026.
 - Feed inventory includes hay and all supplement types from the start, alongside purchases, receipts, and consumption tracking.
@@ -303,6 +310,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Actual-cost readiness increment (October 22, 2026): migration `20261022002500_actual_cost_readiness.sql` adds review state/history, snapshot comparison, and guarded finalization. All 119 tests, TypeScript checks, and the production build pass. Tests cover missing/partial reviews, repeated saves, feed/boarding additions, generated-charge changes, reopening, unbilled-source blocking, successful/repeated guarded finalization, issued-invoice protection, private-helper denial, history isolation, and denied direct writes. Existing manual finalization tests still pass. Local browser previews verify deliberate review controls, required confirmation/note, status differences, and timestamped audit notes. Remote migration and authenticated production flows remain unverified.
 
 - Inventory-usage reporting increment (October 22, 2026): migration `20261022002400_inventory_usage_report.sql` adds the administrator-only report. All 118 tests, TypeScript checks, and the production build pass. Tests cover weighted cost snapshots after later purchases, horse/product reconciliation, waste/reduction separation, later-period reversals, negative correction periods, empty dates, date bounds, and non-admin denial. Local browser previews verify horse/product links, displayed weights and costs, and phone-width summary layout. Remote migration and authenticated production reports remain unverified.
 
