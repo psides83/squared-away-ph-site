@@ -69,8 +69,8 @@ Features in this section are present in the application source. A feature being 
 - Metric purchase/feeding quantities and custom serving weights are supported. Metric ledger conversion uses the exact 28.349523125 g per weight ounce relationship before rounding. Standard weight conversions are protected. Existing custom units named like the new standards retain their IDs and weights under a legacy label; saved rations and transaction history are preserved. Cups, teaspoons, tablespoons, milliliters, and liters can be added with product-specific measured weights.
 - Weighted average inventory value, quantity on hand, and transaction history. Inventory uses weight ounces as its base unit, twelve-decimal base-weight precision, six-decimal entered quantities and inventory values, and valuation in recording order rather than retroactively replaying backdated entries.
 - Transactions snapshot their entered quantity/unit, weight conversion, and inventory cost. Later conversion or price changes do not reprice history. Purchases update cash expense records exactly once on retry.
-- Saved active/paused daily rations per horse/product, with editable quantities and units. Saving a ration never consumes stock.
-- Explicit confirmation of the entire daily ration for a horse/date, once per date. A shortage in any line rolls back the complete confirmation. Manual entries handle extras, partial feeding, and corrections.
+- Saved active/paused rations per horse/product/feeding time, with editable quantities and units. Saved rations are grouped by horse, then feeding time. Saving a ration never consumes stock.
+- Explicit confirmation of one horse’s ration for one date and feeding time, safe to retry per horse/date/time. A shortage in any line rolls back the complete confirmation. Morning confirmation never consumes evening or other scheduled rations. Manual entries handle extras, partial feeding, and corrections.
 - Outgoing stock can be reversed once, returning quantity and original cost with a linked correction entry. The original movement remains visible. Reversing a daily line does not make the day available for another full confirmation; record the corrected quantity manually.
 
 ### Billing calendar and stay service agreements
@@ -167,11 +167,18 @@ Features in this section are present in the application source. A feature being 
 - App preview/download routes issue 60-second signed links with private/no-store responses. Unpublishing, grant revocation, and account disable prevent fresh portal requests; previously issued links/copies are not withdrawn. Admin archival retains the object and audit metadata.
 - File lists are paginated, horse-filterable, and use authenticated image routes without the public image-optimization cache. Photos display in responsive grids; documents open/download through the same access checks.
 
+### Feeding times and grouped rations
+
+- Morning and Evening defaults plus administrator-managed custom feeding times, optional clock times, display order, renaming, and archiving. Active rations must be moved or paused before their feeding time can be archived.
+- Each horse may receive the same product at different feeding times with separate quantities. Add/Edit remains in a deliberate dialog; duplicate horse/product/time additions ask the administrator to edit the existing line instead of silently replacing it.
+- Individual and bulk confirmations use horse/date/feeding-time identity, retain feeding-time label snapshots, and keep per-horse weighted stock costs. Manual single-horse and bulk extras can record a feeding time or remain explicitly unscheduled.
+- Existing daily totals remain unassigned without guessed splits. Assign every active total for a horse before confirming scheduled rations. Historical full-day confirmations prevent timed deductions on the same horse/date; past quantity, cost, and confirmation records are preserved. Requires migration `20261021001800_feeding_times.sql`.
+
 ### Deliberate editing and batch feeding
 
 - Admin pages keep record lists and summaries visible while add/edit/record actions open focused dialogs. Applied to customers, horses, expenses, training stays/logs, reminders and their categories, inventory products/stock, daily rations, calendar classifications, invoice builders/payments, customer updates/files, access management, cost/income matching, shared-cost allocations, and business settings. Filters and quick record actions remain on the overview.
 - Dialogs have labeled headings, native keyboard focus containment, Escape/close controls, return focus to the opener, and reset unsaved fields on dismissal. Existing Add/Edit links and form anchors open the appropriate dialog; successful navigation closes always-available editors so result messages are visible.
-- Bulk daily feeding confirms the saved daily rations for selected horses on one actual date. Existing confirmations remain safe to retry; a shortage or invalid horse rolls back the entire batch.
+- Bulk scheduled feeding confirms the saved rations for selected horses at one feeding time on one actual date. Existing confirmations remain safe to retry; a shortage or invalid horse rolls back the entire batch.
 - Bulk extra/partial feeding records one selected product/unit across multiple horses with individual quantities. Blank quantities skip a horse. Each batch preserves weighted cost and per-horse history, saves atomically, and rejects changed retries using a saved batch request. Requires migration `20261021001700_bulk_feeding.sql`.
 
 ## Planned (not implemented)
@@ -250,6 +257,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Feeding-time increment includes migration `20261021001800_feeding_times.sql`. All 102 tests, TypeScript checks, and the production build pass. Local database tests cover separate same-product rations by time, individual/bulk time-specific deductions and costs, shortages/rollback, retry safety, paused/archived times, label snapshots, migration preservation, old daily-total safeguards, and non-admin denial. Local browser checks used the actual grouped-rations/bulk components with sample horses and confirmed custom-time filtering; the temporary preview was removed. Live authenticated flows and remote migration completion remain unverified.
 
 - Horse files include migration `20261021001500_horse_files.sql`. All 89 tests, TypeScript checks, and the production build pass. Local database/storage-policy tests cover private-by-default uploads, explicit publication, co-owner grants, safe metadata projections, publication-date bounds, account/grant revocation, unpublishing/title revision/archive history, and denied customer/anonymous writes. Storage tables are simulated: actual Supabase uploads/downloads, signed URL behavior, and authenticated browser flows remain unverified.
 

@@ -91,9 +91,22 @@ export async function recordStock(form: FormData) {
   try {
     const values = stockValues(form);
     product = values.p_product;
-    const result = await db.rpc("record_stock_movement", values);
-    issue = message(result.error);
-    expense = result.data?.expense_id;
+    if (values.p_kind === "feeding") {
+      const result = await db.rpc("record_bulk_extra_feeding", {
+        p_request: values.p_request,
+        p_product: values.p_product,
+        p_unit: values.p_unit,
+        p_date: values.p_date,
+        p_entries: [{ horse_id: values.p_horse, quantity: values.p_quantity }],
+        p_notes: values.p_notes,
+        p_feeding_time: identifier(form, "feeding_time_id"),
+      });
+      issue = message(result.error);
+    } else {
+      const result = await db.rpc("record_stock_movement", values);
+      issue = message(result.error);
+      expense = result.data?.expense_id;
+    }
   } catch (e) {
     issue = e instanceof Error ? e.message : "Could not record stock.";
   }
@@ -113,6 +126,7 @@ export async function saveRation(form: FormData) {
     const values = {
       horse_id: identifier(form, "horse_id", true),
       product_id: identifier(form, "product_id", true),
+      feeding_time_id: identifier(form, "feeding_time_id", true),
       unit_id: identifier(form, "unit_id", true),
       quantity: quantity(form),
       active: form.get("active") === "on",
@@ -126,10 +140,11 @@ export async function saveRation(form: FormData) {
           .eq("id", id)
           .select()
           .single()
-      : await db
-          .from("feed_rations")
-          .upsert(values, { onConflict: "horse_id,product_id" });
-    issue = message(error);
+      : await db.from("feed_rations").insert(values);
+    issue =
+      error?.code === "23505"
+        ? "This horse already has this product at that feeding time. Edit the existing ration line instead."
+        : message(error);
   } catch (e) {
     issue = e instanceof Error ? e.message : "Could not save ration.";
   }
@@ -161,9 +176,10 @@ export async function confirmFeeding(form: FormData) {
   const { db } = await requireAdmin();
   let issue: string | undefined;
   try {
-    const { error } = await db.rpc("confirm_daily_feeding", {
+    const { error } = await db.rpc("confirm_scheduled_feeding", {
       p_horse: identifier(form, "horse_id", true),
       p_date: dateValue(form, "feeding_date", true),
+      p_feeding_time: identifier(form, "feeding_time_id", true),
     });
     issue = message(error);
   } catch (e) {
@@ -203,8 +219,9 @@ export async function confirmBulkFeeding(form: FormData) {
     });
     if (!horses.length || horses.length > 100)
       throw new Error("Choose between 1 and 100 horses.");
-    const { error } = await db.rpc("confirm_bulk_daily_feeding", {
+    const { error } = await db.rpc("confirm_bulk_scheduled_feeding", {
       p_horses: horses,
+      p_feeding_time: identifier(form, "feeding_time_id", true),
       p_date: dateValue(form, "feeding_date", true),
     });
     issue = message(error);
@@ -213,7 +230,7 @@ export async function confirmBulkFeeding(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Selected+daily+rations+confirmed.+Already+confirmed+horses+were+not+deducted+again."}`,
+    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Selected+feeding-time+rations+confirmed.+Already+confirmed+horses+were+not+deducted+again."}`,
   );
 }
 export async function recordBulkFeeding(form: FormData) {
@@ -239,6 +256,7 @@ export async function recordBulkFeeding(form: FormData) {
       p_unit: identifier(form, "unit_id", true),
       p_date: dateValue(form, "feeding_date", true),
       p_entries: entries,
+      p_feeding_time: identifier(form, "feeding_time_id"),
       p_notes: text(form, "notes", false, 5000),
     });
     issue = message(error);
@@ -248,5 +266,43 @@ export async function recordBulkFeeding(form: FormData) {
   revalidatePath("/admin", "layout");
   redirect(
     `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=All+feeding+entries+recorded+together."}`,
+  );
+}
+
+export async function saveFeedingTime(form: FormData) {
+  const { db } = await requireAdmin();
+  let issue: string | undefined;
+  try {
+    const time = text(form, "time_of_day", false, 8);
+    const sort = text(form, "sort_order", true, 4)!;
+    if (time && !/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(time))
+      throw new Error("Enter a valid feeding time.");
+    if (!/^\d+$/.test(sort) || Number(sort) > 1000)
+      throw new Error("Display order must be between 0 and 1000.");
+    const values = {
+      name: text(form, "name", true, 60),
+      time_of_day: time,
+      sort_order: Number(sort),
+      archived: form.get("archived") === "on",
+    };
+    const id = identifier(form, "id");
+    const result = id
+      ? await db
+          .from("feeding_times")
+          .update(values)
+          .eq("id", id)
+          .select()
+          .single()
+      : await db.from("feeding_times").insert(values);
+    issue =
+      result.error?.code === "23505"
+        ? "A feeding time with this name already exists."
+        : message(result.error);
+  } catch (e) {
+    issue = e instanceof Error ? e.message : "Could not save feeding time.";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(
+    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Feeding+time+saved.+Past+feeding+records+are+unchanged."}`,
   );
 }

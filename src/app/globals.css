@@ -1876,3 +1876,38 @@ td strong {
 body:has(.action-dialog[open]) {
   overflow: hidden;
 }
+
+.feeding-time-group {
+  margin: 20px 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.feeding-time-group h4 {
+  margin-bottom: 12px;
+  color: var(--leather);
+  font-size: 16px;
+}
+.ration-line {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.ration-line .row-actions {
+  margin-top: 8px;
+}
+.ration-line p {
+  line-height: 1.6;
+}
+.ration-line .tag {
+  margin-left: 8px;
+}
+.feeding-time-group > .muted {
+  margin-top: 14px;
+}
+.feeding-time-group .action-launcher {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.ration-horse-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}

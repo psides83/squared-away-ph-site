@@ -1,4 +1,6 @@
 "use client";
+import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
+
 import { useState } from "react";
 import { Field } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
@@ -12,21 +14,55 @@ import {
   recordBulkFeeding,
 } from "@/app/admin/inventory/actions";
 
-type Horse = { id: string; barn_name: string; ration?: string };
+type Horse = {
+  id: string;
+  barn_name: string;
+  rations?: { feeding_time_id: string; summary: string }[];
+};
 export function DailyFeedingBatch({
   horses,
   date,
+  times,
 }: {
   horses: Horse[];
+  times: FeedingTime[];
   date: string;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
+  const [time, setTime] = useState(times.find((t) => !t.archived)?.id ?? "");
+  const eligible = horses.filter((h) =>
+    h.rations?.some((r) => r.feeding_time_id === time),
+  );
   return (
     <form action={confirmBulkFeeding} className="record-form">
       <p>
-        Choose the horses that received their entire saved daily ration.
-        Previously confirmed horses are safely skipped for the same date.
+        Choose the horses that received their saved ration for this feeding
+        time. Previously confirmed horses are safely skipped for the same date
+        and feeding time.
       </p>
+      <label>
+        Feeding time
+        <select
+          name="feeding_time_id"
+          required
+          value={time}
+          onChange={(e) => {
+            setTime(e.target.value);
+            setSelected([]);
+          }}
+        >
+          <option value="" disabled>
+            Choose a feeding time
+          </option>
+          {times
+            .filter((t) => !t.archived)
+            .map((t) => (
+              <option key={t.id} value={t.id}>
+                {feedingTimeLabel(t)}
+              </option>
+            ))}
+        </select>
+      </label>
       <Field
         name="feeding_date"
         label="Actual feeding date"
@@ -38,22 +74,36 @@ export function DailyFeedingBatch({
       <button
         className="text-button"
         type="button"
+        disabled={!eligible.length}
         onClick={() =>
           setSelected(
-            selected.length === horses.length ? [] : horses.map((h) => h.id),
+            selected.length === eligible.length
+              ? []
+              : eligible.map((h) => h.id),
           )
         }
       >
-        {selected.length === horses.length
+        {selected.length === eligible.length
           ? "Clear selection"
           : "Select all horses with rations"}
       </button>
       <div className="batch-horse-list">
-        {horses.map((h) => (
+        {!eligible.length && (
+          <p className="muted">
+            No assigned active rations at this feeding time. Add rations or
+            choose another time.
+          </p>
+        )}
+        {eligible.map((h) => (
           <label className="batch-horse-row" key={h.id}>
             <span>
               <strong>{h.barn_name}</strong>
-              <small className="muted">{h.ration}</small>
+              <small className="muted">
+                {h.rations
+                  ?.filter((r) => r.feeding_time_id === time)
+                  .map((r) => r.summary)
+                  .join(" · ")}
+              </small>
             </span>
             <input
               type="checkbox"
@@ -89,12 +139,14 @@ export function ExtraFeedingBatch({
   units,
   date,
   request,
+  times = [],
 }: {
   horses: Horse[];
   products: ProductOption[];
   units: UnitOption[];
   date: string;
   request: string;
+  times?: FeedingTime[];
 }) {
   return (
     <form action={recordBulkFeeding} className="record-form">
@@ -113,6 +165,19 @@ export function ExtraFeedingBatch({
           defaultValue={date}
           max={date}
         />
+        <label>
+          Feeding time
+          <select name="feeding_time_id" defaultValue="">
+            <option value="">Unscheduled extra / partial feeding</option>
+            {times
+              .filter((t) => !t.archived)
+              .map((t) => (
+                <option key={t.id} value={t.id}>
+                  {feedingTimeLabel(t)}
+                </option>
+              ))}
+          </select>
+        </label>
         <ProductUnitFields products={products} units={units} />
       </div>
       <div className="batch-horse-list">

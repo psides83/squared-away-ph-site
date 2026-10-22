@@ -1,4 +1,5 @@
 "use client";
+import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
 import { useState } from "react";
 import { Field } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
@@ -82,6 +83,7 @@ export function StockEntryForm({
   product,
   date,
   request,
+  times = [],
 }: {
   products: ProductOption[];
   units: UnitOption[];
@@ -89,6 +91,7 @@ export function StockEntryForm({
   product?: string;
   date: string;
   request: string;
+  times?: FeedingTime[];
 }) {
   const [kind, setKind] = useState("purchase");
   const incoming = ["purchase", "opening", "adjustment_in"].includes(kind);
@@ -157,6 +160,21 @@ export function StockEntryForm({
               defaultValue={date}
             />
           </>
+        )}
+        {kind === "feeding" && (
+          <label>
+            Feeding time
+            <select name="feeding_time_id" defaultValue="">
+              <option value="">Unscheduled extra / partial feeding</option>
+              {times
+                .filter((t) => !t.archived)
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {feedingTimeLabel(t)}
+                  </option>
+                ))}
+            </select>
+          </label>
         )}
         {kind === "feeding" && (
           <label>

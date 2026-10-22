@@ -33,15 +33,23 @@ export default async function Inventory({
     .range((page - 1) * 25, page * 25 - 1);
   if (params.product && /^[0-9a-f-]{36}$/i.test(params.product))
     query = query.eq("product_id", params.product);
-  const [products, units, balances, movements, categories, horses] =
-    await Promise.all([
-      db.from("inventory_products").select("*").order("name"),
-      db.from("inventory_units").select("*").order("label"),
-      db.from("inventory_balances").select("*"),
-      query,
-      db.from("expense_categories").select("*").order("name"),
-      db.from("horses").select("id,barn_name").order("barn_name"),
-    ]);
+  const [
+    products,
+    units,
+    balances,
+    movements,
+    categories,
+    horses,
+    feedingTimes,
+  ] = await Promise.all([
+    db.from("inventory_products").select("*").order("name"),
+    db.from("inventory_units").select("*").order("label"),
+    db.from("inventory_balances").select("*"),
+    query,
+    db.from("expense_categories").select("*").order("name"),
+    db.from("horses").select("id,barn_name").order("barn_name"),
+    db.from("feeding_times").select("*").order("sort_order").order("name"),
+  ]);
   const failed = [
     products,
     units,
@@ -49,6 +57,7 @@ export default async function Inventory({
     movements,
     categories,
     horses,
+    feedingTimes,
   ].some((r) => r.error);
   const selected = products.data?.find((p) => p.id === params.product);
   const request = crypto.randomUUID();
@@ -299,6 +308,7 @@ export default async function Inventory({
                 <h2>Record a stock transaction</h2>
               </div>
               <StockEntryForm
+                times={feedingTimes.data ?? []}
                 key={request}
                 products={products.data ?? []}
                 units={units.data ?? []}
@@ -354,6 +364,9 @@ export default async function Inventory({
                   </p>
                 )}
                 <p className="muted form-hint">
+                  {m.feeding_time_label && (
+                    <span>Feeding time: {m.feeding_time_label} · </span>
+                  )}
                   Conversion used: 1 {m.unit_label} = {m.ounces_per_unit} oz
                 </p>
                 {m.notes && <p className="log-notes">{m.notes}</p>}
