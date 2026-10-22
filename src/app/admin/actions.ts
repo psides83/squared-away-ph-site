@@ -1,4 +1,5 @@
 "use server";
+import { billingScheduleValues } from "@/lib/billing-schedule";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
@@ -87,16 +88,13 @@ export async function saveRecord(entity: Entity, form: FormData) {
         const departure = dateValue(form, "departure_date");
         if (departure && departure < arrival)
           throw new Error("Departure must be on or after arrival.");
-        const billingDay = Number(text(form, "billing_day", true, 2));
-        if (!Number.isInteger(billingDay) || billingDay < 1 || billingDay > 28)
-          throw new Error("Choose a billing day from 1 to 28.");
         values = {
           horse_id: identifier(form, "horse_id", true),
           billing_customer_id: identifier(form, "billing_customer_id", true),
           arrival_date: arrival,
           departure_date: departure,
           monthly_rate_cents: cents(form, "monthly_rate"),
-          billing_day: billingDay,
+          ...billingScheduleValues(form),
           invoice_due_days: wholeNumber(form, "invoice_due_days", 0, 365),
           ...stayServiceValues(form),
           proration: choice(form, "proration", [

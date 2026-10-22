@@ -55,6 +55,11 @@ export default async function Invoices({
           label: "Create invoice",
         }}
       />
+      <div className="row-actions">
+        <Link className="button secondary" href="/admin/invoices/recurring">
+          Recurring billing
+        </Link>
+      </div>
       <Notice
         error={
           failed

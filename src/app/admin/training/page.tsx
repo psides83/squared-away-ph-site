@@ -1,3 +1,5 @@
+import { BillingScheduleFields } from "@/components/billing-schedule-fields";
+import { billingScheduleLabels } from "@/lib/billing-schedule";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { ClipboardList, X } from "lucide-react";
@@ -141,15 +143,11 @@ export default async function Training({
                   step="0.01"
                   defaultValue={defaults?.monthlyRate}
                 />
-                <Field
-                  name="billing_day"
-                  label="Billing day of month (1–28)"
-                  type="number"
-                  required
-                  min={1}
-                  max={28}
-                  step="1"
-                  defaultValue={defaults?.billingDay}
+                <BillingScheduleFields
+                  schedule={selected?.billing_schedule ?? "custom"}
+                  day={defaults?.billingDay}
+                  enabled={selected?.recurring_enabled ?? false}
+                  start={selected?.recurring_start_date ?? ""}
                 />
                 <label>
                   Partial month policy
@@ -258,7 +256,10 @@ export default async function Training({
                     <td>
                       {money(stay.monthly_rate_cents)}
                       <small className="cell-secondary">
-                        Billing day {stay.billing_day}
+                        {billingScheduleLabels[stay.billing_schedule] ??
+                          "Custom day"}{" "}
+                        · day {stay.billing_day}
+                        {stay.recurring_enabled ? " · Recurring enabled" : ""}
                       </small>
                       <small className="cell-secondary">
                         Feed: {serviceLabels[stay.feed_billing ?? "unrecorded"]}

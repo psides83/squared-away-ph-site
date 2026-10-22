@@ -158,11 +158,11 @@ export function BusinessSettingsForm({
                       )}
                       {field(
                         "default_billing_day",
-                        "Default billing day (1–28)",
+                        "Default custom billing day (1–31)",
                         {
                           type: "number",
                           min: 1,
-                          max: 28,
+                          max: 31,
                           step: "1",
                           required: true,
                         },

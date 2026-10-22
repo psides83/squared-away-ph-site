@@ -112,6 +112,7 @@ export function InvoiceServices({
 }
 export type ServiceSnapshot = {
   basis: string;
+  segments?: { month: string; boarding_days: number; calendar_days: number }[];
   monthly_rate_cents?: number;
   boarding_days?: number;
   calendar_days?: number;
@@ -141,13 +142,21 @@ export function InvoiceServiceDetail({
   return (
     <>
       <small className="cell-secondary">
-        {snapshot.basis === "physical_days"
-          ? `${money(snapshot.monthly_rate_cents ?? 0)} × ${snapshot.boarding_days} physical boarding days ÷ ${snapshot.calendar_days}; rounded once to cents.`
-          : snapshot.basis === "consumption"
-            ? "Saved weighted consumption costs, summed and rounded once to cents."
-            : "Reviewed stay cost at its recorded amount."}{" "}
+        {snapshot.basis === "calendar_segments"
+          ? `${money(snapshot.monthly_rate_cents ?? 0)}/month, prorated separately for each calendar month; rounded once to cents.`
+          : snapshot.basis === "physical_days"
+            ? `${money(snapshot.monthly_rate_cents ?? 0)} × ${snapshot.boarding_days} physical boarding days ÷ ${snapshot.calendar_days}; rounded once to cents.`
+            : snapshot.basis === "consumption"
+              ? "Saved weighted consumption costs, summed and rounded once to cents."
+              : "Reviewed stay cost at its recorded amount."}{" "}
         {dateLabel(snapshot.period_from)} – {dateLabel(snapshot.period_to)}
       </small>
+      {snapshot.basis === "calendar_segments" && snapshot.segments && (
+        <CalendarProrationDetail
+          rate={snapshot.monthly_rate_cents ?? 0}
+          segments={snapshot.segments}
+        />
+      )}
       {snapshot.basis === "consumption" && (
         <details>
           <summary>Feed cost sources</summary>
@@ -160,5 +169,44 @@ export function InvoiceServiceDetail({
         </details>
       )}
     </>
+  );
+}
+
+export function CalendarProrationDetail({
+  rate,
+  segments,
+}: {
+  rate: number;
+  segments: {
+    month: string;
+    calendar_days: number;
+    boarding_days?: number;
+    billable_days?: number;
+  }[];
+}) {
+  const exact = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 6,
+    }).format(value / 100);
+  return (
+    <details>
+      <summary>Monthly proration breakdown</summary>
+      {segments.map((s) => {
+        const days = s.billable_days ?? s.boarding_days ?? 0;
+        return (
+          <p key={s.month}>
+            {dateLabel(s.month)}: {money(rate)} × {days}{" "}
+            {s.billable_days !== undefined ? "worked/rest" : "boarding"} days ÷{" "}
+            {s.calendar_days} = {exact((rate * days) / s.calendar_days)}
+          </p>
+        );
+      })}
+      <p className="muted">
+        The invoice line sums unrounded monthly portions, then rounds once to
+        cents.
+      </p>
+    </details>
   );
 }

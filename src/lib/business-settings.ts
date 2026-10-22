@@ -66,7 +66,7 @@ export function businessSettingsValues(form: FormData) {
       text(form, "default_boarding_monthly_rate", false, 12) === null
         ? null
         : cents(form, "default_boarding_monthly_rate"),
-    default_billing_day: wholeNumber(form, "default_billing_day", 1, 28),
+    default_billing_day: wholeNumber(form, "default_billing_day", 1, 31),
     default_proration: choice(form, "default_proration", [
       "manual",
       "calendar_days",

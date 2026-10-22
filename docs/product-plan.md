@@ -28,7 +28,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Training stays
 
-- Create/view/edit/delete stays with arrival/departure dates, one billing customer, individual monthly rates, billing day (1–28), private agreement notes, and a recorded partial-month policy.
+- Create/view/edit/delete stays with arrival/departure dates, one billing customer, individual monthly rates, billing day (1–31), private agreement notes, and a recorded partial-month policy.
 - Database prevention of overlapping stays for a horse and retention of historical billing assignments.
 - Stay terms support reviewed invoice drafts. Automatic scheduling remains planned.
 
@@ -48,7 +48,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Master admin settings
 
-- Admin-only Settings page for public business phone/email, optional default monthly training, feed, and board charges, billing day (1–28), partial-month policy, and invoice payment terms in days (0 means due upon receipt).
+- Admin-only Settings page for public business phone/email, optional default monthly training, feed, and board charges, billing day (1–31), partial-month policy, and invoice payment terms in days (0 means due upon receipt).
 - Saved general payment instructions, HTTPS Venmo/PayPal links, and Apple Cash instructions. Finalized invoices snapshot these details; public-page display remains planned.
 - New training stays prefill training and feed/board charges from settings and allow individual overrides. A set feed/board default starts that service as separately billed monthly; included, actual-cost, and other policies remain available. The rate, billing day, partial-month policy, and payment terms are stored on the stay; changing defaults does not change existing agreements.
 - Legacy stays retain their recorded values. Previously unrecorded payment terms remain unknown until explicitly entered when editing.
@@ -229,14 +229,23 @@ Features in this section are present in the application source. A feature being 
 - Draft invoice Charges tabs show separate feed/boarding reviews for actual-cost agreements and the invoice period. Administrators explicitly confirm all relevant records and charges, including intentional zero costs, and enter a review note. They can reopen reviews; recent audit events remain visible on issued invoices.
 - Reviews retain a source/agreement/charge snapshot. New/reversed feed, changed boarding assignments/claims, stay dates/customer changes, or changed service lines make a prior review stale. Boarding review conservatively includes all assigned stay costs, including dates outside the invoice period; the UI makes this explicit.
 - Guarded database finalization requires every applicable review to match current records and rejects unbilled feed/eligible boarding costs. Review writes are administrator-only, retry-safe for unchanged state, and audited. Direct helper/table writes are denied. Explicit manual finalization retains its existing behavior.
-- Scheduling and automatic generation are not implemented by this increment. The future recurring runner must use the guarded path and independently verify complete training calendars, service agreements, and billing-cycle coverage.
+- The recurring preparation engine below uses the guarded path after verifying training calendars, service agreements, rates, source reservations, and billing-cycle coverage. Unattended background scheduling remains planned.
+
+### Recurring billing preparation
+
+- Training agreements support first-of-month, arrival-anniversary, and custom billing days 1–31; shorter months clamp to month end and later months restore the original day. Settings supports custom default days through 31. Existing agreements retain their custom day and remain opted out until deliberately enabled.
+- Each enabled agreement has an explicit first-period start. Invoices → Recurring billing previews one next cycle per agreement. Bill completed cycles ending before the billing date; departing horses' final partial cycles are ready the following day. Once cycles exist, subsequent periods continue from the last covered date.
+- Prepare a due cycle on demand. The saved cycle and expected-period submission prevent duplicate invoices, repeated charges, and accidental advancement on retry. Multi-month training/monthly feed/board portions use each calendar month's denominator and round once per service, with a visible proration breakdown. Training uses only classified worked/rest days; monthly feed/board uses physical boarding days, including non-billable training days.
+- Complete prepared invoices finalize through the actual-cost review guard. Missing classifications/agreements/terms, manual/no-proration policies, changed rates/terms/service charges, source conflicts, or missing actual-cost reviews retain a draft with a reason. Rechecking reuses that draft. Actual-cost source additions generate incremental unbilled lines and require a new readiness review.
+- Voided cycles require an explicit reasoned skip before continuing; they are not automatically replaced. Skipped period, actor, timestamp, original invoice, and reason remain retained. Private builders and cycle writes are denied to clients; all operations require administrator access.
+- Preparation is operator-started; no unattended job or automatic email delivery has been configured. Those remain planned.
 
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
 
 - Recurring expense scheduling and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
-- Configurable billing schedules beyond the current 1–28 range, scheduled invoice generation, and additional automatic calculations for policies beyond calendar-day proration. Connect scheduled generation to the implemented actual-cost review guard; automatic finalization must also check training-calendar and other service completeness.
+- Unattended background scheduling for recurring invoices, including deployment configuration and monitoring. Operator-started cycle generation, calendar-day calculations, readiness enforcement, and automatic finalization of complete prepared cycles are implemented. Manual/no-proration agreements retain explicit manual review; additional automation policies remain planned.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
 #### Feed, boarding, and profitability details
@@ -285,6 +294,7 @@ Features in this section are present in the application source. A feature being 
 - Vet, farrier, and hauling reimbursements default to actual cost; allow an explicitly entered markup or handling fee.
 - Invoice payment terms are configurable, with due upon receipt as the starting default. Permit multiple/partial payments and show the remaining balance.
 - No training deposit.
+- Recurring cycle windows cover the completed period ending the day before the billing date. Final partial-cycle billing becomes ready the day after departure. Confirmed October 22, 2026; implemented in operator-started preparation above.
 - Recurring billing: dates on the 29th–31st use the last day of shorter months and return to the original anchor in longer months. Automatically finalize invoices only when required billing records are complete; otherwise leave them for review. Confirmed October 21, 2026.
 - Automatic actual-cost billing requires the administrator to explicitly mark feed/boarding records ready for the billing period before automatic finalization. A period reaching its billing date alone does not establish completeness. Confirmed October 21, 2026; invoice-period review and the guarded finalization function are implemented above. Scheduled billing integration remains planned.
 - Customer portal: explicitly granted customers share published horse updates, but each customer sees only invoices and payments billed to their own customer record. Horse portal access is granted/revoked manually by the administrator; ownership edits do not automatically grant access. Confirmed October 21, 2026.
@@ -307,9 +317,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Recurring preparation increment (October 22, 2026): migration `20261022002600_recurring_billing.sql` adds schedule fields, cycle ledger, preview/preparation functions, and private generation. All 121 tests, TypeScript checks, and the production build pass. Local tests cover 31st/leap-year anchors, restored anniversary days, cross-month proration, retry safety, missing-calendar drafts, zero billable days, physical board/feed days, departure closeout, actual-cost reviews, changed payment terms/service agreements, void/skip handling, and access denial. Browser previews verify schedule-mode controls and phone-width cycle actions. Remote migration, authenticated production generation, and unattended scheduling remain unverified; no production invoices were generated by the agent.
 
 - Actual-cost readiness increment (October 22, 2026): migration `20261022002500_actual_cost_readiness.sql` adds review state/history, snapshot comparison, and guarded finalization. All 119 tests, TypeScript checks, and the production build pass. Tests cover missing/partial reviews, repeated saves, feed/boarding additions, generated-charge changes, reopening, unbilled-source blocking, successful/repeated guarded finalization, issued-invoice protection, private-helper denial, history isolation, and denied direct writes. Existing manual finalization tests still pass. Local browser previews verify deliberate review controls, required confirmation/note, status differences, and timestamped audit notes. Remote migration and authenticated production flows remain unverified.
 

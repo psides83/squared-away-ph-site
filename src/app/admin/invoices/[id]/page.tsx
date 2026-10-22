@@ -24,6 +24,7 @@ import {
   PrintInvoice,
 } from "@/components/invoice-buttons";
 import {
+  CalendarProrationDetail,
   InvoiceServices,
   InvoiceServiceDetail,
 } from "@/components/invoice-services";
@@ -117,6 +118,11 @@ export default async function Invoice({
       stay.data.boarding_billing === "at_cost")
       ? await db.rpc("invoice_cost_readiness", { p_invoice: id })
       : { data: [], error: null };
+  const recurring = await db
+    .from("recurring_billing_cycles")
+    .select("id,stay_id,period_from,period_to,review_reason,skipped_reason")
+    .eq("invoice_id", id)
+    .maybeSingle();
   const reviews = await db
     .from("invoice_cost_review_events")
     .select("service,ready,reason,created_at")
@@ -362,6 +368,30 @@ export default async function Invoice({
             label: "Charges",
             content: (
               <>
+                {recurring.data && (
+                  <section className="panel">
+                    <div className="record-form stack">
+                      <h2>Recurring cycle</h2>
+                      <p>
+                        {dateLabel(recurring.data.period_from)}–
+                        {dateLabel(recurring.data.period_to)}
+                      </p>
+                      {draft && (
+                        <p className="notice">
+                          Last preparation check:{" "}
+                          {recurring.data.review_reason ??
+                            "Review this draft before finalizing."}
+                        </p>
+                      )}
+                      <Link
+                        className="button secondary"
+                        href="/admin/invoices/recurring"
+                      >
+                        Review recurring billing
+                      </Link>
+                    </div>
+                  </section>
+                )}
                 {(draft || reviews.data?.length) && (
                   <InvoiceCostReadiness
                     invoice={id}
@@ -404,11 +434,28 @@ export default async function Invoice({
                                     {money(
                                       line.source_snapshot.monthly_rate_cents,
                                     )}
-                                    /month ×{" "}
-                                    {line.source_snapshot.billable_days}/
-                                    {line.source_snapshot.calendar_days};
-                                    rounded once to cents.
+                                    {line.source_snapshot.calendar_segments ? (
+                                      "/month, prorated separately by calendar month; rounded once to cents."
+                                    ) : (
+                                      <>
+                                        /month ×{" "}
+                                        {line.source_snapshot.billable_days}/
+                                        {line.source_snapshot.calendar_days};
+                                        rounded once to cents.
+                                      </>
+                                    )}
                                   </small>
+                                )}
+                              {line.kind === "training" &&
+                                line.source_snapshot?.calendar_segments && (
+                                  <CalendarProrationDetail
+                                    rate={
+                                      line.source_snapshot.monthly_rate_cents
+                                    }
+                                    segments={
+                                      line.source_snapshot.calendar_segments
+                                    }
+                                  />
                                 )}
                               {line.kind === "service" &&
                                 line.source_snapshot && (
