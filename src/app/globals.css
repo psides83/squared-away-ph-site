@@ -2461,3 +2461,38 @@ input[type="number"] {
 .horse-billing-details .stack {
   padding: 10px 0;
 }
+.customer-quick-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+.customer-email {
+  overflow-wrap: anywhere;
+}
+.customer-grid .row-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.customer-list-filter {
+  margin-bottom: 24px;
+}
+.customer-invoice-row {
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
+  display: grid;
+  gap: 14px;
+}
+.customer-invoice-row:last-child {
+  border-bottom: 0;
+}
+.customer-invoice-row h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.customer-invoice-row p {
+  overflow-wrap: anywhere;
+}
+.customer-invoice-row .row-actions {
+  flex-wrap: wrap;
+}

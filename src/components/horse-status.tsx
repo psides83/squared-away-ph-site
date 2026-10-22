@@ -15,7 +15,13 @@ export type HorseStatusData = {
     balance_cents: number;
   }[];
 };
-export function HorseStatus({ status }: { status?: HorseStatusData }) {
+export function HorseStatus({
+  status,
+  showBilling = true,
+}: {
+  status?: HorseStatusData;
+  showBilling?: boolean;
+}) {
   if (!status)
     return <p className="muted">Activity and billing status unavailable.</p>;
   return (
@@ -43,21 +49,23 @@ export function HorseStatus({ status }: { status?: HorseStatusData }) {
             {status.training_title && <small>{status.training_title}</small>}
           </dd>
         </div>
-        <div>
-          <dt>Outstanding bills</dt>
-          <dd>
-            {status.outstanding_cents > 0
-              ? money(status.outstanding_cents)
-              : "No outstanding bills"}
-            {status.overdue_cents > 0 && (
-              <small className="billing-past-due">
-                {money(status.overdue_cents)} past due
-              </small>
-            )}
-          </dd>
-        </div>
+        {showBilling && (
+          <div>
+            <dt>Outstanding bills</dt>
+            <dd>
+              {status.outstanding_cents > 0
+                ? money(status.outstanding_cents)
+                : "No outstanding bills"}
+              {status.overdue_cents > 0 && (
+                <small className="billing-past-due">
+                  {money(status.overdue_cents)} past due
+                </small>
+              )}
+            </dd>
+          </div>
+        )}
       </dl>
-      {status.bills.length > 0 && (
+      {showBilling && status.bills.length > 0 && (
         <details className="horse-billing-details">
           <summary>
             View {status.bills.length} outstanding{" "}

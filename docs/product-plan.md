@@ -196,6 +196,13 @@ Features in this section are present in the application source. A feature being 
 - Bulk scheduled feeding confirms the saved rations for selected horses at one feeding time on one actual date. Existing confirmations remain safe to retry; a shortage or invalid horse rolls back the entire batch.
 - Bulk extra/partial feeding records one selected product/unit across multiple horses with individual quantities. Blank quantities skip a horse. Each batch preserves weighted cost and per-horse history, saves atomically, and rejects changed retries using a saved batch request. Requires migration `20261021001700_bulk_feeding.sql`.
 
+### Customer records and next actions
+
+- Customer list uses mobile-friendly cards with contact actions, linked horse links, outstanding/past-due balances, latest received payment, and current training agreements billed to that customer. Search by customer/contact/horse; filter for current training, outstanding, or past-due bills.
+- Customer records have Overview, Horses, Billing, and Portal access tabs. Private notes and invoice preferences are read first with deliberate editing; successful customer saves return to the record. Deletion remains available under record management.
+- Horses tab distinguishes current ownership links from active stays billed to the customer, with horse activity and Feed/Log training actions. Customer billing summaries never include a co-owner’s invoices. Billing tab has paginated customer invoices, outstanding/all filters, and direct invoice/payment actions. Portal status and manual-sharing counts link to existing access management; ownership does not change grants.
+- New invoice from a customer carries the customer into the form. Add horse from the customer record preselects that customer. These defaults remain reviewable. Calling/texting/emailing opens the device’s normal contact application; the app does not send messages itself.
+
 ### Horse activity and billing cards
 
 - Horse book cards and individual records show last recorded feeding, last training session/focus, outstanding invoice balances, and past-due amounts. Expand outstanding bills to open individual invoices. Feed and Log training buttons start horse-specific workflows; Feed opens that horse’s ration confirmations.
@@ -241,6 +248,7 @@ Features in this section are present in the application source. A feature being 
 - Receipt recognition/OCR with provider selection, product/unit suggestions, reviewed draft entry, confidence/error handling, and duplicate-purchase checks. Multi-item receipt purchases need an atomic multi-product purchase/expense model and reviewed tax/discount allocation. Camera/file capture and private receipt attachment are implemented above; automatic recognition is not. See `docs/receipt-scanning.md`.
 - Continue device testing and refinement of mobile workflows, including keyboard/camera behavior on real iOS/Android devices. Native-style navigation and editors are implemented above; this does not imply offline entry or a native binary.
 
+- Continue the record-first workflow in training agreements, reminders, and expense follow-up: surface relevant status and contextual actions before opening an editor, while keeping detailed accounting in focused sections.
 - Extend bulk entry to additional workflows such as training logs or expense entry as their batch requirements are defined; bulk daily and extra/partial feeding are implemented above.
 
 - Optional online payment processing, delivered notifications, and accounting export after core workflows are established.
@@ -290,6 +298,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Customer-record increment (October 22, 2026): migration `20261022002300_customer_overview.sql` adds administrator-only summaries. All 117 tests, TypeScript checks, and the production build pass. Tests cover co-owner billing separation, partial balances, due-today handling, draft/void exclusions, latest unreversed payment, retained billed stays after ownership changes, and non-admin denial. Browser previews verify contact actions, mobile summaries/tab navigation, and initial invoice customer selection. Remote migration and authenticated production flows remain unverified.
 
 - Horse-overview increment (October 22, 2026): migration `20261022002200_horse_overview.sql` adds an administrator-only activity and billing summary for every horse. All 116 tests, TypeScript checks, and the production build pass. Tests cover partial balances, due-today boundaries, stay/manual assignment, shared-customer isolation, paid/draft/void exclusions, ownership independence, and access denial. Local browser preview covers mobile status cards, quick-action links, and expandable invoice details. Remote migration and authenticated production flows remain unverified.
 

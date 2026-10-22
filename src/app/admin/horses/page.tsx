@@ -17,6 +17,7 @@ export default async function Horses({
 }: {
   searchParams: Promise<{
     new?: string;
+    customer?: string;
     edit?: string;
     error?: string;
     success?: string;
@@ -94,11 +95,16 @@ export default async function Horses({
           >
             <input type="hidden" name="id" value={selected?.id ?? ""} />
             <CustomerPicker
-              key={selected?.id ?? "new"}
+              key={selected?.id ?? params.customer ?? "new"}
               customers={customers.data ?? []}
-              selectedIds={(relationships.data ?? [])
-                .filter((link) => link.horse_id === selected?.id)
-                .map((link) => link.customer_id)}
+              selectedIds={
+                !selected &&
+                customers.data?.some((c) => c.id === params.customer)
+                  ? [params.customer!]
+                  : (relationships.data ?? [])
+                      .filter((link) => link.horse_id === selected?.id)
+                      .map((link) => link.customer_id)
+              }
             />
             <div className="form-grid">
               <Field

@@ -34,6 +34,7 @@ export async function saveRecord(entity: Entity, form: FormData) {
   const { db } = await requireAdmin();
   if (!Object.hasOwn(routes, entity)) throw new Error("Unknown record type.");
   let problem: string | null = null;
+  let savedCustomerId: string | null = null;
   try {
     const id = identifier(form, "id");
     let values: Record<string, unknown> = {};
@@ -135,6 +136,14 @@ export async function saveRecord(entity: Entity, form: FormData) {
               .select("id")
               .single()
           : await db.from(entity).insert(values).select("id").single();
+    if (
+      entity === "customers" &&
+      !result.error &&
+      result.data &&
+      typeof result.data === "object" &&
+      "id" in result.data
+    )
+      savedCustomerId = String(result.data.id);
     if (result.error) {
       problem =
         entity === "training_stays" && result.error.code === "P0001"
@@ -150,7 +159,11 @@ export async function saveRecord(entity: Entity, form: FormData) {
   if (problem)
     redirect(`${routes[entity]}?error=${encodeURIComponent(problem)}`);
   revalidatePath("/admin", "layout");
-  redirect(`${routes[entity]}?success=Record+saved.`);
+  redirect(
+    savedCustomerId
+      ? `/admin/customers/${savedCustomerId}?success=Customer+saved.`
+      : `${routes[entity]}?success=Record+saved.`,
+  );
 }
 
 export async function deleteRecord(entity: Entity, form: FormData) {

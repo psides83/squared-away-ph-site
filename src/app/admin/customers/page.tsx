@@ -1,16 +1,23 @@
-import { phoneDisplay } from "@/lib/input-format";
+import {
+  CustomerSummary,
+  CustomerActions,
+  CustomerContact,
+  type CustomerSummaryData,
+} from "@/components/customer-summary";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { UsersRound, X, ArrowUpRight } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
-import { DeleteButton, SubmitButton } from "@/components/submit-button";
-import { deleteRecord, saveRecord } from "@/app/admin/actions";
+import { SubmitButton } from "@/components/submit-button";
+import { saveRecord } from "@/app/admin/actions";
 
 export default async function Customers({
   searchParams,
 }: {
   searchParams: Promise<{
+    q?: string;
+    status?: string;
     new?: string;
     edit?: string;
     error?: string;
@@ -19,14 +26,37 @@ export default async function Customers({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const [customers, relationships, horses] = await Promise.all([
+  const [customers, relationships, horses, overview] = await Promise.all([
     db.from("customers").select("*").order("name"),
     db.from("horse_customers").select("horse_id, customer_id"),
     db.from("horses").select("id, barn_name").order("barn_name"),
+    db.rpc("customer_overview"),
   ]);
-  const { data } = customers;
+  const summaries = (overview.data ?? []) as CustomerSummaryData[];
+  const search = (params.q ?? "").trim().toLowerCase();
+  const data = customers.data?.filter((c) => {
+    const summary = summaries.find((s) => s.customer_id === c.id);
+    const matches = [
+      c.name,
+      c.email,
+      c.phone,
+      ...(relationships.data ?? [])
+        .filter((r) => r.customer_id === c.id)
+        .map((r) => horses.data?.find((h) => h.id === r.horse_id)?.barn_name),
+    ].some((v) => v?.toLowerCase().includes(search));
+    return (
+      matches &&
+      (!overview.error && params.status === "overdue"
+        ? Number(summary?.overdue_cents) > 0
+        : !overview.error && params.status === "outstanding"
+          ? Number(summary?.outstanding_cents) > 0
+          : !overview.error && params.status === "training"
+            ? Number(summary?.current_stays) > 0
+            : true)
+    );
+  });
   const error = customers.error || relationships.error || horses.error;
-  const selected = data?.find((row) => row.id === params.edit);
+  const selected = customers.data?.find((row) => row.id === params.edit);
   const showForm = params.new === "1" || Boolean(selected);
   return (
     <>
@@ -131,98 +161,125 @@ export default async function Customers({
           </form>
         </ActionPanel>
       )}
+      {overview.error && (
+        <p className="notice error">
+          Customer summaries could not load. Check the latest database
+          migration. Balance and training filters are unavailable.
+        </p>
+      )}
+      <form
+        action="/admin/customers"
+        className="panel record-form customer-list-filter"
+      >
+        <div className="form-grid">
+          <Field
+            name="q"
+            label="Find a customer or horse"
+            defaultValue={params.q}
+            maxLength={200}
+          />
+          <label>
+            Show
+            <select
+              name="status"
+              defaultValue={params.status ?? "all"}
+              disabled={Boolean(overview.error)}
+            >
+              <option value="all">All customers</option>
+              <option value="training">Currently billed for training</option>
+              <option value="outstanding">Outstanding bills</option>
+              <option value="overdue">Past-due bills</option>
+            </select>
+          </label>
+        </div>
+        <div className="form-actions">
+          <button className="button secondary">Apply</button>
+          {(params.q || params.status) && (
+            <Link className="text-link" href="/admin/customers">
+              Clear
+            </Link>
+          )}
+        </div>
+      </form>
       <section className="panel">
         <div className="panel-heading">
           <h2>Your customers</h2>
           <span className="count-badge">{data?.length ?? 0} on file</span>
         </div>
         {data?.length ? (
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Contact</th>
-                  <th>Horses</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row) => (
-                  <tr key={row.id}>
-                    <td>
+          <div className="horse-grid customer-grid">
+            {data.map((row) => (
+              <article className="horse-card" key={row.id}>
+                <h3>
+                  <Link href={`/admin/customers/${row.id}`}>
+                    {row.name}
+                    <ArrowUpRight size={17} />
+                  </Link>
+                </h3>
+                <CustomerContact phone={row.phone} email={row.email} />
+                <CustomerSummary
+                  summary={
+                    overview.error
+                      ? undefined
+                      : summaries.find((s) => s.customer_id === row.id)
+                  }
+                />
+                <div className="row-actions">
+                  {(relationships.data ?? [])
+                    .filter((r) => r.customer_id === row.id)
+                    .map((r) => (
                       <Link
-                        className="record-name"
-                        href={`/admin/customers?edit=${row.id}#record-form`}
+                        className="text-link"
+                        key={r.horse_id}
+                        href={`/admin/horses/${r.horse_id}`}
                       >
-                        {row.name}
-                        <ArrowUpRight size={14} />
+                        {horses.data?.find((h) => h.id === r.horse_id)
+                          ?.barn_name ?? "Horse"}
                       </Link>
-                      <small className="cell-secondary">
-                        {row.invoice_presentation === "combined_services"
-                          ? "Combined service invoice"
-                          : "Itemized invoice"}
-                      </small>
-                    </td>
-                    <td>
-                      <div className="contact-cell">
-                        {row.email ? (
-                          <a href={`mailto:${row.email}`}>{row.email}</a>
-                        ) : (
-                          <span className="muted">No email added</span>
-                        )}
-                        {row.phone && (
-                          <a href={`tel:${phoneDisplay(row.phone)}`}>{phoneDisplay(row.phone)}</a>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="contact-cell">
-                        {(relationships.data ?? [])
-                          .filter((link) => link.customer_id === row.id)
-                          .map((link) => (
-                            <Link
-                              key={link.horse_id}
-                              className="text-link"
-                              href={`/admin/horses?edit=${link.horse_id}#record-form`}
-                            >
-                              {horses.data?.find(
-                                (horse) => horse.id === link.horse_id,
-                              )?.barn_name ?? "Horse"}
-                            </Link>
-                          ))}
-                        {!relationships.data?.some(
-                          (link) => link.customer_id === row.id,
-                        ) && <span className="muted">No horses linked</span>}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="row-actions">
-                        <Link
-                          className="text-button"
-                          href={`/admin/customers?edit=${row.id}#record-form`}
-                        >
-                          Edit
-                        </Link>
-                        <form action={deleteRecord.bind(null, "customers")}>
-                          <input type="hidden" name="id" value={row.id} />
-                          <DeleteButton />
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    ))}
+                </div>
+                <CustomerActions customer={row} />
+                <div className="row-actions">
+                  <Link
+                    className="text-link"
+                    href={`/admin/customers/${row.id}`}
+                  >
+                    View customer record
+                  </Link>
+                  <Link
+                    className="text-link"
+                    href={`/admin/customers/${row.id}#customer-billing`}
+                  >
+                    Billing
+                  </Link>
+                </div>
+              </article>
+            ))}
           </div>
         ) : (
           !error && (
             <EmptyState
               icon={UsersRound}
-              title="Make room for good people."
-              description="Add your first customer, then connect them when adding a horse."
-              href="/admin/customers?new=1#record-form"
-              label="Add your first customer"
+              title={
+                customers.data?.length
+                  ? "No customers match."
+                  : "Make room for good people."
+              }
+              description={
+                customers.data?.length
+                  ? "Try a different name, horse, or status filter."
+                  : "Add your first customer, then connect them when adding a horse."
+              }
+              href={
+                customers.data?.length
+                  ? "/admin/customers"
+                  : "/admin/customers?new=1#record-form"
+              }
+              label={
+                customers.data?.length
+                  ? "Show all customers"
+                  : "Add your first customer"
+              }
             />
           )
         )}

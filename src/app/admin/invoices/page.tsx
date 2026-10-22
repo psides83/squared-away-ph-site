@@ -13,6 +13,7 @@ export default async function Invoices({
 }: {
   searchParams: Promise<{
     new?: string;
+    customer?: string;
     page?: string;
     error?: string;
     success?: string;
@@ -81,7 +82,13 @@ export default async function Invoices({
               />
               <div className="form-grid">
                 <InvoiceOriginFields
+                  key={params.customer ?? "new"}
                   customers={customers.data}
+                  initialCustomer={
+                    customers.data?.some((c) => c.id === params.customer)
+                      ? params.customer
+                      : undefined
+                  }
                   stays={stays.data ?? []}
                   horses={horses.data ?? []}
                   date={date}

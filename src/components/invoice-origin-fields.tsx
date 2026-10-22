@@ -7,7 +7,9 @@ export function InvoiceOriginFields({
   horses,
   date,
   defaultDueDays,
+  initialCustomer = "",
 }: {
+  initialCustomer?: string;
   customers: { id: string; name: string }[];
   stays: {
     id: string;
@@ -20,7 +22,7 @@ export function InvoiceOriginFields({
   date: string;
   defaultDueDays: number;
 }) {
-  const [customer, setCustomer] = useState("");
+  const [customer, setCustomer] = useState(initialCustomer);
   const [stay, setStay] = useState("");
   const [issue, setIssue] = useState(date);
   const dueFor = (value: string, days: number | null) =>
