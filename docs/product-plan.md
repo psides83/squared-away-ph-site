@@ -218,6 +218,12 @@ Features in this section are present in the application source. A feature being 
 - Feeding, Inventory, Reports, Reminders, invoice details, and Settings use accessible tabs to separate tasks. Tabs support keyboard navigation and direct section links; mounted panels preserve unsaved inputs. Invoice printing selects the customer invoice regardless of the active tab.
 - Feeding-time setup supports adding and removing any number of draft rows, then saving all new times together atomically (up to 1,000 per save). Saved times have individual Edit actions. Failed saves preserve drafts; retrying a batch cannot duplicate its times. Editing a saved time leaves unfinished new entries intact.
 
+### Inventory usage reporting
+
+- Reports includes a Feed usage tab with date-filtered saved feed, hay, and supplement consumption costs by horse and product, plus waste and other stock reductions. Product weights use lb/weight oz; horse rows link to records and feeding plans, and products link to their inventory ledger.
+- Costs use historical weighted ledger values, not current purchase prices. Corrections are credited on their ledger dates and can produce negative net usage in a later period. Correction credits are displayed for reference and are already included in the relevant net totals. Product-line counts are explicitly distinguished from meals/days.
+- Owner horses are included without requiring a training stay. Operational consumption costs remain separate from cash-profit calculations; purchases and consumption are never deducted together. Purchase/opening/inbound stock entries are excluded from usage totals.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -230,7 +236,6 @@ Features in this section are present in the application source. A feature being 
 
 - Split receipts from a single manual invoice among multiple horses/stays if needed. Current reporting links assign the entire invoice to one horse and optionally one matching stay.
 - Add reimbursement-versus-absorbed-cost breakdowns using the implemented expense-to-invoice links. Cash reports already count received invoice payments once; do not add reimbursements a second time as separate revenue.
-- Add separate inventory consumption cost summaries in reports, beyond the existing inventory ledger. Keep these separate from cash reports so feed purchases and consumption are never deducted together.
 - Add persistent boarding occupancy records for horses outside training stays if useful; their actual boarding days can currently be entered in each shared-cost allocation.
 
 ### Horse records and customer portal
@@ -298,6 +303,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Inventory-usage reporting increment (October 22, 2026): migration `20261022002400_inventory_usage_report.sql` adds the administrator-only report. All 118 tests, TypeScript checks, and the production build pass. Tests cover weighted cost snapshots after later purchases, horse/product reconciliation, waste/reduction separation, later-period reversals, negative correction periods, empty dates, date bounds, and non-admin denial. Local browser previews verify horse/product links, displayed weights and costs, and phone-width summary layout. Remote migration and authenticated production reports remain unverified.
 
 - Customer-record increment (October 22, 2026): migration `20261022002300_customer_overview.sql` adds administrator-only summaries. All 117 tests, TypeScript checks, and the production build pass. Tests cover co-owner billing separation, partial balances, due-today handling, draft/void exclusions, latest unreversed payment, retained billed stays after ownership changes, and non-admin denial. Browser previews verify contact actions, mobile summaries/tab navigation, and initial invoice customer selection. Remote migration and authenticated production flows remain unverified.
 

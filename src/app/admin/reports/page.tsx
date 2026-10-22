@@ -1,3 +1,7 @@
+import {
+  InventoryUsageReport,
+  type InventoryUsage,
+} from "@/components/inventory-usage-report";
 import { SectionTabs } from "@/components/section-tabs";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
@@ -66,9 +70,12 @@ export default async function Reports({
     validDate(to) &&
     from <= to &&
     Date.parse(to) - Date.parse(from) <= 3660 * 86400000;
-  const result = valid
-    ? await db.rpc("financial_report_bundle", { p_from: from, p_to: to })
-    : null;
+  const [result, usage] = valid
+    ? await Promise.all([
+        db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
+        db.rpc("inventory_usage_report", { p_from: from, p_to: to }),
+      ])
+    : [null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -128,6 +135,7 @@ export default async function Reports({
           <SectionTabs
             id="reports"
             label="Financial report sections"
+            defaultTab="cash"
             sections={[
               {
                 id: "cash",
@@ -220,6 +228,19 @@ export default async function Reports({
                       )}
                     </section>
                   </>
+                ),
+              },
+              {
+                id: "usage",
+                label: "Feed usage",
+                content: (
+                  <InventoryUsageReport
+                    report={
+                      usage?.error
+                        ? null
+                        : (usage?.data as InventoryUsage | null)
+                    }
+                  />
                 ),
               },
               {
