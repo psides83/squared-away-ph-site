@@ -1,4 +1,5 @@
 "use server";
+import { updateReminder } from "@/app/admin/reminders/actions";
 import { billingScheduleValues } from "@/lib/billing-schedule";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -36,6 +37,7 @@ export async function saveRecord(entity: Entity, form: FormData) {
   if (!Object.hasOwn(routes, entity)) throw new Error("Unknown record type.");
   let problem: string | null = null;
   let savedCustomerId: string | null = null;
+  let reminderHorse: string | null = null;
   try {
     const id = identifier(form, "id");
     let values: Record<string, unknown> = {};
@@ -135,6 +137,13 @@ export async function saveRecord(entity: Entity, form: FormData) {
               .single()
           : await db.from(entity).insert(values).select("id").single();
     if (
+      entity === "reminders" &&
+      !result.error &&
+      values.horse_id &&
+      form.get("horse_context") === values.horse_id
+    )
+      reminderHorse = String(values.horse_id);
+    if (
       entity === "customers" &&
       !result.error &&
       result.data &&
@@ -158,9 +167,11 @@ export async function saveRecord(entity: Entity, form: FormData) {
     redirect(`${routes[entity]}?error=${encodeURIComponent(problem)}`);
   revalidatePath("/admin", "layout");
   redirect(
-    savedCustomerId
-      ? `/admin/customers/${savedCustomerId}?success=Customer+saved.`
-      : `${routes[entity]}?success=Record+saved.`,
+    reminderHorse
+      ? `/admin/horses/${reminderHorse}?success=Reminder+saved.#horse-reminders`
+      : savedCustomerId
+        ? `/admin/customers/${savedCustomerId}?success=Customer+saved.`
+        : `${routes[entity]}?success=Record+saved.`,
   );
 }
 
@@ -191,27 +202,5 @@ export async function deleteRecord(entity: Entity, form: FormData) {
 }
 
 export async function toggleReminder(form: FormData) {
-  const { db } = await requireAdmin();
-  let problem = false;
-  try {
-    const id = identifier(form, "id", true)!;
-    const { error } = await db
-      .from("reminders")
-      .update({
-        completed_at:
-          form.get("complete") === "yes" ? new Date().toISOString() : null,
-      })
-      .eq("id", id)
-      .select("id")
-      .single();
-    problem = Boolean(error);
-  } catch {
-    problem = true;
-  }
-  revalidatePath("/admin", "layout");
-  redirect(
-    problem
-      ? "/admin/reminders?error=Could+not+update+the+reminder."
-      : "/admin/reminders?success=Reminder+updated.",
-  );
+  await updateReminder("complete", form);
 }

@@ -2519,3 +2519,26 @@ input[type="number"] {
   font-size: 12px;
   overflow-wrap: anywhere;
 }
+.reminder-filter {
+  margin-bottom: 24px;
+}
+.reminder-quick-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.reminder-quick-actions form {
+  max-width: 100%;
+}
+.reminder-quick-actions .text-button {
+  min-height: 44px;
+}
+.reminder-item .log-notes {
+  overflow-wrap: anywhere;
+}
+.reminder-item-head h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.reminder-item-head .tag {
+  flex-shrink: 0;
+}

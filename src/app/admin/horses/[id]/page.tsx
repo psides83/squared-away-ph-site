@@ -1,3 +1,5 @@
+import { ReminderList } from "@/components/reminder-list";
+import { today } from "@/lib/format";
 import {
   HorseStatus,
   HorseQuickActions,
@@ -30,18 +32,43 @@ export default async function HorseRecord({
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
     notFound();
-  const [horse, rations, products, units, times, overview] = await Promise.all([
+  const [
+    horse,
+    rations,
+    products,
+    units,
+    times,
+    overview,
+    reminders,
+    categories,
+  ] = await Promise.all([
     db.from("horses").select("*").eq("id", id).maybeSingle(),
     db.from("feed_rations").select("*").eq("horse_id", id),
     db.from("inventory_products").select("*").order("name"),
     db.from("inventory_units").select("*"),
     db.from("feeding_times").select("*").order("sort_order").order("name"),
     db.rpc("horse_overview"),
+    db
+      .from("reminders")
+      .select("*", { count: "exact" })
+      .eq("horse_id", id)
+      .is("completed_at", null)
+      .order("due_date")
+      .order("id")
+      .limit(25),
+    db.from("reminder_categories").select("id,name"),
   ]);
   if (!horse.data && !horse.error) notFound();
-  const failed = [horse, rations, products, units, times, overview].some(
-    (r) => r.error,
-  );
+  const failed = [
+    horse,
+    rations,
+    products,
+    units,
+    times,
+    overview,
+    reminders,
+    categories,
+  ].some((r) => r.error);
   const selected = rations.data?.find((r) => r.id === query.ration);
   const h = horse.data;
   return (
@@ -120,6 +147,53 @@ export default async function HorseRecord({
                     </p>
                     <Link className="text-link" href={`/admin/log?horse=${id}`}>
                       Training history
+                    </Link>
+                  </div>
+                </section>
+              ),
+            },
+            {
+              id: "reminders",
+              label: `Reminders (${reminders.count ?? 0})`,
+              content: (
+                <section className="panel">
+                  <div className="panel-heading">
+                    <h2>Open reminders for {h.barn_name}</h2>
+                    <Link
+                      className="button secondary"
+                      href={`/admin/reminders?new=1&horse=${id}#record-form`}
+                    >
+                      Add reminder
+                    </Link>
+                  </div>
+                  {reminders.error || categories.error ? (
+                    <p className="notice error">
+                      Reminders could not load. Refresh and try again.
+                    </p>
+                  ) : reminders.data?.length ? (
+                    <ReminderList
+                      reminders={reminders.data}
+                      horses={[h]}
+                      categories={categories.data ?? []}
+                      date={today()}
+                      horseContext={id}
+                    />
+                  ) : (
+                    <p className="record-form muted">
+                      No open reminders for this horse.
+                    </p>
+                  )}
+                  <div className="record-form">
+                    {Number(reminders.count) > 25 && (
+                      <p className="muted">
+                        Showing the next 25 of {reminders.count} open reminders.
+                      </p>
+                    )}
+                    <Link
+                      className="text-link"
+                      href={`/admin/reminders?horse=${id}`}
+                    >
+                      View all reminders and completed history
                     </Link>
                   </div>
                 </section>

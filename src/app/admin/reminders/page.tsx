@@ -1,17 +1,24 @@
+import { ReminderList } from "@/components/reminder-list";
+import { reminderBuckets, reminderBucketLabels } from "@/lib/reminders";
 import { SectionTabs } from "@/components/section-tabs";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
-import { CalendarDays, X } from "lucide-react";
+import { X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { dateLabel, today } from "@/lib/format";
-import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
+import { Field, Notice, PageHeading } from "@/components/ui";
 import { DeleteButton, SubmitButton } from "@/components/submit-button";
-import { deleteRecord, saveRecord, toggleReminder } from "@/app/admin/actions";
+import { deleteRecord, saveRecord } from "@/app/admin/actions";
 
 export default async function Reminders({
   searchParams,
 }: {
   searchParams: Promise<{
+    horse?: string;
+    category?: string;
+    q?: string;
+    bucket?: string;
+    page?: string;
     new?: string;
     edit?: string;
     error?: string;
@@ -20,18 +27,71 @@ export default async function Reminders({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const [reminders, categories, horses] = await Promise.all([
-    db.from("reminders").select("*").order("due_date"),
-    db.from("reminder_categories").select("id, name").order("name"),
-    db.from("horses").select("id, barn_name").order("barn_name"),
-  ]);
-  const selected = reminders.data?.find((row) => row.id === params.edit);
-  const failed = reminders.error || categories.error || horses.error;
-  const sorted = [...(reminders.data ?? [])].sort(
-    (a, b) =>
-      Number(Boolean(a.completed_at)) - Number(Boolean(b.completed_at)) ||
-      a.due_date.localeCompare(b.due_date),
+  const date = today();
+  const page = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(params.page) || 1)),
   );
+  const filterHorse = /^[0-9a-f-]{36}$/i.test(params.horse ?? "")
+    ? params.horse
+    : undefined;
+  const filterCategory = /^[0-9a-f-]{36}$/i.test(params.category ?? "")
+    ? params.category
+    : undefined;
+  const search = (params.q ?? "").trim().slice(0, 200);
+  const views = await Promise.all(
+    reminderBuckets.map(async (bucket) => {
+      const currentPage = params.bucket === bucket ? page : 1;
+      let query = db
+        .from("reminders")
+        .select("*", { count: "exact" })
+        .range((currentPage - 1) * 25, currentPage * 25 - 1);
+      if (bucket === "completed")
+        query = query
+          .not("completed_at", "is", null)
+          .order("completed_at", { ascending: false })
+          .order("id");
+      else {
+        query = query.is("completed_at", null).order("due_date").order("id");
+        query =
+          bucket === "overdue"
+            ? query.lt("due_date", date)
+            : bucket === "today"
+              ? query.eq("due_date", date)
+              : query.gt("due_date", date);
+      }
+      if (filterHorse) query = query.eq("horse_id", filterHorse);
+      if (filterCategory) query = query.eq("category_id", filterCategory);
+      if (params.horse === "general") query = query.is("horse_id", null);
+      if (params.category === "none") query = query.is("category_id", null);
+      if (search)
+        query = query.ilike("title", `%${search.replace(/[\\%_]/g, "\\$&")}%`);
+      return { bucket, page: currentPage, ...(await query) };
+    }),
+  );
+  const [categories, horses, editing] = await Promise.all([
+    db.from("reminder_categories").select("id,name").order("name"),
+    db.from("horses").select("id,barn_name").order("barn_name"),
+    params.edit && /^[0-9a-f-]{36}$/i.test(params.edit)
+      ? db.from("reminders").select("*").eq("id", params.edit).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+  const selected = editing.data;
+  const failed =
+    views.some((v) => v.error) ||
+    categories.error ||
+    horses.error ||
+    editing.error;
+  const defaultBucket = reminderBuckets.includes(
+    params.bucket as (typeof reminderBuckets)[number],
+  )
+    ? params.bucket
+    : (views.find((v) => Number(v.count) > 0)?.bucket ?? "today");
+  const closeHref = filterHorse
+    ? `/admin/horses/${filterHorse}#horse-reminders`
+    : "/admin/reminders";
+  const pageHref = (bucket: string, p: number) =>
+    `/admin/reminders?${new URLSearchParams({ bucket, page: String(p), ...(params.horse ? { horse: params.horse } : {}), ...(params.category ? { category: params.category } : {}), ...(search ? { q: search } : {}) })}#reminders-${bucket}`;
   return (
     <>
       <PageHeading
@@ -39,7 +99,7 @@ export default async function Reminders({
         title="Reminders"
         description="Care appointments, barn tasks, and the things worth remembering."
         action={{
-          href: "/admin/reminders?new=1#record-form",
+          href: `/admin/reminders?${new URLSearchParams({ new: "1", ...(filterHorse ? { horse: filterHorse } : {}), ...(filterCategory ? { category: filterCategory } : {}) })}#record-form`,
           label: "Add a reminder",
         }}
       />
@@ -59,13 +119,13 @@ export default async function Reminders({
           id="record-form"
           label="Reminder details"
           defaultOpen
-          closeHref="/admin/reminders"
+          closeHref={closeHref}
         >
           <div className="panel-heading">
             <h2>
               {selected ? "Edit reminder" : "Take it off your mental list"}
             </h2>
-            <Link href="/admin/reminders" aria-label="Close reminder form">
+            <Link href={closeHref} aria-label="Close reminder form">
               <X size={20} />
             </Link>
           </div>
@@ -74,6 +134,10 @@ export default async function Reminders({
             className="record-form"
           >
             <input type="hidden" name="id" value={selected?.id ?? ""} />
+            {filterHorse &&
+              (!selected || selected.horse_id === filterHorse) && (
+                <input type="hidden" name="horse_context" value={filterHorse} />
+              )}
             <div className="form-grid">
               <Field
                 name="title"
@@ -91,7 +155,10 @@ export default async function Reminders({
               />
               <label>
                 Horse
-                <select name="horse_id" defaultValue={selected?.horse_id ?? ""}>
+                <select
+                  name="horse_id"
+                  defaultValue={selected?.horse_id ?? filterHorse ?? ""}
+                >
                   <option value="">General barn reminder</option>
                   {horses.data?.map((h) => (
                     <option key={h.id} value={h.id}>
@@ -104,7 +171,7 @@ export default async function Reminders({
                 Category
                 <select
                   name="category_id"
-                  defaultValue={selected?.category_id ?? ""}
+                  defaultValue={selected?.category_id ?? filterCategory ?? ""}
                 >
                   <option value="">Uncategorized</option>
                   {categories.data?.map((c) => (
@@ -132,113 +199,117 @@ export default async function Reminders({
               <SubmitButton>
                 {selected ? "Save changes" : "Create reminder"}
               </SubmitButton>
-              <Link href="/admin/reminders" className="text-button">
+              <Link href={closeHref} className="text-button">
                 Cancel
               </Link>
             </div>
           </form>
         </ActionPanel>
       )}
+      <form
+        action="/admin/reminders"
+        className="panel record-form reminder-filter"
+      >
+        <div className="form-grid">
+          <Field
+            name="q"
+            label="Find a reminder"
+            defaultValue={search}
+            maxLength={200}
+          />
+          <label>
+            Horse
+            <select name="horse" defaultValue={params.horse ?? ""}>
+              <option value="">All horses and barn tasks</option>
+              <option value="general">General barn</option>
+              {horses.data?.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.barn_name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Category
+            <select name="category" defaultValue={params.category ?? ""}>
+              <option value="">All categories</option>
+              <option value="none">Uncategorized</option>
+              {categories.data?.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="form-actions">
+          <button className="button secondary">Apply filters</button>
+          <Link className="text-link" href="/admin/reminders">
+            Clear
+          </Link>
+        </div>
+      </form>
       <SectionTabs
         id="reminders"
         label="Reminder sections"
+        defaultTab={defaultBucket}
         sections={[
-          {
-            id: "tasks",
-            label: "Reminders",
+          ...views.map((view) => ({
+            id: view.bucket,
+            label: `${reminderBucketLabels[view.bucket]} (${view.count ?? 0})`,
             content: (
-              <>
-                <section className="panel">
-                  <div className="panel-heading">
-                    <h2>On your radar</h2>
-                    <span className="count-badge">
-                      {sorted.filter((r) => !r.completed_at).length} open
-                    </span>
-                  </div>
-                  {sorted.length
-                    ? sorted.map((reminder) => (
-                        <article
-                          key={reminder.id}
-                          className={`reminder-item ${reminder.completed_at ? "completed" : ""}`}
-                        >
-                          <div className="reminder-item-head">
-                            <h3>{reminder.title}</h3>
-                            <span className="tag">
-                              {reminder.completed_at
-                                ? "Completed"
-                                : reminder.due_date < today()
-                                  ? "Overdue"
-                                  : reminder.due_date === today()
-                                    ? "Today"
-                                    : "Upcoming"}
-                            </span>
-                          </div>
-                          <div className="reminder-meta">
-                            <span>{dateLabel(reminder.due_date)}</span>
-                            <span>·</span>
-                            <span>
-                              {horses.data?.find(
-                                (h) => h.id === reminder.horse_id,
-                              )?.barn_name ?? "General barn"}
-                            </span>
-                            <span>·</span>
-                            <span>
-                              {categories.data?.find(
-                                (c) => c.id === reminder.category_id,
-                              )?.name ?? "Uncategorized"}
-                            </span>
-                          </div>
-                          {reminder.notes && (
-                            <p className="muted">{reminder.notes}</p>
-                          )}
-                          <div className="row-actions">
-                            <form action={toggleReminder}>
-                              <input
-                                type="hidden"
-                                name="id"
-                                value={reminder.id}
-                              />
-                              <input
-                                type="hidden"
-                                name="complete"
-                                value={reminder.completed_at ? "no" : "yes"}
-                              />
-                              <SubmitButton className="text-button">
-                                {reminder.completed_at
-                                  ? "Reopen"
-                                  : "Mark complete"}
-                              </SubmitButton>
-                            </form>
-                            <Link
-                              className="text-button"
-                              href={`/admin/reminders?edit=${reminder.id}#record-form`}
-                            >
-                              Edit
-                            </Link>
-                            <form action={deleteRecord.bind(null, "reminders")}>
-                              <input
-                                type="hidden"
-                                name="id"
-                                value={reminder.id}
-                              />
-                              <DeleteButton />
-                            </form>
-                          </div>
-                        </article>
-                      ))
-                    : !failed && (
-                        <EmptyState
-                          icon={CalendarDays}
-                          title="A clear head for the work ahead."
-                          description="Add a farrier visit, a vaccination date, or any task you want to keep on your radar."
-                          href="/admin/reminders?new=1#record-form"
-                          label="Create your first reminder"
-                        />
-                      )}
-                </section>
-              </>
+              <section className="panel">
+                <div className="panel-heading">
+                  <h2>{reminderBucketLabels[view.bucket]} reminders</h2>
+                  <span className="count-badge">{view.count ?? 0} tasks</span>
+                </div>
+                {view.error ? (
+                  <p className="notice error">
+                    This reminder list could not load.
+                  </p>
+                ) : view.data?.length ? (
+                  <ReminderList
+                    reminders={view.data}
+                    horses={horses.data ?? []}
+                    categories={categories.data ?? []}
+                    date={date}
+                    returnFilters={{
+                      horse: params.horse,
+                      category: params.category,
+                      q: search,
+                      bucket: view.bucket,
+                    }}
+                  />
+                ) : (
+                  <p className="record-form muted">
+                    No reminders in this view.
+                  </p>
+                )}
+                {((view.count ?? 0) > 25 || view.page > 1) && (
+                  <nav
+                    className="log-pagination"
+                    aria-label={`${view.bucket} reminder pages`}
+                  >
+                    {view.page > 1 ? (
+                      <Link href={pageHref(view.bucket, view.page - 1)}>
+                        Previous
+                      </Link>
+                    ) : (
+                      <span />
+                    )}
+                    <span>Page {view.page}</span>
+                    {view.page * 25 < (view.count ?? 0) ? (
+                      <Link href={pageHref(view.bucket, view.page + 1)}>
+                        Next
+                      </Link>
+                    ) : (
+                      <span />
+                    )}
+                  </nav>
+                )}
+              </section>
             ),
-          },
+          })),
           {
             id: "categories",
             label: "Categories",
