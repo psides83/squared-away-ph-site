@@ -28,6 +28,8 @@ Features in this section are present in the application source. A feature being 
 
 ### Training stays
 
+- Dedicated stay records with Agreement, Billing, and paginated Invoices tabs; linked horse and original billing customer; arrival/departure status; service rates, proration, payment terms, and recurring setup. Contextual actions open the billing calendar, recurring preparation, or a preselected invoice draft. Editing is deliberate; deletion lives under Manage this stay. Successful saves return to the record.
+
 - Create/view/edit/delete stays with arrival/departure dates, one billing customer, individual monthly rates, billing day (1–31), private agreement notes, and a recorded partial-month policy.
 - Database prevention of overlapping stays for a horse and retention of historical billing assignments.
 - Stay terms support reviewed invoice drafts. Automatic scheduling remains planned.
@@ -283,7 +285,6 @@ Features in this section are present in the application source. A feature being 
 - Receipt recognition/OCR with provider selection, product/unit suggestions, reviewed draft entry, confidence/error handling, and duplicate-purchase checks. Multi-item receipt purchases need an atomic multi-product purchase/expense model and reviewed tax/discount allocation. Camera/file capture and private receipt attachment are implemented above; automatic recognition is not. See `docs/receipt-scanning.md`.
 - Continue device testing and refinement of mobile workflows, including keyboard/camera behavior on real iOS/Android devices. Native-style navigation and editors are implemented above; this does not imply offline entry or a native binary.
 
-- Continue the record-first workflow in training agreements: surface relevant status and contextual actions before opening an editor, while keeping detailed accounting in focused sections.
 - Extend bulk entry to additional workflows such as training logs or expense entry as their batch requirements are defined; bulk daily and extra/partial feeding are implemented above.
 
 - Optional online payment processing, delivered notifications, and accounting export after core workflows are established.
@@ -334,6 +335,8 @@ Features in this section are present in the application source. A feature being 
 Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Training-stay record increment (October 22, 2026): no migration required. All 124 tests, TypeScript checks, and the production build pass. Authenticated record loading, saves, and production deployment remain unverified.
 
 - Expense-follow-up increment (October 22, 2026): migration `20261022002700_expense_followup.sql` adds an administrator-only batched summary. All 124 tests, TypeScript checks, and the production build pass. Tests cover receipt counts, duplicate input/charge retry safety, original cost versus fees, partial invoice payments, draft/issued boarding portions, voided-invoice claim release, empty/bounded batches, and non-admin denial. Local browser previews verify cost/payment distinctions, phone-width tab layout, and preselected historical stay/payment terms. Remote migration, authenticated record actions/uploads, and production deployment remain unverified.
 

@@ -6,8 +6,8 @@ import { ClipboardList, X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { dateLabel, money, today } from "@/lib/format";
 import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
-import { DeleteButton, SubmitButton } from "@/components/submit-button";
-import { deleteRecord, saveRecord } from "@/app/admin/actions";
+import { SubmitButton } from "@/components/submit-button";
+import { saveRecord } from "@/app/admin/actions";
 import {
   stayFormDefaults,
   stayServiceFormDefaults,
@@ -37,6 +37,9 @@ export default async function Training({
     db.from("business_settings").select("*").single(),
   ]);
   const selected = stays.data?.find((row) => row.id === params.edit);
+  const closeHref = selected
+    ? `/admin/training/${selected.id}`
+    : "/admin/training";
   const failed =
     stays.error || horses.error || customers.error || settings.error;
   const defaults = settings.data
@@ -72,11 +75,11 @@ export default async function Training({
             id="record-form"
             label="Training stay"
             defaultOpen
-            closeHref="/admin/training"
+            closeHref={closeHref}
           >
             <div className="panel-heading">
               <h2>{selected ? "Edit training stay" : "Welcome to the barn"}</h2>
-              <Link href="/admin/training" aria-label="Close training form">
+              <Link href={closeHref} aria-label="Close training form">
                 <X size={20} />
               </Link>
             </div>
@@ -195,13 +198,14 @@ export default async function Training({
               <p className="notice">
                 New stays use your business settings as a starting point. You
                 can override them here. Saving an agreement does not create an
-                invoice; automatic billing remains planned.
+                invoice. Prepare completed cycles from the recurring billing
+                screen.
               </p>
               <div className="form-actions">
                 <SubmitButton>
                   {selected ? "Save changes" : "Start training stay"}
                 </SubmitButton>
-                <Link href="/admin/training" className="text-button">
+                <Link href={closeHref} className="text-button">
                   Cancel
                 </Link>
               </div>
@@ -236,8 +240,13 @@ export default async function Training({
                   <tr key={stay.id}>
                     <td>
                       <strong>
-                        {horses.data?.find((h) => h.id === stay.horse_id)
-                          ?.barn_name ?? "Horse"}
+                        <Link
+                          className="text-link"
+                          href={`/admin/training/${stay.id}`}
+                        >
+                          {horses.data?.find((h) => h.id === stay.horse_id)
+                            ?.barn_name ?? "Horse"}
+                        </Link>
                       </strong>
                       <small className="cell-secondary">
                         {customers.data?.find(
@@ -300,12 +309,12 @@ export default async function Training({
                         >
                           Edit
                         </Link>
-                        <form
-                          action={deleteRecord.bind(null, "training_stays")}
+                        <Link
+                          className="text-link"
+                          href={`/admin/training/${stay.id}`}
                         >
-                          <input type="hidden" name="id" value={stay.id} />
-                          <DeleteButton />
-                        </form>
+                          View stay
+                        </Link>
                       </div>
                     </td>
                   </tr>

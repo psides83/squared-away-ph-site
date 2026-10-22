@@ -36,7 +36,7 @@ export async function saveRecord(entity: Entity, form: FormData) {
   const { db } = await requireAdmin();
   if (!Object.hasOwn(routes, entity)) throw new Error("Unknown record type.");
   let problem: string | null = null;
-  let savedCustomerId: string | null = null;
+  let savedRecordId: string | null = null;
   let reminderHorse: string | null = null;
   try {
     const id = identifier(form, "id");
@@ -144,13 +144,13 @@ export async function saveRecord(entity: Entity, form: FormData) {
     )
       reminderHorse = String(values.horse_id);
     if (
-      entity === "customers" &&
+      (entity === "customers" || entity === "training_stays") &&
       !result.error &&
       result.data &&
       typeof result.data === "object" &&
       "id" in result.data
     )
-      savedCustomerId = String(result.data.id);
+      savedRecordId = String(result.data.id);
     if (result.error) {
       problem =
         entity === "training_stays" && result.error.code === "P0001"
@@ -169,8 +169,8 @@ export async function saveRecord(entity: Entity, form: FormData) {
   redirect(
     reminderHorse
       ? `/admin/horses/${reminderHorse}?success=Reminder+saved.#horse-reminders`
-      : savedCustomerId
-        ? `/admin/customers/${savedCustomerId}?success=Customer+saved.`
+      : savedRecordId
+        ? `${routes[entity]}/${savedRecordId}?success=Record+saved.`
         : `${routes[entity]}?success=Record+saved.`,
   );
 }
