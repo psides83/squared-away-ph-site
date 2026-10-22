@@ -2405,3 +2405,37 @@ input[type="number"] {
   margin: 0;
   min-width: 0;
 }
+.training-activity {
+  display: grid;
+  gap: 16px;
+  margin: 20px 0;
+}
+.training-activity dt {
+  font-size: 12px;
+  color: #796c5a;
+  margin-bottom: 5px;
+}
+.training-activity dd {
+  margin: 0;
+  font-weight: 600;
+}
+.training-activity small {
+  display: block;
+  font-weight: 400;
+  color: #796c5a;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+.training-work-card .row-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.training-history-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.entry-horse-name {
+  grid-column: 1 / -1;
+}

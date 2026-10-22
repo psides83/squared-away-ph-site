@@ -1,3 +1,8 @@
+import { SectionTabs } from "@/components/section-tabs";
+import {
+  TrainingHorseList,
+  type TrainingHorse,
+} from "@/components/training-horse-list";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { BookOpen, X } from "lucide-react";
@@ -17,6 +22,7 @@ export default async function TrainingLog({
 }: {
   searchParams: Promise<{
     new?: string;
+    kind?: string;
     edit?: string;
     horse?: string;
     page?: string;
@@ -51,7 +57,7 @@ export default async function TrainingLog({
     .order("id")
     .range((page - 1) * pageSize, page * pageSize - 1);
   if (horseId) query = query.eq("horse_id", horseId);
-  const [entries, horses, editing] = await Promise.all([
+  const [entries, horses, editing, worklist] = await Promise.all([
     query,
     db.from("horses").select("id, barn_name").order("barn_name"),
     params.edit && /^[0-9a-f-]{36}$/i.test(params.edit)
@@ -61,15 +67,20 @@ export default async function TrainingLog({
           .eq("id", params.edit)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    db.rpc("training_worklist"),
   ]);
   const selected = editing.data;
-  const failed = entries.error || horses.error || editing.error;
+  const failed =
+    entries.error || horses.error || editing.error || worklist.error;
   const selectedHorse = horses.data?.find((h) => h.id === horseId);
   if (horseId && !horses.error && !selectedHorse)
     filterError =
       "That horse could not be found. Choose another horse or clear the filter.";
   const queryFor = (nextPage: number) =>
-    `/admin/log?${new URLSearchParams({ ...(horseId ? { horse: horseId } : {}), page: String(nextPage) })}`;
+    `/admin/log?${new URLSearchParams({ ...(horseId ? { horse: horseId } : {}), page: String(nextPage) })}#training-log-history`;
+  const entryHorse = horses.data?.find(
+    (h) => h.id === (selected?.horse_id ?? horseId),
+  );
   const addLink = `/admin/log?new=1${horseId ? `&horse=${horseId}` : ""}#record-form`;
   return (
     <>
@@ -77,7 +88,6 @@ export default async function TrainingLog({
         eyebrow="ONE RIDE AT A TIME"
         title="Training log"
         description="Record the work, notice the progress, and remember what comes next."
-        action={{ href: addLink, label: "Add an entry" }}
       />
       <Notice
         error={
@@ -91,12 +101,18 @@ export default async function TrainingLog({
         }
         success={params.success}
       />
+      {params.new === "1" && !entryHorse && !failed && (
+        <p className="notice">
+          Choose Log session or Add note on a horse below to begin.
+        </p>
+      )}
       {(params.new === "1" || selected) &&
+        entryHorse &&
         !failed &&
         (horses.data?.length ? (
           <ActionPanel
             id="record-form"
-            label="Training entry"
+            label={`Training entry · ${entryHorse.barn_name}`}
             defaultOpen
             closeHref="/admin/log"
           >
@@ -117,23 +133,10 @@ export default async function TrainingLog({
             >
               <input type="hidden" name="id" value={selected?.id ?? ""} />
               <div className="form-grid">
-                <label>
-                  Horse <span className="required">*</span>
-                  <select
-                    name="horse_id"
-                    required
-                    defaultValue={selected?.horse_id ?? selectedHorse?.id ?? ""}
-                  >
-                    <option value="" disabled>
-                      Select a horse
-                    </option>
-                    {horses.data.map((horse) => (
-                      <option key={horse.id} value={horse.id}>
-                        {horse.barn_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <input type="hidden" name="horse_id" value={entryHorse.id} />
+                <p className="entry-horse-name">
+                  <strong>{entryHorse.barn_name}</strong>
+                </p>
                 <Field
                   label="Date"
                   name="entry_date"
@@ -143,7 +146,10 @@ export default async function TrainingLog({
                 />
                 <TrainingEntryFields
                   key={selected?.id ?? "new"}
-                  initialKind={selected?.kind ?? "session"}
+                  initialKind={
+                    selected?.kind ??
+                    (params.kind === "note" ? "note" : "session")
+                  }
                   duration={selected?.duration_minutes}
                 />
                 <TrainingFocusField
@@ -181,110 +187,155 @@ export default async function TrainingLog({
             their training log.
           </p>
         ))}
-      <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">THE WORK ADDS UP</p>
-            <h2>
-              {selectedHorse
-                ? `${selectedHorse.barn_name}’s history`
-                : "From the training pen"}
-            </h2>
-          </div>
-          <span className="count-badge">{entries.count ?? 0} entries</span>
-        </div>
-        <form action="/admin/log" className="log-filter">
-          <label>
-            Show horse
-            <select name="horse" defaultValue={horseId ?? ""}>
-              <option value="">All horses</option>
-              {horses.data?.map((horse) => (
-                <option key={horse.id} value={horse.id}>
-                  {horse.barn_name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="button secondary">Apply filter</button>
-          {params.horse && (
-            <Link className="text-link" href="/admin/log">
-              Clear
-            </Link>
-          )}
-        </form>
-        {!failed &&
-          !filterError &&
-          (entries.data?.length ? (
-            entries.data.map((entry) => (
-              <article className="log-entry" key={entry.id}>
-                <div className="log-entry-heading">
-                  <div>
-                    <p className="eyebrow">
-                      {horses.data?.find((horse) => horse.id === entry.horse_id)
-                        ?.barn_name ?? "Horse"}{" "}
-                      · {dateLabel(entry.entry_date)}
-                    </p>
-                    <h3>{entry.title}</h3>
+      {!failed && (
+        <SectionTabs
+          id="training-log"
+          label="Training log sections"
+          defaultTab={
+            params.page || (horseId && !params.new) ? "history" : "horses"
+          }
+          sections={[
+            {
+              id: "horses",
+              label: "Horses in training",
+              content: (
+                <TrainingHorseList
+                  horses={(worklist.data ?? []) as TrainingHorse[]}
+                />
+              ),
+            },
+            {
+              id: "history",
+              label: "History",
+              content: (
+                <section className="panel">
+                  <div className="panel-heading">
+                    <div>
+                      <p className="eyebrow">THE WORK ADDS UP</p>
+                      <h2>
+                        {selectedHorse
+                          ? `${selectedHorse.barn_name}’s history`
+                          : "From the training pen"}
+                      </h2>
+                    </div>
+                    <span className="count-badge">
+                      {entries.count ?? 0} entries
+                    </span>
                   </div>
-                  <span className="tag">
-                    {entry.kind === "session"
-                      ? "Training session"
-                      : "Progress note"}
-                    {entry.duration_minutes
-                      ? ` · ${entry.duration_minutes} min`
-                      : ""}
-                  </span>
-                </div>
-                <p className="log-notes">{entry.notes}</p>
-                <div className="row-actions">
-                  <Link
-                    className="text-button"
-                    href={`/admin/log?edit=${entry.id}${horseId ? `&horse=${horseId}` : ""}#record-form`}
-                  >
-                    Edit
-                  </Link>
-                  <form action={deleteRecord.bind(null, "training_entries")}>
-                    <input type="hidden" name="id" value={entry.id} />
-                    <DeleteButton confirmText="Delete this training entry? This cannot be undone." />
-                  </form>
-                </div>
-              </article>
-            ))
-          ) : (
-            <EmptyState
-              icon={BookOpen}
-              title="Every ride tells you something."
-              description={
-                selectedHorse
-                  ? "This horse has no entries on this page yet. Record a session or a progress note to begin their history."
-                  : "Capture a training session or a quick note so the useful details don’t get left in the arena."
-              }
-              href={addLink}
-              label="Add a training entry"
-            />
-          ))}
-        {!failed &&
-          !filterError &&
-          ((entries.count ?? 0) > pageSize || page > 1) && (
-            <nav className="log-pagination" aria-label="Training log pages">
-              {page > 1 ? (
-                <Link className="text-link" href={queryFor(page - 1)}>
-                  Previous
-                </Link>
-              ) : (
-                <span />
-              )}
-              <span className="muted">Page {page}</span>
-              {page * pageSize < (entries.count ?? 0) ? (
-                <Link className="text-link" href={queryFor(page + 1)}>
-                  Next
-                </Link>
-              ) : (
-                <span />
-              )}
-            </nav>
-          )}
-      </section>
+                  <div className="log-filter training-history-filter">
+                    <Link
+                      className={horseId ? "button secondary" : "button"}
+                      href="/admin/log#training-log-history"
+                    >
+                      All horses
+                    </Link>
+                    {horses.data?.map((h) => (
+                      <Link
+                        key={h.id}
+                        className={
+                          horseId === h.id ? "button" : "button secondary"
+                        }
+                        href={`/admin/log?horse=${h.id}#training-log-history`}
+                      >
+                        {h.barn_name}
+                      </Link>
+                    ))}
+                  </div>
+                  {!failed &&
+                    !filterError &&
+                    (entries.data?.length ? (
+                      entries.data.map((entry) => (
+                        <article className="log-entry" key={entry.id}>
+                          <div className="log-entry-heading">
+                            <div>
+                              <p className="eyebrow">
+                                {horses.data?.find(
+                                  (horse) => horse.id === entry.horse_id,
+                                )?.barn_name ?? "Horse"}{" "}
+                                · {dateLabel(entry.entry_date)}
+                              </p>
+                              <h3>{entry.title}</h3>
+                            </div>
+                            <span className="tag">
+                              {entry.kind === "session"
+                                ? "Training session"
+                                : "Progress note"}
+                              {entry.duration_minutes
+                                ? ` · ${entry.duration_minutes} min`
+                                : ""}
+                            </span>
+                          </div>
+                          <p className="log-notes">{entry.notes}</p>
+                          <div className="row-actions">
+                            <Link
+                              className="text-button"
+                              href={`/admin/log?edit=${entry.id}${horseId ? `&horse=${horseId}` : ""}#record-form`}
+                            >
+                              Edit
+                            </Link>
+                            <form
+                              action={deleteRecord.bind(
+                                null,
+                                "training_entries",
+                              )}
+                            >
+                              <input type="hidden" name="id" value={entry.id} />
+                              <DeleteButton confirmText="Delete this training entry? This cannot be undone." />
+                            </form>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <EmptyState
+                        icon={BookOpen}
+                        title="Every ride tells you something."
+                        description={
+                          selectedHorse
+                            ? "This horse has no entries on this page yet. Record a session or a progress note to begin their history."
+                            : "Capture a training session or a quick note so the useful details don’t get left in the arena."
+                        }
+                        href={
+                          selectedHorse
+                            ? addLink
+                            : "/admin/log#training-log-horses"
+                        }
+                        label={
+                          selectedHorse
+                            ? "Add a training entry"
+                            : "Choose a horse"
+                        }
+                      />
+                    ))}
+                  {!failed &&
+                    !filterError &&
+                    ((entries.count ?? 0) > pageSize || page > 1) && (
+                      <nav
+                        className="log-pagination"
+                        aria-label="Training log pages"
+                      >
+                        {page > 1 ? (
+                          <Link className="text-link" href={queryFor(page - 1)}>
+                            Previous
+                          </Link>
+                        ) : (
+                          <span />
+                        )}
+                        <span className="muted">Page {page}</span>
+                        {page * pageSize < (entries.count ?? 0) ? (
+                          <Link className="text-link" href={queryFor(page + 1)}>
+                            Next
+                          </Link>
+                        ) : (
+                          <span />
+                        )}
+                      </nav>
+                    )}
+                </section>
+              ),
+            },
+          ]}
+        />
+      )}
     </>
   );
 }

@@ -196,6 +196,11 @@ Features in this section are present in the application source. A feature being 
 - Bulk scheduled feeding confirms the saved rations for selected horses at one feeding time on one actual date. Existing confirmations remain safe to retry; a shortage or invalid horse rolls back the entire batch.
 - Bulk extra/partial feeding records one selected product/unit across multiple horses with individual quantities. Blank quantities skip a horse. Each batch preserves weighted cost and per-horse history, saves atomically, and rejects changed retries using a saved batch request. Requires migration `20261021001700_bulk_feeding.sql`.
 
+### Training worklist
+
+- Training log opens to current training horses with Log session, Add note, History, and Feeding plan actions. Entry forms are tied to the chosen horse without a horse dropdown. History uses horse buttons and a separate tab, retaining former-horse history.
+- Cards show arrival date, last recorded training session and focus, and last recorded unreversed feeding including its saved feeding-time label. Progress notes and future sessions do not count as last trained. Horses arriving later or already departed are excluded; arrival/departure dates count inclusively. Missing activity is explicit, and recorded dates are not presented as actual clock times.
+
 ### Task navigation and feeding-time setup
 
 - Feeding, Inventory, Reports, Reminders, invoice details, and Settings use accessible tabs to separate tasks. Tabs support keyboard navigation and direct section links; mounted panels preserve unsaved inputs. Invoice printing selects the customer invoice regardless of the active tab.
@@ -280,6 +285,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Training-worklist increment (October 22, 2026): adds migration `20261022002100_training_worklist.sql` for the administrator-only, per-horse latest-activity query. All 115 tests pass (the original 114 plus the new worklist test), along with TypeScript checks and the production build. Local tests cover current/future/departed stays, inclusive departure dates, missing activity, note/future-session exclusion, reversed-feed exclusion, and non-admin denial. Browser previews verify the actual horse-card component, action links, missing-history labels, and phone-width layout. Remote migration and authenticated production flows remain unverified.
 
 - Horse-record feeding-plan increment (October 22, 2026): ration configuration moved to horse records with scoped updates/removals and links from the horse book and daily feeding. No database migration required. All 114 tests, TypeScript checks, and the production build pass. A local browser preview verifies grouped horse rations, links to the horse record, and the horse-bound ration editor. Authenticated production saves and deployment remain unverified.
 
