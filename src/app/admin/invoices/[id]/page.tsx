@@ -15,6 +15,10 @@ import {
   InvoiceConfirmButton,
   PrintInvoice,
 } from "@/components/invoice-buttons";
+import {
+  InvoiceServices,
+  InvoiceServiceDetail,
+} from "@/components/invoice-services";
 import { invoiceAction } from "../actions";
 
 export default async function Invoice({
@@ -89,6 +93,10 @@ export default async function Invoice({
             .eq("customer_id", invoice.customer_id)
         : Promise.resolve({ data: [], error: null }),
     ]);
+  const services =
+    invoice.status === "draft" && invoice.stay_id
+      ? await db.rpc("invoice_service_options", { p_invoice: id })
+      : { data: null, error: null };
   const failed = [
     lines,
     payments,
@@ -97,6 +105,7 @@ export default async function Invoice({
     stay,
     expenses,
     links,
+    services,
   ].some((r) => r.error);
   const date = today();
   const draft = invoice.status === "draft";
@@ -200,6 +209,9 @@ export default async function Invoice({
                         cents.
                       </small>
                     )}
+                    {line.kind === "service" && line.source_snapshot && (
+                      <InvoiceServiceDetail snapshot={line.source_snapshot} />
+                    )}
                     {line.kind === "expense" && line.source_snapshot && (
                       <small className="cell-secondary">
                         Original cost{" "}
@@ -217,7 +229,7 @@ export default async function Invoice({
                         <input name="line_id" type="hidden" value={line.id} />
                         <DeleteButton
                           label="Remove"
-                          confirmText="Remove this draft line? Any linked expense or calendar days will become available for billing again."
+                          confirmText="Remove this draft line? Any linked expense, feeding records, or service/calendar days will become available for billing again."
                         />
                       </form>
                     </td>
@@ -451,10 +463,10 @@ export default async function Invoice({
                       .
                     </p>
                     <p className="notice">
-                      Only calendar-prorated training is generated automatically
-                      here. Add separately reviewed feed/boarding or actual-cost
-                      lines manually. “Not recorded” agreements should be
-                      resolved before you finalize.
+                      Training charges use worked/rest dates. Separately billed
+                      monthly feed and boarding use every physical boarding day,
+                      including non-training days. “Not recorded” agreements
+                      should be resolved before finalizing.
                     </p>
                     <form action={invoiceAction.bind(null, "training")}>
                       {invoiceId}
@@ -467,6 +479,11 @@ export default async function Invoice({
                       eligible stay day classified. Only worked/rest days are
                       charged. Already reserved days cannot be billed again.
                     </p>
+                    <InvoiceServices
+                      invoice={id}
+                      stay={stay.data}
+                      options={services.data}
+                    />
                   </div>
                 </section>
               )}

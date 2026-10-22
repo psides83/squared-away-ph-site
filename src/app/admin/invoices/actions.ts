@@ -42,6 +42,25 @@ export async function invoiceAction(operation: string, form: FormData) {
     let rpc: string;
     let args: Record<string, unknown>;
     switch (operation) {
+      case "monthly-feed":
+      case "monthly-boarding":
+        rpc = "add_monthly_service";
+        args = {
+          p_invoice: invoice,
+          p_service: operation === "monthly-feed" ? "feed" : "boarding",
+        };
+        break;
+      case "actual-feed":
+        rpc = "add_actual_feed";
+        args = { p_invoice: invoice };
+        break;
+      case "actual-boarding":
+        rpc = "add_actual_boarding";
+        args = {
+          p_invoice: invoice,
+          p_split: identifier(form, "split_id", true),
+        };
+        break;
       case "header": {
         const issueDate = dateValue(form, "issue_date", true)!;
         const due = dateValue(form, "due_date", true)!;

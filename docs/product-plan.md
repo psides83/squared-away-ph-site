@@ -80,7 +80,7 @@ Features in this section are present in the application source. A feature being 
 - Private change history records previous/new status, notes, actor, and time. Unchanged retries do not duplicate events; clearing retains history.
 - Stay date changes cannot strand classified days outside the stay. Stays with billing-day history cannot be reassigned to another horse or accidentally deleted.
 - Per-stay feed and boarding choices: unrecorded, included, separate monthly rate, actual cost, or not provided. Rates are required only for separate monthly billing; legacy agreements remain unrecorded until chosen.
-- Marked days support reviewed training invoice lines. Automatic feed/boarding calculations and actual-cost allocations remain planned.
+- Marked days support reviewed training invoice lines. Feed/boarding lines use the physical-day and recorded-cost rules implemented below.
 
 ### Invoices and recorded payments
 
@@ -129,6 +129,16 @@ Features in this section are present in the application source. A feature being 
 - Overview dashboard cards for current outstanding/overdue balances and counts, month-to-date receipts, and net cash after expenses paid. Chicago business dates and the same financial rules as Reports apply.
 - Recent invoice, payment/reversal, expense, and training records with direct links. This is a latest-record list, not a complete change audit. Missing financial migrations show a notice without hiding otherwise available barn records.
 
+### Feed and boarding invoices
+
+- Generate separate monthly feed/boarding lines from the stay's recorded rate, counting every elapsed physical boarding day in the invoice period (including arrival, departure, non-training, and unclassified training dates). The denominator is the actual number of days in that calendar month; round once to cents. Each generated monthly period must fit within one calendar month. Explicit zero rates remain valid.
+- Actual-cost feed lines use unbilled, unreversed feeding movements for the horse during the stay/invoice period. Saved weighted consumption costs are summed before rounding once; purchases, waste, stock adjustments, and reversed feeding are excluded. New actual feeding can be billed later without reclaiming previously billed movements.
+- Actual-cost boarding uses an explicitly selected, current direct/shared cost portion already assigned to the stay. Sources show expense dates and amounts but are not automatically restricted by expense date; the administrator reviews whether the selected portion belongs to boarding for this billing period. No extra expense is created.
+- Included/not-provided services do not generate separate service charges; unrecorded agreements need resolution before generation. Invoice lines snapshot rates, calculations, dates, feed source quantities/conversions/costs, and selected boarding sources.
+- Source reservations prevent repeated service days, duplicate feeding records, duplicate stay-cost portions, and both full-expense reimbursement and boarding reimbursement for the same expense. Monthly and actual-cost claims cannot overlap for the same service period. Manual lines still require administrator review and do not receive automatic source-duplicate checks.
+- Billed feeding reversals and boarding cost-split/shared-allocation revisions are blocked while reserved. Remove a draft line or void the unpaid invoice to release sources; void retains the original bill and snapshots. Stay dates cannot strand reserved service sources outside the physical stay.
+- Service calculation details appear on the invoice, including expandable actual-feed source documentation. Historical snapshots retain costs when product prices, unit conversions, agreements, or rates later change.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -136,7 +146,6 @@ Features in this section are present in the application source. A feature being 
 - Recurring expense scheduling and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
 - Configurable billing schedules beyond the current 1–28 range, scheduled invoice generation, and additional automatic calculations for policies beyond calendar-day proration.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
-- Calculate invoice feed/boarding lines from recorded service agreements, with explicit period/proration rules and cost sources for actual-cost billing.
 
 #### Feed, boarding, and profitability details
 
@@ -165,7 +174,7 @@ Features in this section are present in the application source. A feature being 
 
 - Store money as integer cents, service/billing dates as dates, and recorded activity times as timezone-aware timestamps. Business dates use America/Chicago.
 - Finalized invoice line items retain the billed customer, description, and amount even if current profiles or rates change. Use adjustments rather than silently overwriting finalized invoices.
-- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, invoice_payments, and invoice_adjustments. Shared-cost revisions use expense_allocations and expense_allocation_lines. Reporting assignments use invoice_reporting_links, cost_stay_splits, and cost_stay_split_lines. Sessions and progress notes share `training_entries`.
+- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, invoice_payments, and invoice_adjustments. Service source reservations use invoice_service_days, invoice_feed_claims, and invoice_boarding_claims. Shared-cost revisions use expense_allocations and expense_allocation_lines. Reporting assignments use invoice_reporting_links, cost_stay_splits, and cost_stay_split_lines. Sessions and progress notes share `training_entries`.
 - Enforce access in the database as well as the UI. Never commit credentials or expose server-only keys to the browser.
 - Keep preview/development databases separate from production. Apply migrations through a reviewed deployment workflow.
 - On every completed feature, move its delivered scope from Planned to Implemented in the same change. Split partially completed items so only unfinished work remains under Planned; do not leave completed features duplicated there. Update the next build sequence and record verification/deployment limitations below.
@@ -179,6 +188,7 @@ Features in this section are present in the application source. A feature being 
 - Vet, farrier, and hauling reimbursements default to actual cost; allow an explicitly entered markup or handling fee.
 - Invoice payment terms are configurable, with due upon receipt as the starting default. Permit multiple/partial payments and show the remaining balance.
 - No training deposit.
+- Customer portal: explicitly granted customers share published horse updates, but each customer sees only invoices and payments billed to their own customer record. Horse portal access is granted/revoked manually by the administrator; ownership edits do not automatically grant access. Confirmed October 21, 2026.
 - Feed and boarding inclusion/separate billing is determined for each horse/training agreement. Separately billed monthly feed and boarding use all physical boarding days, with actual calendar days as the monthly denominator. Actual-cost feed uses recorded weighted consumption costs; actual-cost boarding uses reviewed costs assigned to the stay. The owner confirmed these calculation bases on October 21, 2026.
 - Feed inventory includes hay and all supplement types from the start, alongside purchases, receipts, and consumption tracking.
 - Support all discussed purchase/feeding units with product-specific relationships between pounds/weight ounces and scoops, flakes, bags, bales, tubs, and other measures. Conversion values are configurable rather than universal assumptions, and historical transactions retain their conversion snapshots.
@@ -190,14 +200,17 @@ Features in this section are present in the application source. A feature being 
 
 ## Decisions still needed
 
+
 - Product names, actual package/serving conversion values, and opening quantities will be entered during inventory setup. Supported units and configurable conversions are agreed; actual scoop/flake weights must come from the relevant product or measured batch.
 - Actual starting rates, contact details, and payment instructions can now be entered by the owner in Settings. These are business setup values, not unresolved development decisions.
 
 ## Next build sequence
 
-Feed/boarding billing calculations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
+Customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Service billing includes migration `20261021001300_service_billing.sql`. All 75 tests, TypeScript checks, and the production build pass. Local database tests cover physical boarding days without training classifications, leap-year denominators, zero rates, weighted consumption and rounding, exclusions/reversals, source protection, duplicate/cross-method safeguards, cost snapshots, release on removal/void, and non-admin denial. Authenticated live flows and migration completion remain unverified.
 
 - Overview/expense-filter increment includes migration `20261021001200_overview_expense_filters.sql`. All 66 tests, TypeScript checks, and the production build pass. Local tests cover literal search, combined filters, exact pagination, Chicago month dates, financial exclusions, recent record links, and non-admin denial. Authenticated live flows and migration completion remain unverified.
 
