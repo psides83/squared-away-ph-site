@@ -92,6 +92,14 @@ Features in this section are present in the application source. A feature being 
 - Issued invoices use retained adjustment entries and reasoned payment reversals. Voiding retains history and requires no active payments; a reversal records a correction, not a refund transfer.
 - Paginated invoice list, payment/adjustment history, and a printable invoice view with browser print/save-PDF support.
 
+### Cash reporting
+
+- Admin-only Reports screen with a selected inclusive date range, payments received, expenses paid, and net cash profit (received minus paid).
+- Monthly cash results, including empty months, and paid expense totals by category. Database aggregation covers all matching records without API row-limit truncation.
+- Received amounts use active payment dates on issued invoices; expenses use paid dates. Drafts, unpaid costs, voided expenses, and reversed payments are excluded. Corrections restate affected past periods rather than creating refund cash flows.
+- Feed purchase expenses count once; inventory consumption is not deducted again. All recorded shared barn expenses count in business totals without claiming complete horse-level profit.
+- Current outstanding and overdue invoice balances across all dates, clearly separate from the selected cash period. These are available in Reports; overview dashboard cards remain planned.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -105,10 +113,10 @@ Features in this section are present in the application source. A feature being 
 #### Feed, boarding, and profitability details
 
 - Extend current horse/shared-barn expense assignments with training-stay attribution and allocations of shared costs across horses. Each allocation must reconcile to the original expense so business totals never count it twice, including the owner's horses.
-- Distinguish costs absorbed by the business from costs charged back to customers. Use implemented expense-to-invoice links in reporting; do not count a reimbursement twice as both separate revenue and the same invoice revenue.
-- Report revenue, total costs, and net profit (revenue minus costs) for a selected period. Show horse/stay margins with clear treatment of shared costs, plus overall business profitability. Do not label horse-level profit as complete when shared costs have not been allocated.
-- Begin with clearly labeled cash reporting: payments received minus expenses paid, with unpaid invoices separate. Show inventory consumption costs separately from cash spent on feed purchases; do not deduct both in the same profit calculation. Show horse-level cost allocations with their basis stated.
-- Keep profitability reporting private to the administrator. Profit reports are not implemented; the current expense, inventory, and feeding screens do not claim to show overall profit.
+- Add reporting that separates costs absorbed by the business from costs charged back to customers, using the implemented expense-to-invoice links. Do not count a reimbursement twice as both separate revenue and the same invoice revenue.
+- Add horse/stay margins with clear treatment of allocated shared costs. Do not label horse-level profit as complete when shared costs have not been allocated. Overall cash profit for a selected period is implemented above.
+- Add separate inventory consumption cost views and horse-level cost allocations with their basis stated. Keep these separate from the implemented cash report so feed purchases and consumption are never deducted together.
+- Extend private reporting with allocated horse/stay margins; the current report covers business-wide recorded cash activity only.
 
 ### Horse records and customer portal
 
@@ -133,7 +141,7 @@ Features in this section are present in the application source. A feature being 
 - Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, payments, and invoice_adjustments. Sessions and progress notes share `training_entries`.
 - Enforce access in the database as well as the UI. Never commit credentials or expose server-only keys to the browser.
 - Keep preview/development databases separate from production. Apply migrations through a reviewed deployment workflow.
-- On every completed feature, move its delivered scope from Planned to Implemented and record verification/deployment limitations below.
+- On every completed feature, move its delivered scope from Planned to Implemented in the same change. Split partially completed items so only unfinished work remains under Planned; do not leave completed features duplicated there. Update the next build sequence and record verification/deployment limitations below.
 
 ## Agreed decisions (implementation remains planned unless listed above)
 
@@ -160,9 +168,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Revenue/cost/profit reporting and shared-cost allocations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
+Shared-cost allocations and horse/stay reporting → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Cash reporting includes migration `20261021000900_cash_reporting.sql`. All 48 tests, TypeScript checks, and the production build pass. Local database tests verify inclusive paid-date filtering, reversed payments, unpaid/void exclusions, empty months, current outstanding balances, totals across more than 1,000 expenses, date bounds, and non-admin denial. Live reporting and production migration completion have not been verified.
 
 - Invoice increment includes migration `20261021000800_invoices_payments.sql`. All 47 tests, TypeScript checks, and the production build pass. Local database tests cover source reservations, calculation completeness, snapshots, partial payments, repeat safety, overpayment/over-credit guards, adjustments, reversals, voids, and denied non-admin access. Live migration completion, authenticated invoice/browser printing flows, and external payment links have not been verified; no production billing records were created.
 
