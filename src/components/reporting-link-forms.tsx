@@ -36,10 +36,9 @@ export function InvoiceReportingForm({
       <input name="request_id" type="hidden" value={request} />
       <input name="invoice_id" type="hidden" value={invoice} />
       <p>
-        This assigns all current and future receipts on this invoice to one
-        horse. An optional stay must match the horse and the invoice’s billing
-        customer. Use horse-only when no stay applies. Multi-horse invoice
-        receipt splits are not available yet.
+        Choose the horse this invoice was for. Its payments will count as income
+        for that horse. You can also choose a training visit for the same horse
+        and billing customer. One invoice can currently be matched to one horse.
       </p>
       <div className="form-grid">
         <label>
@@ -64,13 +63,13 @@ export function InvoiceReportingForm({
           </select>
         </label>
         <label>
-          Training stay (optional)
+          Training visit (optional)
           <select
             name="stay_id"
             value={stay}
             onChange={(e) => setStay(e.target.value)}
           >
-            <option value="">Horse only / no stay</option>
+            <option value="">Horse only — no particular visit</option>
             {stays
               .filter(
                 (s) =>
@@ -86,10 +85,10 @@ export function InvoiceReportingForm({
         </label>
       </div>
       <label>
-        Reason
+        Why does this belong here?
         <textarea name="reason" required maxLength={2000} rows={3} />
       </label>
-      <SubmitButton>Save income assignment</SubmitButton>
+      <SubmitButton>Save horse match</SubmitButton>
     </form>
   );
 }
@@ -132,17 +131,18 @@ export function CostStayForm({
       <input name="horse_id" type="hidden" value={horse} />
       <input name="allocation_id" type="hidden" value={allocation ?? ""} />
       <p>
-        Split this horse’s {money(amount)} cost among its stays. Enter zero
-        where none belongs. Any remainder stays assigned to the horse but
-        unassigned to a stay. Choose the stay the cost actually belongs to, even
-        if the expense was paid later.
+        This expense already counts toward the horse’s total costs. Enter how
+        much of the {money(amount)} belongs to each training visit below. Put
+        the full amount against one visit, or divide it between visits. Leave
+        other visits at $0.00. Any amount left over stays in the horse’s report
+        without being tied to a visit.
       </p>
       <div className="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Stay</th>
-              <th>Assign ($)</th>
+              <th>Training visit</th>
+              <th>Cost for this visit ($)</th>
             </tr>
           </thead>
           <tbody>
@@ -156,7 +156,7 @@ export function CostStayForm({
                 <td>
                   <label>
                     <span className="sr-only">
-                      Amount for stay starting {s.arrival_date}
+                      Cost for visit starting {s.arrival_date}
                     </span>
                     <input
                       name={`amount_${s.id}`}
@@ -179,14 +179,14 @@ export function CostStayForm({
       </div>
       <p className={!valid || assigned > amount ? "notice error" : "notice"}>
         {valid
-          ? `${money(assigned)} assigned · ${money(amount - assigned)} unassigned to a stay`
+          ? `${money(assigned)} matched to visits · ${money(amount - assigned)} left without a visit`
           : "Enter dollar amounts with at most two decimal places."}
       </p>
       <label>
-        Reason
+        Why does this belong here?
         <textarea name="reason" required maxLength={2000} rows={3} />
       </label>
-      <SubmitButton>Save stay cost split</SubmitButton>
+      <SubmitButton>Save visit amounts</SubmitButton>
     </form>
   );
 }

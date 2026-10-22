@@ -241,9 +241,9 @@ export default async function Reports({
               received without a horse reporting assignment, and{" "}
               <strong>{money(horseReport.unallocated_paid_cents)}</strong> in
               paid shared expenses without an allocation. Resolve these amounts
-              before treating horse margins as complete. Use Income & cost links
-              to assign manual invoices; customer ownership alone does not
-              determine the horse.
+              before treating horse margins as complete. Use Match income &
+              expenses to assign manual invoices; customer ownership alone does
+              not determine the horse.
             </p>
             <p>
               Reconciliation: horse margins{" "}
@@ -260,7 +260,7 @@ export default async function Reports({
             <div className="panel-heading">
               <h2>Training-stay cash margins</h2>
               <Link href="/admin/attribution" className="text-link">
-                Assign income & costs
+                Match income & expenses
               </Link>
             </div>
             <p>

@@ -1,7 +1,8 @@
+import { Receipt } from "lucide-react";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { money, dateLabel } from "@/lib/format";
-import { PageHeading, Notice } from "@/components/ui";
+import { PageHeading, Notice, EmptyState } from "@/components/ui";
 import { DeleteButton } from "@/components/submit-button";
 import {
   InvoiceReportingForm,
@@ -136,8 +137,8 @@ export default async function Attribution({
     <>
       <PageHeading
         eyebrow="CLEAR RECORDS"
-        title="Assign income & costs"
-        description="Link recorded money to the horse and training stay it belongs to."
+        title="Match income & expenses"
+        description="Choose which horse and training visit an invoice or expense belongs to."
       />
       <Notice
         error={
@@ -151,17 +152,57 @@ export default async function Attribution({
         }
         success={params.success}
       />
-      <p className="notice">
-        These private reporting links leave customer invoices, ownership, and
-        business totals unchanged. They apply to all payment dates, including
-        prior periods, so corrections restate past reports. Shared costs must
-        first be divided among horses in{" "}
-        <Link href="/admin/allocations">Shared costs</Link>.
-      </p>
+      <section className="panel">
+        <div className="panel-heading">
+          <h2>When do I use this page?</h2>
+        </div>
+        <div className="record-form">
+          <p>
+            A <strong>training visit</strong> is one arrival-to-departure period
+            recorded in Training stays. A horse may have several visits if it
+            leaves and comes back.
+          </p>
+          <p>
+            <strong>For income:</strong> invoices created for a training stay
+            already belong to that horse and visit. If you created an invoice
+            without a stay, choose the horse here so its payments appear in the
+            right report.
+          </p>
+          <p>
+            <strong>For expenses:</strong> first record the bill in{" "}
+            <Link className="text-link" href="/admin/expenses">
+              Expenses
+            </Link>{" "}
+            and choose the horse. That already includes the cost in the horse’s
+            report. Use this page to put some or all of that cost against a
+            particular training visit.
+          </p>
+          <p>
+            <strong>Example:</strong> a $150 farrier bill for a horse’s June
+            visit can go entirely against that visit. If a cost covers two
+            visits, divide the amount between them.
+          </p>
+          <p>
+            For a bill shared by several horses, divide it between horses in{" "}
+            <Link className="text-link" href="/admin/allocations">
+              Shared costs
+            </Link>{" "}
+            first. Each horse’s share will then appear below.
+          </p>
+          <p className="muted">
+            These choices organize reports and identify costs available for
+            actual-cost boarding invoices. To charge a customer, add the cost to
+            an invoice in Invoices. Changing a match also updates earlier
+            reports.
+          </p>
+        </div>
+      </section>
       {!failed && data && invoice.data && (
         <section className="panel">
           <div className="panel-heading">
-            <h2>{invoiceLabel(invoice.data)} · income assignment</h2>
+            <h2>
+              {invoiceLabel(invoice.data)} · choose the horse for these payments
+            </h2>
             <Link
               className="text-link"
               href={`/admin/invoices/${invoice.data.id}`}
@@ -172,10 +213,10 @@ export default async function Attribution({
           {invoice.data.stay_id ? (
             <p>
               This invoice already belongs to {stayLabel(invoice.data.stay_id)}.
-              Its original training stay determines income attribution.
+              Its payments already appear under that horse and training visit.
             </p>
           ) : invoice.data.status === "void" ? (
-            <p>Voided invoices have no active receipts to assign.</p>
+            <p>This invoice is voided, so it has no payments to match.</p>
           ) : (
             <InvoiceReportingForm
               key={activeInvoice?.id ?? invoice.data.id}
@@ -194,21 +235,21 @@ export default async function Attribution({
             >
               <input type="hidden" name="invoice_id" value={invoice.data.id} />
               <label>
-                Reason for clearing
+                Why are you removing this match?
                 <input name="reason" required maxLength={2000} />
               </label>
               <DeleteButton
-                label="Clear income assignment"
-                confirmText="Clear this reporting link? Receipts will become unassigned again. The invoice and payments will remain unchanged."
+                label="Remove income match"
+                confirmText="Remove the horse and visit match for this invoice? Its payments will still count in business totals."
               />
             </form>
           )}
           <div className="record-form separated">
-            <h3>Income assignment history (latest 10)</h3>
+            <h3>Previous income matches (latest 10)</h3>
             {invoiceHistory.data?.map((r) => (
               <p key={r.id}>
                 <strong>
-                  {r.retired_at ? "Retired" : "Active"}: {r.horse_name}
+                  {r.retired_at ? "Previous" : "Current"}: {r.horse_name}
                 </strong>
                 {r.stay_id ? ` · ${stayLabel(r.stay_id)}` : " · horse only"}
                 <br />
@@ -224,7 +265,10 @@ export default async function Attribution({
           <div className="panel-heading">
             <h2>
               {horseName(source.data.horse_id)} ·{" "}
-              {money(source.data.amount_cents)} {source.data.kind} cost
+              {money(source.data.amount_cents)}{" "}
+              {source.data.kind === "direct"
+                ? "expense for this horse"
+                : "share of a barn bill"}
             </h2>
             <Link
               className="text-link"
@@ -259,8 +303,9 @@ export default async function Attribution({
             />
           ) : (
             <p>
-              This horse has no training stays. Its cost remains in horse-level
-              reports without a stay assignment.
+              This horse has no training visits recorded yet. The expense
+              already counts in its horse report. Add a Training stay if you
+              want to track costs for a particular visit.
             </p>
           )}
           {activeCost && (
@@ -284,21 +329,21 @@ export default async function Attribution({
                 value={source.data.shared_allocation_id ?? ""}
               />
               <label>
-                Reason for clearing
+                Why are you removing this match?
                 <input name="reason" required maxLength={2000} />
               </label>
               <DeleteButton
-                label="Clear stay cost split"
-                confirmText="Clear this stay split? The cost will remain with the horse, and its stay portion will become unassigned. History will remain."
+                label="Remove visit amounts"
+                confirmText="Remove these visit amounts? The expense will still count in the horse and business reports. The previous amounts will remain in history."
               />
             </form>
           )}
           <div className="record-form separated">
-            <h3>Stay cost history (latest 10)</h3>
+            <h3>Previous visit amounts (latest 10)</h3>
             {costHistory.data?.map((r) => (
               <details key={r.id}>
                 <summary>
-                  {r.retired_at ? "Retired" : "Active"} · source{" "}
+                  {r.retired_at ? "Previous" : "Current"} · original horse cost{" "}
                   {money(r.source_amount_cents)}
                 </summary>
                 <p>
@@ -317,10 +362,9 @@ export default async function Attribution({
           </div>
           {source.data.shared_allocation_id && (
             <p className="notice">
-              This split belongs to this saved shared-cost revision. If you
-              revise or clear the horse allocation, its stay split stops
-              contributing to reports. Review stay assignments for the new
-              shared-cost revision.
+              These visit amounts use the horse’s saved share of a barn bill. If
+              you change that share in Shared costs, return here to choose visit
+              amounts for the new share. The old amounts remain in history.
             </p>
           )}
         </section>
@@ -328,22 +372,22 @@ export default async function Attribution({
       {!failed && !source.data && costHistory.data?.length ? (
         <section className="panel">
           <div className="panel-heading">
-            <h2>Previous stay cost assignments</h2>
+            <h2>Previous visit amounts</h2>
             <Link className="text-link" href="/admin/attribution">
-              Current cost sources
+              Current horse expenses
             </Link>
           </div>
           <p className="notice">
-            This source portion is no longer current. These saved assignments
-            are retained for review and do not contribute to reports. Choose a
-            current cost source to make a new assignment.
+            This horse’s expense or share of a barn bill has changed. These
+            previous visit amounts are kept as history and no longer count in
+            reports. Choose the current horse expense to enter new amounts.
           </p>
           {costHistory.data.map((r) => (
             <details key={r.id}>
               <summary>
                 {r.retired_at
-                  ? "Retired revision"
-                  : "Saved revision · source no longer current"}{" "}
+                  ? "Previous amounts"
+                  : "Previous amounts — expense changed"}{" "}
                 · {money(r.source_amount_cents)}
               </summary>
               <p>
@@ -363,12 +407,13 @@ export default async function Attribution({
       ) : null}
       <section className="panel">
         <div className="panel-heading">
-          <h2>Invoices without training stays</h2>
+          <h2>Invoices that need a horse match</h2>
           <span className="count-badge">{invoices.count ?? 0} records</span>
         </div>
         <p>
-          Stay-linked invoices already have income assignments. Manual invoices
-          can be assigned to one horse and optionally one matching stay.
+          Only invoices created without a training stay appear here. Choose the
+          horse for their payments, and a training visit if one applies.
+          Previously matched invoices stay listed so you can review them.
         </p>
         <div className="table-scroll">
           <table>
@@ -377,7 +422,7 @@ export default async function Attribution({
                 <th>Invoice</th>
                 <th>Date</th>
                 <th>Status</th>
-                <th>Reporting link</th>
+                <th>Horse match</th>
               </tr>
             </thead>
             <tbody>
@@ -397,8 +442,8 @@ export default async function Attribution({
                     {i.invoice_reporting_links.some(
                       (r: { retired_at: string | null }) => !r.retired_at,
                     )
-                      ? "Assigned / revise"
-                      : "Unassigned"}
+                      ? "Matched — review"
+                      : "Choose a horse"}
                   </td>
                 </tr>
               ))}
@@ -406,7 +451,10 @@ export default async function Attribution({
           </table>
         </div>
         {!invoices.data?.length && !failed && (
-          <p>No manual invoices to assign.</p>
+          <p>
+            No invoices need a horse match. Invoices created for a training stay
+            are matched automatically.
+          </p>
         )}
         <nav className="log-pagination" aria-label="Manual invoice pages">
           {ipage > 1 ? (
@@ -424,62 +472,90 @@ export default async function Attribution({
       </section>
       <section className="panel">
         <div className="panel-heading">
-          <h2>Horse costs available for stay assignment</h2>
-          <span className="count-badge">{costs.count ?? 0} portions</span>
+          <h2>Choose the training visit for a horse expense</h2>
+          <span className="count-badge">{costs.count ?? 0} horse expenses</span>
         </div>
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Date / vendor</th>
-                <th>Horse</th>
-                <th>Source</th>
-                <th>Cost</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {costs.data?.map((c) => (
-                <tr
-                  key={`${c.expense_id}:${c.shared_allocation_id}:${c.horse_id}`}
-                >
-                  <td>
-                    {dateLabel(c.expense_date)}
-                    <small className="cell-secondary">
-                      {c.vendor || "No vendor"}
-                    </small>
-                  </td>
-                  <td>{horseName(c.horse_id)}</td>
-                  <td>
-                    {c.kind} · {c.paid_on ? "paid" : "unpaid"}
-                  </td>
-                  <td>{money(c.amount_cents)}</td>
-                  <td>
-                    <Link className="text-link" href={sourceUrl(c)}>
-                      Assign / review
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {!costs.data?.length && !failed && (
-          <p>No direct horse expenses or saved shared-cost portions yet.</p>
+        {costs.data?.length ? (
+          <>
+            <p className="record-form">
+              These expenses already belong to a horse. Open one to choose the
+              training visit it belongs to, or review amounts you saved earlier.
+              The list includes both paid and unpaid expenses.
+            </p>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date / vendor</th>
+                    <th>Horse</th>
+                    <th>Expense type / payment</th>
+                    <th>Horse’s cost</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {costs.data?.map((c) => (
+                    <tr
+                      key={`${c.expense_id}:${c.shared_allocation_id}:${c.horse_id}`}
+                    >
+                      <td>
+                        {dateLabel(c.expense_date)}
+                        <small className="cell-secondary">
+                          {c.vendor || "No vendor"}
+                        </small>
+                      </td>
+                      <td>{horseName(c.horse_id)}</td>
+                      <td>
+                        {c.kind === "direct"
+                          ? "Bill for this horse"
+                          : "Share of a barn bill"}{" "}
+                        · {c.paid_on ? "paid" : "unpaid"}
+                      </td>
+                      <td>{money(c.amount_cents)}</td>
+                      <td>
+                        <Link className="text-link" href={sourceUrl(c)}>
+                          Choose visit / review amounts
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : !failed ? (
+          <>
+            <EmptyState
+              icon={Receipt}
+              title="No horse expenses to organize yet."
+              description="Add a bill in Expenses and choose the horse it belongs to. For a shared barn bill, divide it between horses in Shared costs first."
+              href="/admin/expenses?new=1"
+              label="Add a horse expense"
+            />
+            <p className="record-form">
+              <Link className="text-link" href="/admin/allocations">
+                Divide a shared barn bill between horses
+              </Link>
+            </p>
+          </>
+        ) : null}
+        {(costs.count ?? 0) > 0 && (
+          <nav className="log-pagination" aria-label="Horse expense pages">
+            {cpage > 1 ? (
+              <Link href={`/admin/attribution?cpage=${cpage - 1}`}>
+                Previous
+              </Link>
+            ) : (
+              <span />
+            )}
+            <span>Page {cpage}</span>
+            {cpage * 25 < (costs.count ?? 0) ? (
+              <Link href={`/admin/attribution?cpage=${cpage + 1}`}>Next</Link>
+            ) : (
+              <span />
+            )}
+          </nav>
         )}
-        <nav className="log-pagination" aria-label="Horse cost pages">
-          {cpage > 1 ? (
-            <Link href={`/admin/attribution?cpage=${cpage - 1}`}>Previous</Link>
-          ) : (
-            <span />
-          )}
-          <span>Page {cpage}</span>
-          {cpage * 25 < (costs.count ?? 0) ? (
-            <Link href={`/admin/attribution?cpage=${cpage + 1}`}>Next</Link>
-          ) : (
-            <span />
-          )}
-        </nav>
       </section>
     </>
   );

@@ -30,7 +30,7 @@ const links = [
   { href: "/admin/invoices", label: "Invoices", icon: FileText },
   { href: "/admin/reports", label: "Reports", icon: ChartNoAxesCombined },
   { href: "/admin/allocations", label: "Shared costs", icon: Scale },
-  { href: "/admin/attribution", label: "Income & cost links", icon: Link2 },
+  { href: "/admin/attribution", label: "Match income & expenses", icon: Link2 },
   { href: "/admin/log", label: "Training log", icon: BookOpen },
   { href: "/admin/reminders", label: "Reminders", icon: CalendarDays },
   { href: "/admin/expenses", label: "Expenses", icon: Receipt },

@@ -113,7 +113,9 @@ Features in this section are present in the application source. A feature being 
 
 ### Stay reporting and manual invoice assignments
 
-- Admin-only Income & cost links screen, with paginated manual invoices and direct/shared horse cost sources. Forms load all horse/stay options without list-limit truncation.
+- Plain-language Match income & expenses guide explains when the page is needed, defines a training visit, and shows a farrier-bill example. Empty expense lists show next steps instead of an empty table; matching labels distinguish a horse expense from its optional visit detail.
+
+- Admin-only Match income & expenses screen, with paginated manual invoices and direct/shared horse cost sources. Forms load all horse/stay options without list-limit truncation.
 - Assign a manual invoice's receipts to one horse and optionally one stay matching that horse and the invoice's recorded billing customer. The assignment applies to all active receipts, including later partial payments; customer ownership changes do not silently choose a horse. Invoices linked to stays already use their original stay.
 - Reporting assignments leave invoice numbers, original bill details, amounts, payment records, and business totals unchanged. Reasons and prior revisions are retained; clearing restores unassigned reporting. Multi-horse receipt splitting on one invoice remains planned.
 - Divide a direct horse cost or a saved shared-cost horse portion among that horse's stays in exact cents. Partial assignments leave an explicit remainder; over-assignment, duplicate stays, and cross-horse assignments are rejected atomically. Unpaid costs remain outside cash reports.
