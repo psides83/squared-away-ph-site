@@ -42,7 +42,7 @@ export default async function Login({
           <p className="eyebrow">THE BARN OFFICE</p>
           <h2>Welcome back.</h2>
           <p className="muted">
-            Your horses, your customers, and the work ahead.
+            Your horses and the work ahead.
             <br />
             Sign in to get the day started.
           </p>
@@ -80,7 +80,7 @@ export default async function Login({
               />
             </label>
             <SubmitButton>
-              Sign in to your office <ArrowUpRight size={17} />
+              Sign in <ArrowUpRight size={17} />
             </SubmitButton>
           </form>
           <p className="login-note">

@@ -1611,3 +1611,93 @@ td strong {
     transition: none !important;
   }
 }
+
+.customer-shell {
+  min-height: 100vh;
+  background: var(--paper);
+}
+.customer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px clamp(20px, 5vw, 80px);
+  border-bottom: 1px solid var(--line);
+  background: #eeebe2;
+  flex-wrap: wrap;
+}
+.customer-header nav {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+.customer-header nav a:hover {
+  color: var(--leather);
+  text-decoration: underline;
+}
+.customer-main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+.customer-footer {
+  padding: 24px;
+  text-align: center;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.customer-footer small {
+  display: block;
+  margin-top: 8px;
+  letter-spacing: 0;
+}
+.customer-horse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.customer-horse-card {
+  padding: 28px;
+  display: grid;
+  gap: 12px;
+}
+.customer-horse-card:hover {
+  border-color: var(--leather);
+}
+.preserve-lines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .customer-header {
+    gap: 20px;
+    padding: 22px 20px;
+  }
+  .customer-header nav {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .customer-header .brand strong {
+    font-size: 13px;
+  }
+  .customer-main {
+    padding: 28px 16px 40px;
+  }
+}
+@media print {
+  .customer-header,
+  .customer-footer {
+    display: none !important;
+  }
+  .customer-main {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+}

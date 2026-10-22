@@ -15,7 +15,11 @@ export async function signIn(form: FormData) {
     redirect(
       "/login?error=Unable+to+sign+in.+Check+your+details+and+try+again.",
     );
-  redirect("/admin");
+  const admin = await db.rpc("is_admin");
+  if (admin.data && !admin.error) redirect("/admin");
+  const customer = await db.rpc("current_customer_id");
+  if (customer.data && !customer.error) redirect("/portal");
+  redirect("/access");
 }
 export async function signOut() {
   const db = await supabaseServer();

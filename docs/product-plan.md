@@ -139,6 +139,16 @@ Features in this section are present in the application source. A feature being 
 - Billed feeding reversals and boarding cost-split/shared-allocation revisions are blocked while reserved. Remove a draft line or void the unpaid invoice to release sources; void retains the original bill and snapshots. Stay dates cannot strand reserved service sources outside the physical stay.
 - Service calculation details appear on the invoice, including expandable actual-feed source documentation. Historical snapshots retain costs when product prices, unit conversions, agreements, or rates later change.
 
+### Customer portal and published updates
+
+- Shared sign-in routes administrators to the barn office and linked customers to `/portal`. Portal pages refresh sessions and send private/no-store responses; there is no public registration or private-data service-worker caching.
+- Admin Portal access screen explicitly links an existing Supabase Authentication email to one customer record, enables/disables the account, and replaces its login when deliberately requested. This stage uses owner-provisioned sign-in accounts; it does not send invitation emails or require a service-role key.
+- Manual per-customer/per-horse grants, revocation, and an optional publication-date starting bound. A blank bound allows all published history; new grants default to today. Ownership edits neither grant nor revoke portal access; review access manually after sales.
+- Customer overview, granted horse profiles, paginated published updates, own finalized/voided invoices, balances, adjustments, and payment history. Co-owners share permitted updates while billing remains limited to the customer actually billed. Horse revocation leaves that customer's own billing available; disabling the account blocks both.
+- Customer invoice details include preserved bill/payment instructions and printable copies, but omit internal payment notes, references, source-cost snapshots, void reasons, drafts, and other customers' billing. Payment links never record a payment.
+- Separate customer-update authoring: save drafts, explicitly publish, unpublish to revise, or archive while retaining records. Private training logs/horse health notes/reminders are never copied automatically. Publication changes and access changes retain administrator history.
+- Customer reads use database-enforced, session-bound functions with whitelisted fields. Administrator tables and financial/stock mutation functions remain inaccessible to customers. Revocation or login replacement takes effect on subsequent reads without relying on browser navigation restrictions.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -157,8 +167,7 @@ Features in this section are present in the application source. A feature being 
 ### Horse records and customer portal
 
 - Horse photos/media, documents, and an ownership transfer history.
-- Invite-only customer dashboard with horses, shared training updates, media, care, documents, invoices, and payment history.
-- An explicit publishing flow that separates private notes from customer updates, with database-enforced customer access rules.
+- Extend the implemented customer portal with deliberately shared media, care records, and customer documents. Add in-app email invitations and password setup/recovery beyond owner-provisioned Supabase accounts.
 
 ### Marketing website
 
@@ -200,15 +209,20 @@ Features in this section are present in the application source. A feature being 
 
 ## Decisions still needed
 
+- Public About page and landing-page information are deferred at the owner's request on October 21, 2026. Trainer biography, final logo, and real media will be supplied later.
+- Public visual direction is an illustrated western design until real photographs and a final logo are available, confirmed October 21, 2026.
+
 
 - Product names, actual package/serving conversion values, and opening quantities will be entered during inventory setup. Supported units and configurable conversions are agreed; actual scoop/flake weights must come from the relevant product or measured batch.
 - Actual starting rates, contact details, and payment instructions can now be entered by the owner in Settings. These are business setup values, not unresolved development decisions.
 
 ## Next build sequence
 
-Customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
+PWA installation → customer media/documents and onboarding → remaining admin expense/reporting improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Customer portal includes migration `20261021001400_customer_portal.sql`. All 83 tests, TypeScript checks, and the production build pass. Local database tests cover explicit grants, separate co-owner billing, safe projections, draft/private-data exclusion, publication lifecycle, date bounds, ownership independence, revocation, login replacement/disable, retained history, and denied customer/anonymous access to admin operations. Authenticated production sign-in/customer flows and migration completion remain unverified.
 
 - Service billing includes migration `20261021001300_service_billing.sql`. All 75 tests, TypeScript checks, and the production build pass. Local database tests cover physical boarding days without training classifications, leap-year denominators, zero rates, weighted consumption and rounding, exclusions/reversals, source protection, duplicate/cross-method safeguards, cost snapshots, release on removal/void, and non-admin denial. Authenticated live flows and migration completion remain unverified.
 

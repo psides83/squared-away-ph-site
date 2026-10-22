@@ -17,11 +17,11 @@ npm run dev
 
 If an existing `.env` already contains those values, Next.js reads it; copying another file is unnecessary. Environment files are ignored by Git. Never add a service-role key to a `NEXT_PUBLIC_` variable.
 
-Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-in. The public marketing site is a later phase.
+Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-in; linked customer accounts are redirected to their customer portal. The public marketing site is a later phase.
 
 ## Set up Supabase
 
-1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, billing-day inputs, invoices/payments, cash reporting, shared-cost allocations, and stay-reporting links. No horse, customer, expense, or stock records are seeded. Installations already using the billing calendar need `20261021000800_invoices_payments.sql` before opening Invoices. Apply `20261021000900_cash_reporting.sql` before opening Reports. Apply `20261021001000_shared_cost_allocations.sql` for Shared costs and the updated horse-margin report. Apply `20261021001100_stay_reporting.sql` for Income & cost links and the updated Reports screen. Apply `20261021001200_overview_expense_filters.sql` for expense filters and overview financial cards. Apply `20261021001300_service_billing.sql` before using feed/boarding invoice generation.
+1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, billing-day inputs, invoices/payments, cash reporting, shared-cost allocations, and stay-reporting links. No horse, customer, expense, or stock records are seeded. Installations already using the billing calendar need `20261021000800_invoices_payments.sql` before opening Invoices. Apply `20261021000900_cash_reporting.sql` before opening Reports. Apply `20261021001000_shared_cost_allocations.sql` for Shared costs and the updated horse-margin report. Apply `20261021001100_stay_reporting.sql` for Income & cost links and the updated Reports screen. Apply `20261021001200_overview_expense_filters.sql` for expense filters and overview financial cards. Apply `20261021001300_service_billing.sql` before using feed/boarding invoice generation. Apply `20261021001400_customer_portal.sql` before enabling customer accounts or published updates.
 2. In Supabase Authentication → Users, create your administrator account with an email and password. Confirm its email through the dashboard if needed. There is no public sign-up flow.
 3. Grant administrator access from the SQL Editor, replacing the example email with the exact account email:
 
@@ -61,7 +61,17 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Ownership transfer history, scheduled invoice generation, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Ownership transfer history, scheduled invoice generation, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, purchase-cost/inbound-stock corrections, customer media/documents/care sharing, in-app invitation emails/password recovery, public marketing pages, and PWA installation/offline features. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+
+## Customer portal setup
+
+1. Create a customer sign-in account in Supabase Authentication using your trusted owner workflow. There is no public registration or automatic email invitation in this increment. Do not share your administrator login or put a service-role key in the browser.
+2. In **Portal access**, select the customer and link the exact existing sign-in email. One login maps to one customer record. Replacing or disabling that link removes the old session's customer access on subsequent reads.
+3. Grant each horse explicitly. New grants default to updates published from today; clear the date only when you intend to share all published history. Ownership changes do not change these grants automatically. Review/revoke access whenever a horse is sold.
+4. Write separate customer-facing text in **Customer updates**. Saving creates a draft; publish only after review. Private training/health notes are not exposed or copied. Unpublish before revising; republishing has a new publication date. Archiving hides the update and retains history.
+5. Customers sign in through `/login` and use `/portal`. They see only granted horses/published updates and invoices/payments billed to their own customer record. Removing horse access does not remove their own billing history. Account disable blocks the entire portal.
+
+Customer invoice projections omit internal payment notes/references and source-cost snapshots. Customer tables remain closed to direct reads; scoped database functions return only allowed fields. Live authentication and browser flows still need testing with owner-created customer accounts after migration. The tests simulate Supabase auth roles and do not send invitation emails or create production accounts.
 
 ## Overview and expense filters
 

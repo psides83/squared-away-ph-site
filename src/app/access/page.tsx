@@ -10,19 +10,20 @@ export default async function Access() {
     data: { user },
   } = await db.auth.getUser();
   if (!user) redirect("/login");
+  const customer = await db.rpc("current_customer_id");
+  if (customer.data && !customer.error) redirect("/portal");
   return (
     <main className="access-page">
       <div className="panel access-card">
         <Brand />
         <p className="eyebrow">ONE MORE STEP</p>
-        <h1>Your office is protected.</h1>
+        <h1>Your account needs access.</h1>
         <p className="muted">
-          This account does not have administrator access yet, or the database
-          setup has not been applied.
+          Access has not been assigned to this account yet.
         </p>
         <p>
-          The project owner needs to apply the database migration and grant this
-          account access using the setup guide in the repository.
+          Contact Squared Away Performance Horses to activate your customer
+          access.
         </p>
         <p className="notice">Signed in as {user.email}</p>
         <form action={signOut}>
