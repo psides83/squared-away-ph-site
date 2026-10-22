@@ -108,8 +108,19 @@ Features in this section are present in the application source. A feature being 
 - Saved splits snapshot horse names, approved days, training-stay day counts, and allocated cents. Later stay changes do not reprice saved splits. Revising or clearing retains history and reasons; retries do not duplicate revisions. The screen shows the latest ten revisions.
 - Active allocations protect source amount, horse assignment, expense date, and void status until cleared. Payment dates remain editable and determine when the cost appears in cash reports. The original expense is counted once in business totals.
 - Reports show per-horse receipts on stay-linked invoices, direct paid costs, allocated shared paid costs, and recorded cash margins. This includes the owner's horses, even without training stays or income.
-- Unassigned receipts from invoices without stays and unallocated paid shared expenses remain explicit. Horse margins plus unassigned receipts minus unallocated costs reconcile to business net cash profit; incomplete assignments are not labeled complete horse profitability.
+- Unassigned receipts without horse reporting links and unallocated paid shared expenses remain explicit. Horse margins plus unassigned receipts minus unallocated costs reconcile to business net cash profit; incomplete assignments are not labeled complete horse profitability.
 - Stay-linked invoices prevent subsequent reassignment of the stay to another horse, preserving income attribution. Reports and allocation records remain administrator-only.
+
+### Stay reporting and manual invoice assignments
+
+- Admin-only Income & cost links screen, with paginated manual invoices and direct/shared horse cost sources. Forms load all horse/stay options without list-limit truncation.
+- Assign a manual invoice's receipts to one horse and optionally one stay matching that horse and the invoice's recorded billing customer. The assignment applies to all active receipts, including later partial payments; customer ownership changes do not silently choose a horse. Invoices linked to stays already use their original stay.
+- Reporting assignments leave invoice numbers, original bill details, amounts, payment records, and business totals unchanged. Reasons and prior revisions are retained; clearing restores unassigned reporting. Multi-horse receipt splitting on one invoice remains planned.
+- Divide a direct horse cost or a saved shared-cost horse portion among that horse's stays in exact cents. Partial assignments leave an explicit remainder; over-assignment, duplicate stays, and cross-horse assignments are rejected atomically. Unpaid costs remain outside cash reports.
+- Replacing/clearing a shared horse allocation automatically stops its old stay splits contributing to reports. Saved history remains reviewable from the shared-cost revision; new horse portions need their own reviewed stay splits.
+- Active direct-cost splits protect the source expense amount, horse assignment, expense date, and void status until cleared. Stays referenced by reporting history cannot be reassigned to another horse; active manual invoice stay links protect the matched billing customer.
+- Reports include training-stay receipts, direct/shared costs paid, and recorded cash margins, with unassigned receipts, direct-cost remainders, shared-cost remainders, and barn costs shown separately. Stay and horse reconciliations agree with the same business total.
+- Business, horse, and stay summaries are returned together from a consistent database snapshot. Labels identify recorded cash margins rather than claiming complete profitability when records or assignments are incomplete.
 
 ## Planned (not implemented)
 
@@ -123,9 +134,8 @@ Features in this section are present in the application source. A feature being 
 
 #### Feed, boarding, and profitability details
 
-- Extend implemented horse/shared-barn assignments and shared-cost splits with explicit training-stay cost attribution and per-stay reporting. Add a workflow for attributing manual invoice receipts without a stay; these remain visibly unassigned today.
+- Split receipts from a single manual invoice among multiple horses/stays if needed. Current reporting links assign the entire invoice to one horse and optionally one matching stay.
 - Add reimbursement-versus-absorbed-cost breakdowns using the implemented expense-to-invoice links. Cash reports already count received invoice payments once; do not add reimbursements a second time as separate revenue.
-- Add stay-level margins beyond the implemented horse-level recorded cash margins. Preserve visible unassigned amounts and allocation completeness indicators.
 - Add separate inventory consumption cost summaries in reports, beyond the existing inventory ledger. Keep these separate from cash reports so feed purchases and consumption are never deducted together.
 - Add persistent boarding occupancy records for horses outside training stays if useful; their actual boarding days can currently be entered in each shared-cost allocation.
 
@@ -149,7 +159,7 @@ Features in this section are present in the application source. A feature being 
 
 - Store money as integer cents, service/billing dates as dates, and recorded activity times as timezone-aware timestamps. Business dates use America/Chicago.
 - Finalized invoice line items retain the billed customer, description, and amount even if current profiles or rates change. Use adjustments rather than silently overwriting finalized invoices.
-- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, invoice_payments, and invoice_adjustments. Shared-cost revisions use expense_allocations and expense_allocation_lines. Sessions and progress notes share `training_entries`.
+- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, invoice_payments, and invoice_adjustments. Shared-cost revisions use expense_allocations and expense_allocation_lines. Reporting assignments use invoice_reporting_links, cost_stay_splits, and cost_stay_split_lines. Sessions and progress notes share `training_entries`.
 - Enforce access in the database as well as the UI. Never commit credentials or expose server-only keys to the browser.
 - Keep preview/development databases separate from production. Apply migrations through a reviewed deployment workflow.
 - On every completed feature, move its delivered scope from Planned to Implemented in the same change. Split partially completed items so only unfinished work remains under Planned; do not leave completed features duplicated there. Update the next build sequence and record verification/deployment limitations below.
@@ -179,9 +189,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Stay-level attribution, manual-invoice attribution, and feed/boarding billing calculations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
+Feed/boarding billing calculations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Stay-reporting increment includes migration `20261021001100_stay_reporting.sql`. All 63 tests, TypeScript checks, and the production build pass. Local database tests cover manual receipt assignments, historical billing-customer validation, bill preservation, partial direct/shared cost splits, residuals, over-assignment/cross-horse rejection, repeated requests, revisions/clears, retired source handling, full cash reconciliation, and denied non-admin access. Authenticated browser flows, retired-history UI, and production migration completion have not been verified; no production records were created for testing.
 
 - Shared-cost/horse-margin increment includes migration `20261021001000_shared_cost_allocations.sql`. All 55 tests, TypeScript checks, and the production build pass. Local database tests cover inclusive boarding defaults, owner horses without training stays, cent reconciliation, snapshots, repeat safety, replacement/clearing history, protected source amounts, income attribution, business-total reconciliation, and non-admin denial. Authenticated browser flows and live migration completion have not been verified.
 

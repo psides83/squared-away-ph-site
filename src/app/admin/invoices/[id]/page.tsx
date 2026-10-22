@@ -136,6 +136,14 @@ export default async function Invoice({
           <Link className="text-link" href="/admin/invoices">
             All invoices
           </Link>
+          {!invoice.stay_id && (
+            <Link
+              className="text-link"
+              href={`/admin/attribution?invoice=${id}`}
+            >
+              Income reporting assignment
+            </Link>
+          )}
           <PrintInvoice />
         </div>
       </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
-import { today, money } from "@/lib/format";
+import { today, money, dateLabel } from "@/lib/format";
 import { PageHeading } from "@/components/ui";
 
 type HorseReport = {
@@ -14,6 +14,24 @@ type HorseReport = {
   }[];
   unassigned_received_cents: number;
   unallocated_paid_cents: number;
+};
+
+type StayReport = {
+  stays: {
+    stay_id: string;
+    horse_name: string;
+    customer_name: string;
+    arrival_date: string;
+    departure_date: string | null;
+    received_cents: number;
+    direct_cents: number;
+    shared_cents: number;
+    margin_cents: number;
+  }[];
+  unassigned_received_cents: number;
+  unassigned_direct_cents: number;
+  unassigned_shared_cents: number;
+  unallocated_shared_cents: number;
 };
 
 type Report = {
@@ -47,14 +65,12 @@ export default async function Reports({
     validDate(to) &&
     from <= to &&
     Date.parse(to) - Date.parse(from) <= 3660 * 86400000;
-  const [result, horseResult] = valid
-    ? await Promise.all([
-        db.rpc("cash_report", { p_from: from, p_to: to }),
-        db.rpc("horse_cash_report", { p_from: from, p_to: to }),
-      ])
-    : [null, null];
-  const report = result?.data as Report | null;
-  const horseReport = horseResult?.data as HorseReport | null;
+  const result = valid
+    ? await db.rpc("financial_report_bundle", { p_from: from, p_to: to })
+    : null;
+  const report = result?.data?.business as Report | null;
+  const horseReport = result?.data?.horse as HorseReport | null;
+  const stayReport = result?.data?.stay as StayReport | null;
   return (
     <>
       <PageHeading
@@ -79,11 +95,7 @@ export default async function Reports({
           </div>
         </form>
       </section>
-      {!valid ||
-      result?.error ||
-      horseResult?.error ||
-      !report ||
-      !horseReport ? (
+      {!valid || result?.error || !report || !horseReport || !stayReport ? (
         <p className="notice error" role="alert">
           {!valid
             ? "Choose valid dates in order, covering at most ten years."
@@ -193,6 +205,7 @@ export default async function Reports({
             </div>
             <p>
               Payments on stay-linked invoices belong to that stay’s horse.
+              Manual invoice receipts use their saved reporting assignment.
               Direct horse expenses and saved shared-cost splits use the expense
               paid date. These are margins from assigned records, not complete
               horse profitability.
@@ -225,12 +238,12 @@ export default async function Reports({
             <p className="notice">
               Not assigned to a horse:{" "}
               <strong>{money(horseReport.unassigned_received_cents)}</strong>{" "}
-              received on invoices without a training stay, and{" "}
+              received without a horse reporting assignment, and{" "}
               <strong>{money(horseReport.unallocated_paid_cents)}</strong> in
               paid shared expenses without an allocation. Resolve these amounts
-              before treating horse margins as complete. Manual invoice income
-              remains unassigned; customer ownership alone does not determine
-              the horse.
+              before treating horse margins as complete. Use Income & cost links
+              to assign manual invoices; customer ownership alone does not
+              determine the horse.
             </p>
             <p>
               Reconciliation: horse margins{" "}
@@ -241,6 +254,82 @@ export default async function Reports({
               {money(horseReport.unassigned_received_cents)} − unallocated
               shared costs {money(horseReport.unallocated_paid_cents)} =
               business net cash profit {money(report.net_cents)}.
+            </p>
+          </section>
+          <section className="panel">
+            <div className="panel-heading">
+              <h2>Training-stay cash margins</h2>
+              <Link href="/admin/attribution" className="text-link">
+                Assign income & costs
+              </Link>
+            </div>
+            <p>
+              Receipts use the invoice’s original stay or a saved reporting
+              link. Costs use reviewed stay splits on direct horse expenses and
+              current shared-cost portions. Dates below identify the stay; the
+              selected report period still uses payment dates. Unassigned
+              amounts remain separate.
+            </p>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Horse / billing customer</th>
+                    <th>Stay</th>
+                    <th>Received</th>
+                    <th>Direct costs paid</th>
+                    <th>Shared costs paid</th>
+                    <th>Recorded cash margin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stayReport.stays.map((s) => (
+                    <tr key={s.stay_id}>
+                      <td>
+                        {s.horse_name}
+                        <small className="cell-secondary">
+                          {s.customer_name}
+                        </small>
+                      </td>
+                      <td>
+                        {dateLabel(s.arrival_date)} –{" "}
+                        {s.departure_date
+                          ? dateLabel(s.departure_date)
+                          : "ongoing"}
+                      </td>
+                      <td>{money(s.received_cents)}</td>
+                      <td>{money(s.direct_cents)}</td>
+                      <td>{money(s.shared_cents)}</td>
+                      <td>{money(s.margin_cents)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {!stayReport.stays.length && <p>No training stays yet.</p>}
+            <p className="notice">
+              Not assigned to stays: receipts{" "}
+              {money(stayReport.unassigned_received_cents)}, direct horse costs{" "}
+              {money(stayReport.unassigned_direct_cents)}, and allocated horse
+              shares {money(stayReport.unassigned_shared_cents)}. Shared barn
+              costs not yet allocated to horses:{" "}
+              {money(stayReport.unallocated_shared_cents)}. Owner-horse costs
+              with no training stay correctly remain outside stay margins. These
+              figures represent assigned recorded activity, not complete stay
+              profitability.
+            </p>
+            <p>
+              Reconciliation: stay margins{" "}
+              {money(
+                stayReport.stays.reduce((sum, s) => sum + s.margin_cents, 0),
+              )}{" "}
+              + unassigned receipts{" "}
+              {money(stayReport.unassigned_received_cents)} − unassigned direct
+              costs {money(stayReport.unassigned_direct_cents)} − unassigned
+              horse shares {money(stayReport.unassigned_shared_cents)} −
+              unallocated barn costs{" "}
+              {money(stayReport.unallocated_shared_cents)} = business net cash
+              profit {money(report.net_cents)}.
             </p>
           </section>
         </>

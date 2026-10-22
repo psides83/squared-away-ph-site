@@ -227,7 +227,17 @@ export default async function Allocations({
                               <td>{l.horse_name}</td>
                               <td>{l.board_days}</td>
                               <td>{l.training_days_snapshot}</td>
-                              <td>{money(l.amount_cents)}</td>
+                              <td>
+                                {money(l.amount_cents)}
+                                <small className="cell-secondary">
+                                  <Link
+                                    className="text-link"
+                                    href={`/admin/attribution?expense=${expense.id}&horse=${l.horse_id}&allocation=${a.id}`}
+                                  >
+                                    Stay reporting / history
+                                  </Link>
+                                </small>
+                              </td>
                             </tr>
                           ),
                         )}

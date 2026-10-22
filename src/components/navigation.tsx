@@ -16,6 +16,7 @@ import {
   FileText,
   ChartNoAxesCombined,
   Scale,
+  Link2,
 } from "lucide-react";
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -26,6 +27,7 @@ const links = [
   { href: "/admin/invoices", label: "Invoices", icon: FileText },
   { href: "/admin/reports", label: "Reports", icon: ChartNoAxesCombined },
   { href: "/admin/allocations", label: "Shared costs", icon: Scale },
+  { href: "/admin/attribution", label: "Income & cost links", icon: Link2 },
   { href: "/admin/log", label: "Training log", icon: BookOpen },
   { href: "/admin/reminders", label: "Reminders", icon: CalendarDays },
   { href: "/admin/expenses", label: "Expenses", icon: Receipt },
