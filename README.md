@@ -179,3 +179,9 @@ Daily feeding offers **Confirm a feeding in bulk** and **Record extras for multi
 Apply `20261021001800_feeding_times.sql` after the preceding migrations. Saved rations are grouped by horse and feeding time. Morning and Evening are provided; **Manage feeding times** adds custom times with optional clock times, ordering, and archive controls. The same feed or supplement can have different quantities at different times.
 
 Existing daily totals stay unassigned. Edit each line to assign its time and per-feeding amount, adding another line if it is fed at another time. Assign all active lines for a horse before confirming scheduled rations. Historical full-day confirmations cannot be duplicated as timed confirmations on the same date. Individual and bulk confirmations record only the chosen time; extras can be tagged with a time or remain unscheduled. History retains its original label and cost when a feeding time is renamed.
+
+### Feed/board defaults and customer invoice format
+
+Apply `20261021001900_service_defaults_invoice_format.sql`. In Settings, monthly feed and board charges prefill new training stays; blank means unset and zero is allowed. Existing stays retain their terms. Actual business expenses are still recorded separately.
+
+Choose **Invoice format** on each customer: itemized, or combined training/feed/board. Other charges stay separate. Manual invoice lines choose a category; generated service lines classify automatically. The invoice document and portal show the customer format, while **Review detailed charges** preserves the full internal breakdown. Finalization saves the selected format; changing a customer later does not restyle issued invoices. Existing issued invoices remain itemized.

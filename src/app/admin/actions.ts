@@ -50,6 +50,10 @@ export async function saveRecord(entity: Entity, form: FormData) {
           name: text(form, "name", true, 200),
           email,
           phone: text(form, "phone", false, 50),
+          invoice_presentation: choice(form, "invoice_presentation", [
+            "itemized",
+            "combined_services",
+          ]),
           notes: text(form, "notes", false, 5000),
         };
         break;

@@ -1,3 +1,4 @@
+import { CustomerInvoiceLines } from "@/components/customer-invoice-lines";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireCustomer } from "@/lib/auth";
@@ -60,30 +61,7 @@ export default async function CustomerInvoice({
           {i.customer?.email && <p>{i.customer.email}</p>}
           {i.customer?.phone && <p>{i.customer.phone}</p>}
         </div>
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {i.lines.map(
-                (l: {
-                  id: string;
-                  description: string;
-                  amount_cents: number;
-                }) => (
-                  <tr key={l.id}>
-                    <td>{l.description}</td>
-                    <td>{money(Number(l.amount_cents))}</td>
-                  </tr>
-                ),
-              )}
-            </tbody>
-          </table>
-        </div>
+        <CustomerInvoiceLines lines={i.lines} />
         <div className="invoice-totals">
           <p>
             <span>Original invoice</span>

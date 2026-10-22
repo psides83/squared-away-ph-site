@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
-import { cents, dateValue, identifier, text } from "@/lib/validation";
+import { choice, cents, dateValue, identifier, text } from "@/lib/validation";
 import {
   invoiceHeaderValues,
   paymentValues,
@@ -81,6 +81,12 @@ export async function invoiceAction(operation: string, form: FormData) {
           p_request: identifier(form, "request_id", true),
           p_invoice: invoice,
           p_description: text(form, "description", true, 500),
+          p_category: choice(form, "billing_category", [
+            "other",
+            "training",
+            "feed",
+            "boarding",
+          ]),
           p_amount: signedAmount(form),
         };
         break;

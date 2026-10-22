@@ -94,7 +94,7 @@ export function BusinessSettingsForm({
           <div className="panel-heading">
             <div>
               <p className="eyebrow">A STARTING POINT, NOT A LOCKED RATE</p>
-              <h2>Training & payment defaults</h2>
+              <h2>Training, feed, board & payment defaults</h2>
             </div>
           </div>
           <div className="record-form">
@@ -102,6 +102,28 @@ export function BusinessSettingsForm({
               {field(
                 "default_monthly_rate",
                 "Default monthly training rate ($)",
+                {
+                  type: "number",
+                  min: 0,
+                  max: 1000000,
+                  step: "0.01",
+                  placeholder: "Not set",
+                },
+              )}
+              {field(
+                "default_feed_monthly_rate",
+                "Default monthly feed charge ($)",
+                {
+                  type: "number",
+                  min: 0,
+                  max: 1000000,
+                  step: "0.01",
+                  placeholder: "Not set",
+                },
+              )}
+              {field(
+                "default_boarding_monthly_rate",
+                "Default monthly board charge ($)",
                 {
                   type: "number",
                   min: 0,
@@ -144,9 +166,10 @@ export function BusinessSettingsForm({
             </div>
             <p className="muted form-hint">
               New training stays start with these defaults and can be adjusted
-              individually. Existing stays keep their recorded terms. Invoice
-              creation and worked/rest-day billing calculations are still being
-              built.
+              individually. A feed or board charge starts a new stay with that
+              separate monthly rate; you can choose included or actual-cost
+              billing instead. Existing stays keep their recorded terms. These
+              customer charges do not record business expenses.
             </p>
           </div>
         </section>
@@ -177,8 +200,8 @@ export function BusinessSettingsForm({
             </div>
             {notes("apple_cash_instructions", "Apple Cash instructions", 2000)}
             <p className="muted form-hint">
-              These are saved instructions for the upcoming billing screens. No
-              payment is collected or confirmed here.
+              These instructions appear on finalized invoices. No payment is
+              collected or confirmed here.
             </p>
           </div>
         </section>

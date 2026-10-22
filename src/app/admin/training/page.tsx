@@ -6,7 +6,10 @@ import { dateLabel, money, today } from "@/lib/format";
 import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
 import { DeleteButton, SubmitButton } from "@/components/submit-button";
 import { deleteRecord, saveRecord } from "@/app/admin/actions";
-import { stayFormDefaults } from "@/lib/business-settings";
+import {
+  stayFormDefaults,
+  stayServiceFormDefaults,
+} from "@/lib/business-settings";
 import { StayServiceFields } from "@/components/stay-service-fields";
 import { serviceLabels } from "@/lib/billing-days";
 
@@ -181,21 +184,20 @@ export default async function Training({
               <div className="form-grid">
                 <StayServiceFields
                   key={selected?.id ?? "new"}
-                  feedMode={selected?.feed_billing ?? "unrecorded"}
-                  feedCents={selected?.feed_monthly_cents}
-                  boardingMode={selected?.boarding_billing ?? "unrecorded"}
-                  boardingCents={selected?.boarding_monthly_cents}
+                  {...(settings.data
+                    ? stayServiceFormDefaults(selected, settings.data)
+                    : {})}
                 />
               </div>
               <p className="muted form-hint">
-                Feed and boarding are agreed individually for this stay. “Actual
-                cost” records the agreement only; cost allocation and invoice
-                generation are still to come.
+                Feed and boarding are agreed individually for this stay. Monthly
+                charges use physical boarding days. Actual-cost charges use
+                recorded feed consumption and reviewed boarding costs.
               </p>
               <p className="notice">
                 New stays use your business settings as a starting point. You
-                can override them here. This records your agreement; automatic
-                invoices and proration calculations will come with billing.
+                can override them here. Saving an agreement does not create an
+                invoice; automatic billing remains planned.
               </p>
               <div className="form-actions">
                 <SubmitButton>

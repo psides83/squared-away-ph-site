@@ -48,9 +48,9 @@ Features in this section are present in the application source. A feature being 
 
 ### Master admin settings
 
-- Admin-only Settings page for public business phone/email, optional default monthly rate, billing day (1–28), partial-month policy, and invoice payment terms in days (0 means due upon receipt).
+- Admin-only Settings page for public business phone/email, optional default monthly training, feed, and board charges, billing day (1–28), partial-month policy, and invoice payment terms in days (0 means due upon receipt).
 - Saved general payment instructions, HTTPS Venmo/PayPal links, and Apple Cash instructions. Finalized invoices snapshot these details; public-page display remains planned.
-- New training stays prefill from settings and allow individual overrides. The rate, billing day, partial-month policy, and payment terms are stored on the stay; changing defaults does not change existing agreements.
+- New training stays prefill training and feed/board charges from settings and allow individual overrides. A set feed/board default starts that service as separately billed monthly; included, actual-cost, and other policies remain available. The rate, billing day, partial-month policy, and payment terms are stored on the stay; changing defaults does not change existing agreements.
 - Legacy stays retain their recorded values. Previously unrecorded payment terms remain unknown until explicitly entered when editing.
 - No business dollar rate or contact detail is hard-coded. Settings validation preserves blank or zero rates, validates payment links, and retains typed form values when saving fails.
 
@@ -167,6 +167,13 @@ Features in this section are present in the application source. A feature being 
 - App preview/download routes issue 60-second signed links with private/no-store responses. Unpublishing, grant revocation, and account disable prevent fresh portal requests; previously issued links/copies are not withdrawn. Admin archival retains the object and audit metadata.
 - File lists are paginated, horse-filterable, and use authenticated image routes without the public image-optimization cache. Photos display in responsive grids; documents open/download through the same access checks.
 
+### Customer invoice format and service charge defaults
+
+- Settings include optional monthly feed and board customer-charge defaults in exact cents, including zero and unset values. New stays use them; saved agreements keep their original terms. These are billing rates, not expense records or profit assumptions.
+- Each customer chooses itemized services or one combined training/feed/board amount. Vet, farrier, hauling, and other charges remain separate. Manual lines explicitly choose their charge category; generated training/feed/board lines classify themselves from their source, never by guessing description text.
+- Customer invoice preview, printed admin invoice, and portal invoice share the selected presentation. Full internal source details and draft-line removal stay available under Review detailed charges. Combining lines does not modify financial amounts, source reservations, payment allocation, or profit records.
+- Finalization snapshots the customer’s format. Drafts follow the current preference; later preference changes do not alter issued invoices. Existing issued invoices with no saved format remain itemized. Portal responses for combined invoices contain grouped service amounts while preserving customer billing isolation. Requires migration `20261021001900_service_defaults_invoice_format.sql`.
+
 ### Feeding times and grouped rations
 
 - Morning and Evening defaults plus administrator-managed custom feeding times, optional clock times, display order, renaming, and archiving. Active rations must be moved or paused before their feeding time can be archived.
@@ -223,6 +230,8 @@ Features in this section are present in the application source. A feature being 
 
 ## Agreed decisions (implementation remains planned unless listed above)
 
+- Customer invoice presentation may combine training, feed, and board; vet, farrier, hauling, and other charges stay separate. The full internal breakdown is retained. Confirmed October 21, 2026; implemented above.
+
 - Repository: https://github.com/psides83/squared-away-ph-site. The owner confirmed that the source code is public. Repository visibility is separate from deployed app access; no visibility change has been requested.
 - Billing schedules vary by training stay: first of month, arrival anniversary, or another agreed date.
 - Partial months use actual calendar days as the proration denominator, with a manual override. Billable days are days actually worked plus rest days in between; merely being present on arrival or departure is not automatically billable. Physical boarding dates and billable training dates must be tracked separately.
@@ -257,6 +266,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Service-defaults/invoice-format increment includes migration `20261021001900_service_defaults_invoice_format.sql`. All 109 tests, TypeScript checks, and the production build pass. Local tests cover blank/zero/exact-cent defaults, retained stay agreements, generated/manual charge categories, combined-service sums and separate other charges, draft preference changes, issued/legacy invoice format preservation, portal isolation/private-helper denial, payments, and adjustments. Browser checks used the actual Settings and invoice-line components with sample values; the temporary preview was removed. Remote migration and authenticated production flows remain unverified.
 
 - Feeding-time increment includes migration `20261021001800_feeding_times.sql`. All 102 tests, TypeScript checks, and the production build pass. Local database tests cover separate same-product rations by time, individual/bulk time-specific deductions and costs, shortages/rollback, retry safety, paused/archived times, label snapshots, migration preservation, old daily-total safeguards, and non-admin denial. Local browser checks used the actual grouped-rations/bulk components with sample horses and confirmed custom-time filtering; the temporary preview was removed. Live authenticated flows and remote migration completion remain unverified.
 

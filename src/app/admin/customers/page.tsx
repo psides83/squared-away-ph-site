@@ -90,6 +90,26 @@ export default async function Customers({
               />
             </div>
             <label>
+              Invoice format
+              <select
+                name="invoice_presentation"
+                defaultValue={selected?.invoice_presentation ?? "itemized"}
+              >
+                <option value="itemized">
+                  Itemized training, feed, and board
+                </option>
+                <option value="combined_services">
+                  Combined training, feed, and board total
+                </option>
+              </select>
+            </label>
+            <p className="muted">
+              Vet, farrier, hauling, and other charges stay separate. Detailed
+              charges stay in your records. This preference applies when an
+              invoice is finalized; previously issued invoices keep their
+              format.
+            </p>
+            <label>
               Private notes
               <textarea
                 name="notes"
@@ -137,6 +157,11 @@ export default async function Customers({
                         {row.name}
                         <ArrowUpRight size={14} />
                       </Link>
+                      <small className="cell-secondary">
+                        {row.invoice_presentation === "combined_services"
+                          ? "Combined service invoice"
+                          : "Itemized invoice"}
+                      </small>
                     </td>
                     <td>
                       <div className="contact-cell">

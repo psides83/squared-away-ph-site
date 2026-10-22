@@ -1,3 +1,4 @@
+import { CustomerInvoiceLines } from "@/components/customer-invoice-lines";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -47,53 +48,58 @@ export default async function Invoice({
     );
   if (!result.data) notFound();
   const invoice = result.data;
-  const [lines, payments, adjustments, customer, stay, expenses, links] =
-    await Promise.all([
-      db
-        .from("invoice_lines")
-        .select("*")
-        .eq("invoice_id", id)
-        .order("created_at"),
-      db
-        .from("invoice_payments")
-        .select("*")
-        .eq("invoice_id", id)
-        .order("created_at"),
-      db
-        .from("invoice_adjustments")
-        .select("*")
-        .eq("invoice_id", id)
-        .order("created_at"),
-      db
-        .from("customers")
-        .select("id,name,email,phone")
-        .eq("id", invoice.customer_id)
-        .single(),
-      invoice.stay_id
-        ? db
-            .from("training_stays")
-            .select("*")
-            .eq("id", invoice.stay_id)
-            .single()
-        : Promise.resolve({ data: null, error: null }),
-      invoice.status === "draft"
-        ? db
-            .from("expenses")
-            .select(
-              "id,horse_id,vendor,amount_cents,expense_date,invoice_expense_claims(line_id)",
-            )
-            .eq("reimbursable", true)
-            .is("voided_at", null)
-            .order("expense_date", { ascending: false })
-            .limit(100)
-        : Promise.resolve({ data: [], error: null }),
-      invoice.status === "draft"
-        ? db
-            .from("horse_customers")
-            .select("horse_id")
-            .eq("customer_id", invoice.customer_id)
-        : Promise.resolve({ data: [], error: null }),
-    ]);
+  const [
+    lines,
+    payments,
+    adjustments,
+    customer,
+    stay,
+    expenses,
+    links,
+    presentation,
+  ] = await Promise.all([
+    db
+      .from("invoice_lines")
+      .select("*")
+      .eq("invoice_id", id)
+      .order("created_at"),
+    db
+      .from("invoice_payments")
+      .select("*")
+      .eq("invoice_id", id)
+      .order("created_at"),
+    db
+      .from("invoice_adjustments")
+      .select("*")
+      .eq("invoice_id", id)
+      .order("created_at"),
+    db
+      .from("customers")
+      .select("id,name,email,phone")
+      .eq("id", invoice.customer_id)
+      .single(),
+    invoice.stay_id
+      ? db.from("training_stays").select("*").eq("id", invoice.stay_id).single()
+      : Promise.resolve({ data: null, error: null }),
+    invoice.status === "draft"
+      ? db
+          .from("expenses")
+          .select(
+            "id,horse_id,vendor,amount_cents,expense_date,invoice_expense_claims(line_id)",
+          )
+          .eq("reimbursable", true)
+          .is("voided_at", null)
+          .order("expense_date", { ascending: false })
+          .limit(100)
+      : Promise.resolve({ data: [], error: null }),
+    invoice.status === "draft"
+      ? db
+          .from("horse_customers")
+          .select("horse_id")
+          .eq("customer_id", invoice.customer_id)
+      : Promise.resolve({ data: [], error: null }),
+    db.rpc("admin_invoice_presentation", { p_invoice: id }),
+  ]);
   const services =
     invoice.status === "draft" && invoice.stay_id
       ? await db.rpc("invoice_service_options", { p_invoice: id })
@@ -107,6 +113,7 @@ export default async function Invoice({
     expenses,
     links,
     services,
+    presentation,
   ].some((r) => r.error);
   const date = today();
   const draft = invoice.status === "draft";
@@ -155,6 +162,20 @@ export default async function Invoice({
             </Link>
           )}
           <PrintInvoice />
+          <span className="muted">
+            Customer format:{" "}
+            {presentation.data?.style === "combined_services"
+              ? "Combined training, feed & board"
+              : "Itemized"}
+          </span>
+          {draft && (
+            <Link
+              className="text-link"
+              href={`/admin/customers?edit=${invoice.customer_id}#record-form`}
+            >
+              Change customer invoice format
+            </Link>
+          )}
         </div>
       </div>
       <section className="panel invoice-document">
@@ -188,58 +209,66 @@ export default async function Invoice({
           {snapshot?.email && <p>{snapshot.email}</p>}
           {snapshot?.phone && <p>{snapshot.phone}</p>}
         </div>
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Amount</th>
-                {draft && <th className="no-print">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {lines.data?.map((line) => (
-                <tr key={line.id}>
-                  <td>
-                    {line.description}
-                    {line.kind === "training" && line.source_snapshot && (
-                      <small className="cell-secondary">
-                        {money(line.source_snapshot.monthly_rate_cents)}/month ×{" "}
-                        {line.source_snapshot.billable_days}/
-                        {line.source_snapshot.calendar_days}; rounded once to
-                        cents.
-                      </small>
-                    )}
-                    {line.kind === "service" && line.source_snapshot && (
-                      <InvoiceServiceDetail snapshot={line.source_snapshot} />
-                    )}
-                    {line.kind === "expense" && line.source_snapshot && (
-                      <small className="cell-secondary">
-                        Original cost{" "}
-                        {money(line.source_snapshot.original_cost_cents)} +
-                        handling fee{" "}
-                        {money(line.source_snapshot.handling_fee_cents)}
-                      </small>
-                    )}
-                  </td>
-                  <td>{money(line.amount_cents)}</td>
-                  {draft && (
-                    <td className="no-print">
-                      <form action={invoiceAction.bind(null, "remove")}>
-                        {invoiceId}
-                        <input name="line_id" type="hidden" value={line.id} />
-                        <DeleteButton
-                          label="Remove"
-                          confirmText="Remove this draft line? Any linked expense, feeding records, or service/calendar days will become available for billing again."
-                        />
-                      </form>
-                    </td>
-                  )}
+        <CustomerInvoiceLines lines={presentation.data?.lines ?? []} />
+        <ActionPanel id="invoice-breakdown" label="Review detailed charges">
+          <p className="record-form muted">
+            Your internal breakdown. The customer’s invoice uses the format
+            above; grouping never changes these charges, source records, or
+            totals.
+          </p>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  {draft && <th className="no-print">Actions</th>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {lines.data?.map((line) => (
+                  <tr key={line.id}>
+                    <td>
+                      {line.description}
+                      {line.kind === "training" && line.source_snapshot && (
+                        <small className="cell-secondary">
+                          {money(line.source_snapshot.monthly_rate_cents)}/month
+                          × {line.source_snapshot.billable_days}/
+                          {line.source_snapshot.calendar_days}; rounded once to
+                          cents.
+                        </small>
+                      )}
+                      {line.kind === "service" && line.source_snapshot && (
+                        <InvoiceServiceDetail snapshot={line.source_snapshot} />
+                      )}
+                      {line.kind === "expense" && line.source_snapshot && (
+                        <small className="cell-secondary">
+                          Original cost{" "}
+                          {money(line.source_snapshot.original_cost_cents)} +
+                          handling fee{" "}
+                          {money(line.source_snapshot.handling_fee_cents)}
+                        </small>
+                      )}
+                    </td>
+                    <td>{money(line.amount_cents)}</td>
+                    {draft && (
+                      <td className="no-print">
+                        <form action={invoiceAction.bind(null, "remove")}>
+                          {invoiceId}
+                          <input name="line_id" type="hidden" value={line.id} />
+                          <DeleteButton
+                            label="Remove"
+                            confirmText="Remove this draft line? Any linked expense, feeding records, or service/calendar days will become available for billing again."
+                          />
+                        </form>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ActionPanel>
         {!lines.data?.length && (
           <p className="record-form muted">No line items yet.</p>
         )}
@@ -405,6 +434,20 @@ export default async function Invoice({
                     required
                     maxLength={500}
                   />
+                  <label>
+                    Charge category
+                    <select name="billing_category" defaultValue="other">
+                      <option value="other">Other — keep separate</option>
+                      <option value="training">Training</option>
+                      <option value="feed">Feed</option>
+                      <option value="boarding">Board</option>
+                    </select>
+                  </label>
+                  <p className="muted">
+                    Choose Training, Feed, or Board to include this manual line
+                    in the customer’s combined service total. Other charges stay
+                    separate.
+                  </p>
                   <div className="form-grid">
                     <label>
                       Line type

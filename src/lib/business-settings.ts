@@ -4,6 +4,8 @@ export const settingsFields = [
   "business_phone",
   "business_email",
   "default_monthly_rate",
+  "default_feed_monthly_rate",
+  "default_boarding_monthly_rate",
   "default_billing_day",
   "default_proration",
   "default_invoice_due_days",
@@ -56,6 +58,14 @@ export function businessSettingsValues(form: FormData) {
     business_email: email,
     default_monthly_rate_cents:
       rate === null ? null : cents(form, "default_monthly_rate"),
+    default_feed_monthly_cents:
+      text(form, "default_feed_monthly_rate", false, 12) === null
+        ? null
+        : cents(form, "default_feed_monthly_rate"),
+    default_boarding_monthly_cents:
+      text(form, "default_boarding_monthly_rate", false, 12) === null
+        ? null
+        : cents(form, "default_boarding_monthly_rate"),
     default_billing_day: wholeNumber(form, "default_billing_day", 1, 28),
     default_proration: choice(form, "default_proration", [
       "manual",
@@ -114,6 +124,14 @@ export function settingsFormValues(
       settings.default_monthly_rate_cents === null
         ? ""
         : (settings.default_monthly_rate_cents / 100).toFixed(2),
+    default_feed_monthly_rate:
+      settings.default_feed_monthly_cents == null
+        ? ""
+        : (settings.default_feed_monthly_cents / 100).toFixed(2),
+    default_boarding_monthly_rate:
+      settings.default_boarding_monthly_cents == null
+        ? ""
+        : (settings.default_boarding_monthly_cents / 100).toFixed(2),
     default_billing_day: String(settings.default_billing_day),
     default_proration: settings.default_proration,
     default_invoice_due_days: String(settings.default_invoice_due_days),
@@ -122,4 +140,36 @@ export function settingsFormValues(
     paypal_url: settings.paypal_url ?? "",
     apple_cash_instructions: settings.apple_cash_instructions ?? "",
   };
+}
+
+export function stayServiceFormDefaults(
+  stay:
+    | {
+        feed_billing: string;
+        feed_monthly_cents: number | null;
+        boarding_billing: string;
+        boarding_monthly_cents: number | null;
+      }
+    | undefined,
+  settings: BusinessSettings,
+) {
+  return stay
+    ? {
+        feedMode: stay.feed_billing,
+        feedCents: stay.feed_monthly_cents,
+        boardingMode: stay.boarding_billing,
+        boardingCents: stay.boarding_monthly_cents,
+      }
+    : {
+        feedMode:
+          settings.default_feed_monthly_cents == null
+            ? "unrecorded"
+            : "separate_monthly",
+        feedCents: settings.default_feed_monthly_cents ?? null,
+        boardingMode:
+          settings.default_boarding_monthly_cents == null
+            ? "unrecorded"
+            : "separate_monthly",
+        boardingCents: settings.default_boarding_monthly_cents ?? null,
+      };
 }
