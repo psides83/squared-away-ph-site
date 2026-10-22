@@ -55,7 +55,7 @@ You can use the app without the Supabase GitHub integration; that integration ma
 - Billing calendar with worked, billable-rest, and non-billable days, plus unclassified dates. Only elapsed days within a physical stay can be classified; only worked/rest count as billable. Corrections/clearing retain private audit history. Training logs do not automatically classify dates.
 - Per-stay feed/boarding choices: unrecorded, included, separate monthly rate, actual cost, or not provided. Monthly prices are recorded on the stay and feed/boarding invoice tools use the agreed physical-day or actual-cost basis.
 
-Billing days currently support 1–28. End-of-month billing conventions remain planned. Dashboard active stays include arrival and departure dates and exclude future stays. Business dates use America/Chicago.
+Billing days support 1–31. Shorter months use their last day, returning to the original anchor in longer months. Recurring cycle preparation is operator-started; unattended scheduling remains planned. Dashboard active stays include arrival and departure dates and exclude future stays. Business dates use America/Chicago.
 
 Open **Settings** to enter your business values. A blank default training rate means not set; a zero rate remains a valid explicit choice. Terms use whole days with 0 meaning due upon receipt. Existing stays without previously recorded payment terms show an empty term field when edited, requiring an explicit choice rather than silently adopting today's default.
 
@@ -193,3 +193,7 @@ Admin mobile screens use bottom navigation and full-screen editors. Inputs are c
 Stock purchases can include a private receipt from **Take photo** or **Choose file**, with larger photos prepared on the device. Purchase/expense data saves first; receipt failures direct you to the saved expense for attachment retry. Identical receipt content is attached once per expense. Existing expense attachments use the same capture controls. This increment needs no new database migration, but the existing private receipt/storage migrations must already be applied.
 
 Automatic receipt reading is not connected. See [receipt-scanning.md](docs/receipt-scanning.md) for the extraction, product matching, review, and multi-item purchase work that remains.
+
+## Read-only deployment check
+
+Run `npm run verify:deployment -- https://squaredawayperformancehorses.vercel.app` after a deployment. This checks sign-in availability, signed-out protection and caching, the install manifest, and every declared icon’s PNG dimensions. It requires Node 22+ and network access, uses no credentials, and changes no records. It does not establish that migrations have applied or authenticated workflows work; those require an administrator session and separate verification.

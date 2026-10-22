@@ -12,6 +12,8 @@ Features in this section are present in the application source. A feature being 
 
 ### App foundation and security
 
+- Repeatable, read-only public deployment check (`npm run verify:deployment -- <URL>`) validates sign-in availability, private/no-store protection on signed-out admin/customer routes, install manifest settings, and all declared PNG icon dimensions. Authenticated database and real-device checks remain separate.
+
 - Next.js App Router, TypeScript, Tailwind CSS, a traditional western design, and responsive admin layouts.
 - Email/password sign-in and sign-out, trusted administrator provisioning, server-side authorization on pages and actions, and session refresh.
 - Supabase migrations in version control, admin-only row-level security, and environment files excluded from Git.
@@ -335,6 +337,8 @@ Features in this section are present in the application source. A feature being 
 Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Public production verification (October 22, 2026): all checks in the new deployment script pass against `https://squaredawayperformancehorses.vercel.app`, including signed-out protection on the training-stay record route and every manifest icon. This confirms public responses only; it does not confirm the deployed commit, migration history, authenticated data access, uploads, billing mutations, or real-device installation. An administrator sign-in is required to continue authenticated verification.
 
 - Training-stay record increment (October 22, 2026): no migration required. All 124 tests, TypeScript checks, and the production build pass. Authenticated record loading, saves, and production deployment remain unverified.
 
