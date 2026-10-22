@@ -72,6 +72,16 @@ Features in this section are present in the application source. A feature being 
 - Explicit confirmation of the entire daily ration for a horse/date, once per date. A shortage in any line rolls back the complete confirmation. Manual entries handle extras, partial feeding, and corrections.
 - Outgoing stock can be reversed once, returning quantity and original cost with a linked correction entry. The original movement remains visible. Reversing a daily line does not make the day available for another full confirmation; record the corrected quantity manually.
 
+### Billing calendar and stay service agreements
+
+- Per-stay monthly calendar with worked, billable-rest, non-billable, and unclassified days. Only worked/rest count as billable; unclassified dates are shown separately.
+- Classify a single day or inclusive range, or clear a mistaken classification. Dates must be within the physical stay and cannot be in the future.
+- One current classification per stay/date. Training session counts do not automatically classify or duplicate billing days.
+- Private change history records previous/new status, notes, actor, and time. Unchanged retries do not duplicate events; clearing retains history.
+- Stay date changes cannot strand classified days outside the stay. Stays with billing-day history cannot be reassigned to another horse or accidentally deleted.
+- Per-stay feed and boarding choices: unrecorded, included, separate monthly rate, actual cost, or not provided. Rates are required only for separate monthly billing; legacy agreements remain unrecorded until chosen.
+- These are billing inputs only. No invoices, automatic charges, or actual-cost allocations are generated yet.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -80,9 +90,8 @@ Features in this section are present in the application source. A feature being 
 - Invoices, line items, recorded payments, partial payments, adjustments, and derived outstanding balances.
 - Optional Venmo, Apple Cash, and PayPal payment instructions/links where supported. Visiting a link must not count as payment confirmation.
 - Configurable billing schedules beyond the current 1–28 range, automated training charges, and explicit partial-month calculations.
-- Per-horse daily billing calendar with explicit worked, billable-rest, and non-billable statuses. Unmarked dates remain unclassified; they must not silently become billable, and multiple sessions on one date must not create duplicate billable days.
 - Populate future invoices/public pages from business settings, with contact/payment-instruction snapshots on finalized invoices so later settings changes do not rewrite history.
-- Per-horse/per-stay feed and boarding agreements: included in training or separately billed, with individual rates and overrides.
+- Calculate invoice feed/boarding lines from recorded service agreements, with explicit period/proration rules and cost sources for actual-cost billing.
 - Dashboard outstanding balances and recent activity beyond the current horse/reminder overview.
 
 #### Feed, boarding, and profitability details
@@ -143,9 +152,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Worked/rest-day billing calendar and per-horse feed/boarding agreements → invoices, charge-backs, and recorded payments (using implemented settings/expenses) → revenue/cost/profit reporting and shared-cost allocations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
+Invoices, charge-backs, and recorded payments (using implemented settings, calendar, agreements, and expenses) → revenue/cost/profit reporting and shared-cost allocations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Billing groundwork includes migration `20261021000700_billing_days_agreements.sql`. All 38 tests, TypeScript checks, and the production build pass, covering explicit day counts, repeat safety, audit history, clearing classifications, date/horse guards, service-rate constraints, and administrator access. Authenticated live calendar flows and production migration completion have not been confirmed.
 
 - Foundation and horse/customer updates were pushed to `main`; the production sign-in page and signed-out redirects were checked. Full authenticated production CRUD has not been exercised by the agent.
 - Training log implementation includes migration `20261021000300_training_log.sql`. Apply it before using the new feature; production migration completion has not been confirmed.

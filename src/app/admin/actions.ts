@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { trainingEntryValues } from "@/lib/training-entry";
 import { wholeNumber } from "@/lib/business-settings";
+import { stayServiceValues } from "@/lib/billing-days";
 import {
   cents,
   choice,
@@ -92,6 +93,7 @@ export async function saveRecord(entity: Entity, form: FormData) {
           monthly_rate_cents: cents(form, "monthly_rate"),
           billing_day: billingDay,
           invoice_due_days: wholeNumber(form, "invoice_due_days", 0, 365),
+          ...stayServiceValues(form),
           proration: choice(form, "proration", [
             "manual",
             "calendar_days",
@@ -130,9 +132,12 @@ export async function saveRecord(entity: Entity, form: FormData) {
               .single()
           : await db.from(entity).insert(values).select("id").single();
     if (result.error) {
-      problem = ["23505", "23P01"].includes(result.error.code)
-        ? "That record overlaps or duplicates an existing record. Check existing entries."
-        : "Could not save this record. Check your entries and database setup, then try again.";
+      problem =
+        entity === "training_stays" && result.error.code === "P0001"
+          ? result.error.message
+          : ["23505", "23P01"].includes(result.error.code)
+            ? "That record overlaps or duplicates an existing record. Check existing entries."
+            : "Could not save this record. Check your entries and database setup, then try again.";
     }
   } catch (error) {
     problem =

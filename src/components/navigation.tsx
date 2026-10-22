@@ -12,12 +12,14 @@ import {
   Receipt,
   Package,
   Wheat,
+  CalendarCheck,
 } from "lucide-react";
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/horses", label: "Horses", icon: Fence },
   { href: "/admin/customers", label: "Customers", icon: UsersRound },
   { href: "/admin/training", label: "Training stays", icon: ClipboardList },
+  { href: "/admin/calendar", label: "Billing calendar", icon: CalendarCheck },
   { href: "/admin/log", label: "Training log", icon: BookOpen },
   { href: "/admin/reminders", label: "Reminders", icon: CalendarDays },
   { href: "/admin/expenses", label: "Expenses", icon: Receipt },

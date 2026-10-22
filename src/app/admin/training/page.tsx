@@ -6,6 +6,8 @@ import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
 import { DeleteButton, SubmitButton } from "@/components/submit-button";
 import { deleteRecord, saveRecord } from "@/app/admin/actions";
 import { stayFormDefaults } from "@/lib/business-settings";
+import { StayServiceFields } from "@/components/stay-service-fields";
+import { serviceLabels } from "@/lib/billing-days";
 
 export default async function Training({
   searchParams,
@@ -170,6 +172,20 @@ export default async function Training({
                   defaultValue={selected?.notes ?? ""}
                 />
               </label>
+              <div className="form-grid">
+                <StayServiceFields
+                  key={selected?.id ?? "new"}
+                  feedMode={selected?.feed_billing ?? "unrecorded"}
+                  feedCents={selected?.feed_monthly_cents}
+                  boardingMode={selected?.boarding_billing ?? "unrecorded"}
+                  boardingCents={selected?.boarding_monthly_cents}
+                />
+              </div>
+              <p className="muted form-hint">
+                Feed and boarding are agreed individually for this stay. “Actual
+                cost” records the agreement only; cost allocation and invoice
+                generation are still to come.
+              </p>
               <p className="notice">
                 New stays use your business settings as a starting point. You
                 can override them here. This records your agreement; automatic
@@ -236,6 +252,21 @@ export default async function Training({
                       <small className="cell-secondary">
                         Billing day {stay.billing_day}
                       </small>
+                      <small className="cell-secondary">
+                        Feed: {serviceLabels[stay.feed_billing ?? "unrecorded"]}
+                        {stay.feed_monthly_cents !== null &&
+                        stay.feed_monthly_cents !== undefined
+                          ? ` · ${money(stay.feed_monthly_cents)}/month`
+                          : ""}
+                      </small>
+                      <small className="cell-secondary">
+                        Boarding:{" "}
+                        {serviceLabels[stay.boarding_billing ?? "unrecorded"]}
+                        {stay.boarding_monthly_cents !== null &&
+                        stay.boarding_monthly_cents !== undefined
+                          ? ` · ${money(stay.boarding_monthly_cents)}/month`
+                          : ""}
+                      </small>
                     </td>
                     <td>
                       <span className="tag">
@@ -248,6 +279,12 @@ export default async function Training({
                     </td>
                     <td>
                       <div className="row-actions">
+                        <Link
+                          className="text-link"
+                          href={`/admin/calendar?stay=${stay.id}`}
+                        >
+                          Billing calendar
+                        </Link>
                         <Link
                           className="text-button"
                           href={`/admin/training?edit=${stay.id}#record-form`}

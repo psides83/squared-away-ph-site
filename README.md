@@ -21,7 +21,7 @@ Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-i
 
 ## Set up Supabase
 
-1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer atomic save, training log, settings, expenses/inventory, and private receipt storage. No horse, customer, expense, or stock records are seeded. Installations already using Settings need `20261021000500_expenses_inventory.sql` and `20261021000600_private_receipts.sql` for the new screens.
+1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, and billing-day inputs. No horse, customer, expense, or stock records are seeded. Installations already using expenses/inventory need `20261021000700_billing_days_agreements.sql` for the calendar and updated training-stay form.
 2. In Supabase Authentication → Users, create your administrator account with an email and password. Confirm its email through the dashboard if needed. There is no public sign-up flow.
 3. Grant administrator access from the SQL Editor, replacing the example email with the exact account email:
 
@@ -52,6 +52,8 @@ You can use the app without the Supabase GitHub integration; that integration ma
 - Expenses with user-managed categories, horse/shared-barn assignments, paid dates, charge-back flags, editing/voids of standalone costs, and private receipt attachments (JPEG/PNG/WebP/PDF, 3 MB maximum).
 - Feed/hay/supplement inventory with product-specific weight conversions, purchases/opening stock, weighted average valuation, waste/adjustments, and retained transaction snapshots. Stock purchases create their expense and quantity/value movement atomically; repeated requests cannot duplicate them.
 - Saved daily rations and once-per-horse/date confirmation. Extras and partial feeding use manual inventory entries. Insufficient stock rolls back every line of a confirmation; saving a ration does not deduct anything. Outgoing stock reversals retain history and restore original cost once.
+- Billing calendar with worked, billable-rest, and non-billable days, plus unclassified dates. Only elapsed days within a physical stay can be classified; only worked/rest count as billable. Corrections/clearing retain private audit history. Training logs do not automatically classify dates.
+- Per-stay feed/boarding choices: unrecorded, included, separate monthly rate, actual cost, or not provided. Monthly prices are recorded on the stay; cost allocation and invoice calculation remain future work.
 
 Billing days currently support 1–28. End-of-month billing conventions can be added when billing is implemented. Dashboard active stays include arrival and departure dates and exclude future stays. Business dates use America/Chicago.
 
@@ -59,7 +61,13 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Ownership transfer history, invoices/payments, worked/rest-day billing calendars, per-horse feed/boarding agreements, shared-cost allocations, profitability reports, recurring expenses, expense filters, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Training stay policies are recorded only; no charges or proration are calculated. Reminders do not send notifications. Charge-back flags do not generate invoices. No fake records are displayed.
+Ownership transfer history, invoices/payments, shared-cost allocations, profitability reports, recurring expenses, expense filters, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Training stay/service policies and billable days are recorded only; no charges or proration are calculated. Reminders do not send notifications. Charge-back flags do not generate invoices. No fake records are displayed.
+
+## Billing calendar workflow
+
+Open **Billing calendar** or the link on a training stay. Choose a stay and month, then mark actual worked, billable-rest, and non-billable dates. Clear an incorrect classification to return it to unclassified; its change history remains. Unmarked dates never count as billable. Arrival/departure days count only when explicitly classified. Future dates are not eligible. Existing training notes do not imply a billing status.
+
+Feed and boarding terms are editable on the training-stay form. Legacy stays show **Not recorded** until an agreement is chosen. Record a separate monthly price only when that mode applies. Changing a mode or rate records your agreement; it does not issue an invoice or calculate actual-cost reimbursement.
 
 ## Expense and inventory workflow
 

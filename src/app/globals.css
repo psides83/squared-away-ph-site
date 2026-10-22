@@ -1,5 +1,47 @@
 @import "tailwindcss";
 
+.calendar-stats {
+  margin-top: 24px;
+}
+.billing-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  padding: 20px;
+  gap: 12px;
+}
+.billing-day {
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #f5f2eb;
+  font-size: 11px;
+}
+.billing-day strong {
+  display: block;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.billing-day-worked {
+  border-color: #b1c0a1;
+  background: #edf1e7;
+}
+.billing-day-rest {
+  border-color: #cabb9c;
+  background: #f0e8d7;
+}
+.billing-day-nonbillable {
+  border-color: #c9cbcd;
+  background: #eff0f1;
+}
+.day-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 10px;
+  color: var(--muted);
+  max-height: 160px;
+  overflow-y: auto;
+}
+
 .inline-checkbox {
   display: flex;
   align-items: center;
