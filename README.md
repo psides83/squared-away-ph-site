@@ -61,7 +61,7 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Ownership transfer history, video uploads, scheduled invoice generation, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, purchase-cost/inbound-stock corrections, structured customer care sharing, in-app invitation emails/password recovery, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Video uploads, scheduled invoice generation, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, purchase-cost/inbound-stock corrections, structured customer care sharing, in-app invitation emails/password recovery, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
 
 ## Horse photos and documents
 
@@ -197,3 +197,7 @@ Automatic receipt reading is not connected. See [receipt-scanning.md](docs/recei
 ## Read-only deployment check
 
 Run `npm run verify:deployment -- https://squaredawayperformancehorses.vercel.app` after a deployment. This checks sign-in availability, signed-out protection and caching, the install manifest, and every declared icon’s PNG dimensions. It requires Node 22+ and network access, uses no credentials, and changes no records. It does not establish that migrations have applied or authenticated workflows work; those require an administrator session and separate verification.
+
+## Ownership history
+
+Apply `20261022002800_ownership_history.sql` in migration order. Horse records then show **Customers & ownership** with current links and recorded additions/removals or relationship changes. Existing links receive an explicit starting baseline; the app does not infer earlier sale dates. History retains the name recorded at the time, is administrator-only, and prevents horse deletion. Correct links through the horse editor; past events remain. Ownership changes do not change existing stay billing responsibility or manual portal grants.

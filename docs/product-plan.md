@@ -22,6 +22,8 @@ Features in this section are present in the application source. A feature being 
 
 ### Customers and horses
 
+- Horse records include a Customers & ownership tab with current customer links and paginated private history of links added/removed and relationship changes. Database triggers capture changes, including authorized direct relationship edits, with the signed-in actor ID and recorded time. Baselines identify links present when tracking begins; earlier ownership and legal sale dates are not inferred. Snapshotted names survive customer renames/deletion. Repeated unchanged saves add no events; failed transactions roll back history. History cannot be edited through app roles and prevents horse deletion. Existing stay billing assignments and manual portal grants remain independent.
+
 - Customer create/view/edit/delete with contact details and private notes.
 - Horse create/view/edit/delete with barn name, registered name, registration number, birth year, sex, breed, training goals, feeding instructions, and private health notes.
 - Required customer selection on horse saves, multiple horses per customer, and multiple customers per horse.
@@ -274,7 +276,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Horse records and customer portal
 
-- Video uploads and an ownership transfer history beyond the existing editable owner links and manual portal grants.
+- Video uploads. Recorded ownership/customer-link history is implemented; historical legal sale dates are not inferred.
 - Add structured customer-shared care records, in-app email invitations, and password setup/recovery beyond owner-provisioned Supabase accounts. Photo/document sharing and published updates are implemented above.
 
 ### Marketing website
@@ -337,6 +339,8 @@ Features in this section are present in the application source. A feature being 
 Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Ownership-history increment (October 22, 2026): migration `20261022002800_ownership_history.sql` adds private history, migration baselines, and automatic relationship audit triggers. All 126 tests, TypeScript checks, and the production build pass. Tests cover baseline preservation, co-owners, unchanged retries, relationship edits, retained names, transaction rejection, history protection, customer/anonymous denial, historical billing preservation, and unchanged existing portal grants. Local browser preview verifies tab navigation and the 390-pixel layout. Remote migration and authenticated production ownership changes remain unverified.
 
 - Authenticated production read checks (October 22, 2026): using the owner's signed-in admin session, the dashboard, horse list/record and feeding-plan tab, customer list/record and billing/portal tabs, training stays, billing calendar, invoices, recurring billing, reports, expenses, inventory, feeding and feeding-time setup, reminders, training log, shared costs, income/expense matching, horse files, customer updates, portal management, and settings load without displayed database warnings. The existing horse/customer records and saved rations are visible. Feeding-time setup displays individually editable Morning/Evening records and the batch-add control. Existing daily-total rations remain unassigned; no schedule or quantity was guessed or changed.
 - Limits of those read checks: production contains no training stays, invoices, expenses, payments, or horse files at the time checked, so empty screens cannot validate populated calculations, expense follow-up, actual-cost readiness, invoice printing, or record mutations. No records were created/changed, no bills were generated, and no messages were sent. Migration history was not accessible through the application; successful reads do not establish every migration's completion. Customer-account authorization, uploads/downloads, and physical-device testing remain unverified. Public signed-out protection is covered separately below.

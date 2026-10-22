@@ -1,3 +1,7 @@
+import {
+  OwnershipHistory,
+  type OwnershipEvent,
+} from "@/components/ownership-history";
 import { ReminderList } from "@/components/reminder-list";
 import { today } from "@/lib/format";
 import {
@@ -19,6 +23,7 @@ export default async function HorseRecord({
 }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{
+    ownership_page?: string;
     ration?: string;
     new?: string;
     error?: string;
@@ -28,6 +33,10 @@ export default async function HorseRecord({
   const { id } = await params,
     query = await searchParams;
   const { db } = await requireAdmin();
+  const ownershipPage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.ownership_page) || 1)),
+  );
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
@@ -41,6 +50,8 @@ export default async function HorseRecord({
     overview,
     reminders,
     categories,
+    owners,
+    ownershipEvents,
   ] = await Promise.all([
     db.from("horses").select("*").eq("id", id).maybeSingle(),
     db.from("feed_rations").select("*").eq("horse_id", id),
@@ -57,6 +68,18 @@ export default async function HorseRecord({
       .order("id")
       .limit(25),
     db.from("reminder_categories").select("id,name"),
+    db
+      .from("horse_customers")
+      .select("customer_id,relationship,customers(name)")
+      .eq("horse_id", id)
+      .order("customer_id"),
+    db
+      .from("horse_ownership_events")
+      .select("*", { count: "exact" })
+      .eq("horse_id", id)
+      .order("recorded_at", { ascending: false })
+      .order("id")
+      .range((ownershipPage - 1) * 25, ownershipPage * 25 - 1),
   ]);
   if (!horse.data && !horse.error) notFound();
   const failed = [
@@ -108,9 +131,11 @@ export default async function HorseRecord({
           id="horse"
           label="Horse record sections"
           defaultTab={
-            query.new || query.ration || query.success || query.error
-              ? "rations"
-              : "profile"
+            query.ownership_page
+              ? "ownership"
+              : query.new || query.ration || query.success || query.error
+                ? "rations"
+                : "profile"
           }
           sections={[
             {
@@ -150,6 +175,28 @@ export default async function HorseRecord({
                     </Link>
                   </div>
                 </section>
+              ),
+            },
+            {
+              id: "ownership",
+              label: "Customers & ownership",
+              content: (
+                <OwnershipHistory
+                  horseId={id}
+                  current={(owners.data ?? []).map((o) => ({
+                    customer_id: o.customer_id,
+                    relationship: o.relationship,
+                    name:
+                      (Array.isArray(o.customers)
+                        ? o.customers[0]
+                        : o.customers
+                      )?.name ?? "Customer",
+                  }))}
+                  events={(ownershipEvents.data ?? []) as OwnershipEvent[]}
+                  count={ownershipEvents.count ?? 0}
+                  page={ownershipPage}
+                  error={Boolean(owners.error || ownershipEvents.error)}
+                />
               ),
             },
             {
