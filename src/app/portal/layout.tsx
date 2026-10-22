@@ -1,3 +1,4 @@
+import { InstallApp } from "@/components/install-app";
 import Link from "next/link";
 import { requireCustomer } from "@/lib/auth";
 import { Brand } from "@/components/brand";
@@ -30,6 +31,7 @@ export default async function CustomerLayout({
         </form>
       </header>
       <main id="main" className="customer-main">
+        <InstallApp />
         {children}
       </main>
       <footer className="customer-footer">

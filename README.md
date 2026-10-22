@@ -61,7 +61,13 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Ownership transfer history, scheduled invoice generation, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, purchase-cost/inbound-stock corrections, customer media/documents/care sharing, in-app invitation emails/password recovery, public marketing pages, and PWA installation/offline features. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Ownership transfer history, scheduled invoice generation, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, purchase-cost/inbound-stock corrections, customer media/documents/care sharing, in-app invitation emails/password recovery, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+
+## Install on a phone or computer
+
+Open `/login` and expand **Add Squared Away to your home screen**. Supported browsers can show an Install app button. Safari on iPhone/iPad uses Share → Add to Home Screen; Safari on Mac uses File → Add to Dock. The installed app opens at sign-in and routes each account to its own portal.
+
+The app requires a network connection. It registers no service worker and does not save private records for offline use. Manifest/icons are public assets; admin and customer responses remain private/no-store. The icons use the provisional brand mark until the final logo is supplied. Device installation still needs a real-device check after deployment.
 
 ## Customer portal setup
 

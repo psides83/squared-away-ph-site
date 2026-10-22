@@ -1701,3 +1701,25 @@ td strong {
     margin: 0;
   }
 }
+
+.install-help {
+  margin: 20px 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-size: 12px;
+  background: #f6f1e6;
+}
+.install-help summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--leather);
+}
+.install-help p,
+.install-help button {
+  margin-top: 12px;
+}
+.sidebar .install-help {
+  padding: 10px;
+  font-size: 11px;
+}

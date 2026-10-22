@@ -6,6 +6,7 @@ export const metadata: Metadata = {
     default: "Squared Away | Barn Office",
     template: "%s | Squared Away",
   },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/icon-180.png" },
   description:
     "The private barn office for Squared Away Performance Horses in Granbury, Texas.",
   robots: { index: false, follow: false },

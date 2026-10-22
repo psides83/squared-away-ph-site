@@ -1,3 +1,4 @@
+import { InstallApp } from "@/components/install-app";
 import { Brand } from "@/components/brand";
 import { SubmitButton } from "@/components/submit-button";
 import { signIn } from "@/app/auth-actions";
@@ -83,6 +84,7 @@ export default async function Login({
               Sign in <ArrowUpRight size={17} />
             </SubmitButton>
           </form>
+          <InstallApp />
           <p className="login-note">
             Private access for Squared Away Performance Horses.
             <br />

@@ -149,6 +149,12 @@ Features in this section are present in the application source. A feature being 
 - Separate customer-update authoring: save drafts, explicitly publish, unpublish to revise, or archive while retaining records. Private training logs/horse health notes/reminders are never copied automatically. Publication changes and access changes retain administrator history.
 - Customer reads use database-enforced, session-bound functions with whitelisted fields. Administrator tables and financial/stock mutation functions remain inaccessible to customers. Revocation or login replacement takes effect on subsequent reads without relying on browser navigation restrictions.
 
+### PWA installation
+
+- Web app manifest with standalone display, `/login` start URL, application identity/colors, 192/512-pixel PNG icons, a maskable icon, and an Apple home-screen icon. Icons use the existing provisional brand mark and can be replaced with the final logo later.
+- Installation help on sign-in and in both portals, with an install button when supported and browser-specific home-screen instructions otherwise. Installed standalone sessions hide the prompt.
+- A connection is required. No service worker or offline private-response cache is registered; signed-out admin/customer routes redirect to sign-in with private/no-store headers.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -176,7 +182,6 @@ Features in this section are present in the application source. A feature being 
 
 ### PWA and later improvements
 
-- Installable PWA with icons and manifest; no private-response service-worker caching by default.
 - Optional online payment processing, delivered notifications, and accounting export after core workflows are established.
 
 ## Implementation conventions
@@ -218,9 +223,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-PWA installation → customer media/documents and onboarding → remaining admin expense/reporting improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Customer media/documents and onboarding → remaining admin expense/reporting improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- PWA installation: TypeScript and production build pass. Local production HTTP checks verify the manifest, icon dimensions/responses, sign-in manifest link/install help, and private/no-store signed-out redirects for both portals. Icons were visually checked. Actual device installation, browser install-prompt eligibility, and authenticated live flows remain unverified. No service worker was added.
 
 - Customer portal includes migration `20261021001400_customer_portal.sql`. All 83 tests, TypeScript checks, and the production build pass. Local database tests cover explicit grants, separate co-owner billing, safe projections, draft/private-data exclusion, publication lifecycle, date bounds, ownership independence, revocation, login replacement/disable, retained history, and denied customer/anonymous access to admin operations. Authenticated production sign-in/customer flows and migration completion remain unverified.
 

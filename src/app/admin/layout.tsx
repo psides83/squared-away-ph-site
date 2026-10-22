@@ -1,3 +1,4 @@
+import { InstallApp } from "@/components/install-app";
 import { requireAdmin } from "@/lib/auth";
 import { Brand } from "@/components/brand";
 import { Navigation } from "@/components/navigation";
@@ -31,6 +32,7 @@ export default async function AdminLayout({
             <br />
             Made for the horseman.
           </p>
+          <InstallApp />
           <span className="sidebar-rule" />
           <form action={signOut}>
             <button className="signout">
