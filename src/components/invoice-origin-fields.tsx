@@ -8,8 +8,10 @@ export function InvoiceOriginFields({
   date,
   defaultDueDays,
   initialCustomer = "",
+  initialStay = "",
 }: {
   initialCustomer?: string;
+  initialStay?: string;
   customers: { id: string; name: string }[];
   stays: {
     id: string;
@@ -23,7 +25,10 @@ export function InvoiceOriginFields({
   defaultDueDays: number;
 }) {
   const [customer, setCustomer] = useState(initialCustomer);
-  const [stay, setStay] = useState("");
+  const selectedStay = stays.find(
+    (s) => s.id === initialStay && s.billing_customer_id === initialCustomer,
+  );
+  const [stay, setStay] = useState(selectedStay?.id ?? "");
   const [issue, setIssue] = useState(date);
   const dueFor = (value: string, days: number | null) =>
     days === null || !value
@@ -31,7 +36,9 @@ export function InvoiceOriginFields({
       : new Date(Date.parse(value) + days * 86400000)
           .toISOString()
           .slice(0, 10);
-  const [due, setDue] = useState(dueFor(date, defaultDueDays));
+  const [due, setDue] = useState(
+    dueFor(date, selectedStay ? selectedStay.invoice_due_days : defaultDueDays),
+  );
   const termsFor = (id: string) =>
     id
       ? (stays.find((s) => s.id === id)?.invoice_due_days ?? null)

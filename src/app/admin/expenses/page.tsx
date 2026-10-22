@@ -1,3 +1,7 @@
+import {
+  ExpenseFollowupSummary,
+  type ExpenseFollowup,
+} from "@/components/expense-followup";
 import { ReceiptPicker } from "@/components/receipt-picker";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
@@ -92,6 +96,12 @@ export default async function Expenses({
       ? row.inventory_movements.length > 0
       : Boolean(row.inventory_movements);
   const stockPurchase = selected && linked(selected);
+  const followup = expenses.data?.length
+    ? await db.rpc("expense_followup", {
+        p_expenses: expenses.data.map((e) => e.id),
+      })
+    : { data: [], error: null };
+  const followupRows = (followup.data ?? []) as ExpenseFollowup[];
   return (
     <>
       <PageHeading
@@ -282,7 +292,12 @@ export default async function Expenses({
                   Assign to horse
                   <select
                     name="horse_id"
-                    defaultValue={selected?.horse_id ?? ""}
+                    defaultValue={
+                      selected?.horse_id ??
+                      (horses.data?.some((h) => h.id === params.horse)
+                        ? params.horse
+                        : "")
+                    }
                   >
                     <option value="">Shared barn cost</option>
                     {horses.data?.map((h) => (
@@ -384,6 +399,7 @@ export default async function Expenses({
                   <th>Category / horse</th>
                   <th>Cost</th>
                   <th>Status</th>
+                  <th>Follow-up</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -419,12 +435,23 @@ export default async function Expenses({
                       </span>
                     </td>
                     <td>
+                      <ExpenseFollowupSummary
+                        data={
+                          followup.error
+                            ? undefined
+                            : followupRows.find((r) => r.expense_id === e.id)
+                        }
+                        reimbursable={e.reimbursable}
+                        voided={Boolean(e.voided_at)}
+                      />
+                    </td>
+                    <td>
                       <div className="row-actions">
                         <Link
                           className="text-button"
-                          href={`/admin/expenses?edit=${e.id}#record-form`}
+                          href={`/admin/expenses/${e.id}`}
                         >
-                          View / receipts
+                          View expense
                         </Link>
                         {!e.voided_at && !linked(e) && (
                           <form action={expenseStatus}>

@@ -247,6 +247,13 @@ Features in this section are present in the application source. A feature being 
 - Horse records have a Reminders tab showing the next 25 open tasks and a link to the full filtered history. Add/Edit preselects the horse; saving/completing/moving tasks from horse context returns to its record. Central quick actions retain task/horse/category/search filters. Reminder horse links open the record rather than an editor.
 - These are private in-app tasks. Email/push delivery and recurring reminders are not added by this increment.
 
+### Expense records and billing follow-up
+
+- Expense list links to record pages and shows receipt counts, original costs reserved on draft/issued invoices, and overdue linked-invoice status. Missing follow-up data is explicitly unavailable rather than shown as unbilled.
+- Expense records separate Details, Receipts, and Customer billing. Read costs/status/notes first; payment changes, receipt attachment, and charge-back forms open deliberately. Receipt operations return to the record. Saving an expense opens its record rather than an always-open editor. Voids retain documentation, and stock-purchase cost protections remain intact.
+- Billing links include full expense charge-backs and assigned actual-cost boarding portions, grouped per invoice without counting the same cost twice. Original cost is separate from fees and invoice-wide payment balances; payments/credits are not presumed allocated to expense lines. Actual collected reimbursement/absorbed-cost reporting remains planned.
+- Reimbursable horse expenses can be added to eligible drafts with an explicit fee (zero by default), retaining database duplicate/source protections. Choices consider current customer links and historical stays matching the expense date. New drafts can preselect the chosen customer and matching historical stay/terms; responsibility stays an explicit administrator choice. Eligible choices are limited to matches within the latest 100 candidate drafts, with this limitation shown.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -276,7 +283,7 @@ Features in this section are present in the application source. A feature being 
 - Receipt recognition/OCR with provider selection, product/unit suggestions, reviewed draft entry, confidence/error handling, and duplicate-purchase checks. Multi-item receipt purchases need an atomic multi-product purchase/expense model and reviewed tax/discount allocation. Camera/file capture and private receipt attachment are implemented above; automatic recognition is not. See `docs/receipt-scanning.md`.
 - Continue device testing and refinement of mobile workflows, including keyboard/camera behavior on real iOS/Android devices. Native-style navigation and editors are implemented above; this does not imply offline entry or a native binary.
 
-- Continue the record-first workflow in training agreements and expense follow-up: surface relevant status and contextual actions before opening an editor, while keeping detailed accounting in focused sections.
+- Continue the record-first workflow in training agreements: surface relevant status and contextual actions before opening an editor, while keeping detailed accounting in focused sections.
 - Extend bulk entry to additional workflows such as training logs or expense entry as their batch requirements are defined; bulk daily and extra/partial feeding are implemented above.
 
 - Optional online payment processing, delivered notifications, and accounting export after core workflows are established.
@@ -327,6 +334,8 @@ Features in this section are present in the application source. A feature being 
 Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Expense-follow-up increment (October 22, 2026): migration `20261022002700_expense_followup.sql` adds an administrator-only batched summary. All 124 tests, TypeScript checks, and the production build pass. Tests cover receipt counts, duplicate input/charge retry safety, original cost versus fees, partial invoice payments, draft/issued boarding portions, voided-invoice claim release, empty/bounded batches, and non-admin denial. Local browser previews verify cost/payment distinctions, phone-width tab layout, and preselected historical stay/payment terms. Remote migration, authenticated record actions/uploads, and production deployment remain unverified.
 
 - Reminder workflow increment (October 22, 2026): no database migration required. All 123 tests pass, including new business-date urgency and month/leap-year/year/DST boundary checks. Local browser previews verify urgency tabs, completed-only actions, horse-context links, and phone-width quick actions. TypeScript checks and the production build also pass. Actual authenticated completion/rescheduling, live filtering/pagination, and production deployment remain unverified.
 

@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { dateValue, identifier, text } from "@/lib/validation";
+import { cents, dateValue, identifier, text } from "@/lib/validation";
 import { preparedReceipt, attachReceipt } from "@/lib/receipt-storage";
 import { expenseValues } from "@/lib/inventory";
 
@@ -29,7 +29,7 @@ export async function saveExpense(form: FormData) {
   if (issue) redirect(`/admin/expenses?error=${encodeURIComponent(issue)}`);
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin/expenses?edit=${saved}&success=Expense+saved.+You+can+attach+receipts+below.#record-form`,
+    `/admin/expenses/${saved}?success=Expense+saved.+You+can+attach+receipts+below.#expense-receipts`,
   );
 }
 export async function expenseStatus(form: FormData) {
@@ -116,22 +116,24 @@ export async function uploadReceipt(form: FormData) {
   } catch (e) {
     issue = e instanceof Error ? e.message : "Receipt could not be uploaded.";
   }
-  revalidatePath("/admin/expenses");
+  revalidatePath("/admin", "layout");
   redirect(
-    `/admin/expenses?${expense ? `edit=${expense}&` : ""}${issue ? `error=${encodeURIComponent(issue)}` : "success=Receipt+attached."}#receipts`,
+    `${expense && form.get("record_context") === "yes" ? `/admin/expenses/${expense}?` : `/admin/expenses?${expense ? `edit=${expense}&` : ""}`}${issue ? `error=${encodeURIComponent(issue)}` : "success=Receipt+attached."}#${form.get("record_context") === "yes" ? "expense-receipts" : "receipts"}`,
   );
 }
 export async function removeReceipt(form: FormData) {
   const { db } = await requireAdmin();
   let issue = false;
+  let expense: string | null = null;
   try {
     const id = identifier(form, "id", true);
     const { data, error } = await db
       .from("expense_receipts")
-      .select("object_path")
+      .select("object_path,expense_id")
       .eq("id", id)
       .single();
     if (error || !data) throw new Error();
+    expense = data.expense_id;
     const deleted = await db.storage
       .from("expense-receipts")
       .remove([data.object_path]);
@@ -141,8 +143,50 @@ export async function removeReceipt(form: FormData) {
   } catch {
     issue = true;
   }
-  revalidatePath("/admin/expenses");
+  revalidatePath("/admin", "layout");
   redirect(
-    `/admin/expenses?${issue ? "error=Receipt+could+not+be+removed.+Try+again." : "success=Receipt+removed."}`,
+    `${expense && form.get("record_context") === "yes" ? `/admin/expenses/${expense}` : "/admin/expenses"}?${issue ? "error=Receipt+could+not+be+removed.+Try+again." : "success=Receipt+removed."}${form.get("record_context") === "yes" ? "#expense-receipts" : ""}`,
+  );
+}
+
+export async function expenseRecordAction(operation: string, form: FormData) {
+  const { db } = await requireAdmin();
+  let expense: string | null = null;
+  let error: string | undefined;
+  try {
+    expense = identifier(form, "expense_id", true);
+    if (operation === "payment" || operation === "void") {
+      const result = await db.rpc("set_expense_status", {
+        p_id: expense,
+        p_paid_on: dateValue(form, "paid_on"),
+        p_void: operation === "void",
+      });
+      if (result.error)
+        throw new Error(
+          result.error.code === "P0001"
+            ? result.error.message
+            : "Could not update expense payment status.",
+        );
+    } else if (operation === "chargeback") {
+      const result = await db.rpc("add_expense_chargeback", {
+        p_invoice: identifier(form, "invoice_id", true),
+        p_expense: expense,
+        p_markup: cents(form, "markup"),
+      });
+      if (result.error)
+        throw new Error(
+          result.error.code === "P0001"
+            ? result.error.message
+            : result.error.code === "23505"
+              ? "This expense is already reserved on an invoice. Refresh its billing links."
+              : "Could not add the expense to this invoice.",
+        );
+    } else throw new Error("Unknown expense action.");
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Could not save this expense.";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(
+    `${expense ? `/admin/expenses/${expense}` : "/admin/expenses"}?${error ? `error=${encodeURIComponent(error)}` : "success=Expense+updated."}${operation === "chargeback" ? "#expense-billing" : ""}`,
   );
 }

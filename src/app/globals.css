@@ -2542,3 +2542,7 @@ input[type="number"] {
 .reminder-item-head .tag {
   flex-shrink: 0;
 }
+.billing-past-due {
+  color: #9b352c;
+  font-weight: 600;
+}
