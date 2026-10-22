@@ -179,7 +179,7 @@ Features in this section are present in the application source. A feature being 
 ### Expenses, receipts, billing, and profitability
 
 - Recurring expense scheduling and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
-- Configurable billing schedules beyond the current 1–28 range, scheduled invoice generation, and additional automatic calculations for policies beyond calendar-day proration.
+- Configurable billing schedules beyond the current 1–28 range, scheduled invoice generation, and additional automatic calculations for policies beyond calendar-day proration. Add an administrator-controlled readiness review for actual-cost feed/boarding periods and block automatic finalization until the required period is marked ready.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
 #### Feed, boarding, and profitability details
@@ -224,6 +224,7 @@ Features in this section are present in the application source. A feature being 
 - Invoice payment terms are configurable, with due upon receipt as the starting default. Permit multiple/partial payments and show the remaining balance.
 - No training deposit.
 - Recurring billing: dates on the 29th–31st use the last day of shorter months and return to the original anchor in longer months. Automatically finalize invoices only when required billing records are complete; otherwise leave them for review. Confirmed October 21, 2026.
+- Automatic actual-cost billing requires the administrator to explicitly mark feed/boarding records ready for the billing period before automatic finalization. A period reaching its billing date alone does not establish completeness. Confirmed October 21, 2026; readiness workflow and enforcement remain planned.
 - Customer portal: explicitly granted customers share published horse updates, but each customer sees only invoices and payments billed to their own customer record. Horse portal access is granted/revoked manually by the administrator; ownership edits do not automatically grant access. Confirmed October 21, 2026.
 - Feed and boarding inclusion/separate billing is determined for each horse/training agreement. Separately billed monthly feed and boarding use all physical boarding days, with actual calendar days as the monthly denominator. Actual-cost feed uses recorded weighted consumption costs; actual-cost boarding uses reviewed costs assigned to the stay. The owner confirmed these calculation bases on October 21, 2026.
 - Feed inventory includes hay and all supplement types from the start, alongside purchases, receipts, and consumption tracking.
@@ -236,7 +237,6 @@ Features in this section are present in the application source. A feature being 
 
 ## Decisions still needed
 
-- Automatic actual-cost billing completeness: awaiting whether the owner marks periods ready or the scheduled run uses currently recorded costs. Asked October 21, 2026; this determines when an invoice can be finalized automatically.
 
 - Public About page and landing-page information are deferred at the owner's request on October 21, 2026. Trainer biography, final logo, and real media will be supplied later.
 - Public visual direction is an illustrated western design until real photographs and a final logo are available, confirmed October 21, 2026.
