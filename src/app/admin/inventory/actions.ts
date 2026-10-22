@@ -135,12 +135,12 @@ export async function recordStock(form: FormData) {
     `/admin/inventory?${product ? `product=${product}&` : ""}${issue ? `error=${encodeURIComponent(issue)}` : "success=Stock+transaction+recorded."}`,
   );
 }
-export async function saveRation(form: FormData) {
+export async function saveHorseRation(horseId: string, form: FormData) {
   const { db } = await requireAdmin();
   let issue: string | undefined;
   try {
     const values = {
-      horse_id: identifier(form, "horse_id", true),
+      horse_id: horseId,
       product_id: identifier(form, "product_id", true),
       feeding_time_id: identifier(form, "feeding_time_id", true),
       unit_id: identifier(form, "unit_id", true),
@@ -154,6 +154,7 @@ export async function saveRation(form: FormData) {
           .from("feed_rations")
           .update(values)
           .eq("id", id)
+          .eq("horse_id", horseId)
           .select()
           .single()
       : await db.from("feed_rations").insert(values);
@@ -166,10 +167,10 @@ export async function saveRation(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Ration+saved.+No+stock+was+deducted."}`,
+    `/admin/horses/${horseId}?${issue ? `ration=${encodeURIComponent(String(form.get("id") ?? ""))}&new=1&error=${encodeURIComponent(issue)}` : "success=Ration+saved.+No+stock+was+deducted."}#${issue ? "ration-form" : "horse-rations"}`,
   );
 }
-export async function deleteRation(form: FormData) {
+export async function deleteRation(horseId: string, form: FormData) {
   const { db } = await requireAdmin();
   let issue = false;
   try {
@@ -177,6 +178,7 @@ export async function deleteRation(form: FormData) {
       .from("feed_rations")
       .delete()
       .eq("id", identifier(form, "id", true))
+      .eq("horse_id", horseId)
       .select()
       .single();
     issue = Boolean(error);
@@ -185,7 +187,7 @@ export async function deleteRation(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin/feeding?${issue ? "error=Ration+could+not+be+removed." : "success=Ration+removed.+Past+feedings+remain+unchanged."}`,
+    `/admin/horses/${horseId}?${issue ? "error=Ration+could+not+be+removed." : "success=Ration+removed.+Past+feedings+remain+unchanged."}#horse-rations`,
   );
 }
 export async function confirmFeeding(form: FormData) {

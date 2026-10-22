@@ -6,7 +6,7 @@ import { confirmFeeding, deleteRation } from "@/app/admin/inventory/actions";
 import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
 import { today } from "@/lib/format";
 
-type Ration = {
+export type Ration = {
   id: string;
   horse_id: string;
   product_id: string;
@@ -23,7 +23,9 @@ export function SavedRations({
   products,
   units,
   todayConfirmations,
+  editable = false,
 }: {
+  editable?: boolean;
   horses: { id: string; barn_name: string }[];
   rations: Ration[];
   times: FeedingTime[];
@@ -90,20 +92,22 @@ export function SavedRations({
                           <div className="row-actions">
                             <Link
                               className="text-link"
-                              href={`/admin/feeding?edit=${r.id}#ration-form`}
+                              href={`/admin/horses/${h.id}?ration=${r.id}#ration-form`}
                             >
                               {r.feeding_time_id
                                 ? "Edit"
                                 : "Assign feeding time"}
                             </Link>
-                            <form action={deleteRation}>
-                              <input name="id" type="hidden" value={r.id} />
-                              <DeleteButton label="Remove" />
-                            </form>
+                            {editable && (
+                              <form action={deleteRation.bind(null, h.id)}>
+                                <input name="id" type="hidden" value={r.id} />
+                                <DeleteButton label="Remove" />
+                              </form>
+                            )}
                           </div>
                         </div>
                       ))}
-                      {active && g.id && !g.archived && (
+                      {!editable && active && g.id && !g.archived && (
                         <>
                           <p className="muted">
                             {confirmed
@@ -164,9 +168,9 @@ export function SavedRations({
               {!lines.length && <p className="muted">No rations saved yet.</p>}
               <Link
                 className="text-link"
-                href={`/admin/feeding?new=1&horse=${h.id}#ration-form`}
+                href={`/admin/horses/${h.id}${editable ? "?new=1#ration-form" : "#horse-rations"}`}
               >
-                Add a ration for {h.barn_name}
+                {editable ? "Add a ration" : "Manage feeding plan"}
               </Link>
             </article>
           );

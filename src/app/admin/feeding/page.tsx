@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { FeedingTimeManager } from "@/components/feeding-time-manager";
 import { SectionTabs } from "@/components/section-tabs";
 import { SavedRations } from "@/components/saved-rations";
@@ -6,14 +7,9 @@ import {
   DailyFeedingBatch,
   ExtraFeedingBatch,
 } from "@/components/bulk-feeding";
-import { ActionPanel } from "@/components/action-panel";
 import { requireAdmin } from "@/lib/auth";
 import { today, dateLabel } from "@/lib/format";
-import { feedingTimeLabel } from "@/lib/feeding-times";
-import { PageHeading, Notice, Field } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
-import { ProductQuantityFields } from "@/components/stock-forms";
-import { saveRation } from "@/app/admin/inventory/actions";
+import { PageHeading, Notice } from "@/components/ui";
 
 export default async function Feeding({
   searchParams,
@@ -55,6 +51,12 @@ export default async function Feeding({
     db.from("feeding_times").select("*").order("sort_order").order("name"),
   ]);
   const selected = rations.data?.find((r) => r.id === params.edit);
+  if (selected)
+    redirect(
+      `/admin/horses/${selected.horse_id}?ration=${selected.id}#ration-form`,
+    );
+  if (params.new === "1" && horses.data?.some((h) => h.id === params.horse))
+    redirect(`/admin/horses/${params.horse}?new=1#ration-form`);
   const failed = [
     rations,
     horses,
@@ -90,9 +92,9 @@ export default async function Feeding({
       {!failed && (
         <>
           <p className="notice">
-            Save quantities for one feeding, such as morning or evening. Confirm
-            each feeding only after it was actually given. Extras and partial
-            feedings are recorded separately.
+            Set up rations in each horse’s record. Confirm each feeding only
+            after it was actually given. Extras and partial feedings are
+            recorded separately.
           </p>
           {legacyActive.size > 0 && (
             <p className="notice">
@@ -112,113 +114,6 @@ export default async function Feeding({
                 label: "Rations",
                 content: (
                   <>
-                    <ActionPanel
-                      id="ration-form"
-                      label={selected ? "Edit ration" : "Add a ration"}
-                      defaultOpen={Boolean(selected) || params.new === "1"}
-                      closeHref="/admin/feeding"
-                    >
-                      {horses.data?.length &&
-                      products.data?.some((p) => !p.archived) ? (
-                        <form
-                          action={saveRation}
-                          className="record-form"
-                          key={selected?.id ?? "new"}
-                        >
-                          <input
-                            type="hidden"
-                            name="id"
-                            value={selected?.id ?? ""}
-                          />
-                          <div className="form-grid">
-                            <label>
-                              Horse
-                              <select
-                                name="horse_id"
-                                required
-                                defaultValue={
-                                  selected?.horse_id ?? params.horse ?? ""
-                                }
-                              >
-                                <option value="" disabled>
-                                  Choose a horse
-                                </option>
-                                {horses.data.map((h) => (
-                                  <option key={h.id} value={h.id}>
-                                    {h.barn_name}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label>
-                              Feeding time
-                              <select
-                                name="feeding_time_id"
-                                required
-                                defaultValue={
-                                  selected?.feeding_time_id ?? params.time ?? ""
-                                }
-                              >
-                                <option value="" disabled>
-                                  Choose a feeding time
-                                </option>
-                                {times.data
-                                  ?.filter(
-                                    (t) =>
-                                      !t.archived ||
-                                      t.id === selected?.feeding_time_id,
-                                  )
-                                  .map((t) => (
-                                    <option
-                                      key={t.id}
-                                      value={t.id}
-                                      disabled={t.archived}
-                                    >
-                                      {feedingTimeLabel(t)}
-                                      {t.archived ? " (archived)" : ""}
-                                    </option>
-                                  ))}
-                              </select>
-                            </label>
-                            <ProductQuantityFields
-                              products={products.data ?? []}
-                              units={units.data ?? []}
-                              initialProduct={selected?.product_id}
-                              initialUnit={selected?.unit_id}
-                              initialQuantity={selected?.quantity}
-                            />
-                          </div>
-                          <label className="inline-checkbox">
-                            <input
-                              name="active"
-                              type="checkbox"
-                              defaultChecked={selected?.active ?? true}
-                            />
-                            Active ration
-                          </label>
-                          <label>
-                            Notes
-                            <textarea
-                              name="notes"
-                              rows={3}
-                              maxLength={2000}
-                              defaultValue={selected?.notes ?? ""}
-                            />
-                          </label>
-                          <p className="muted">
-                            One line per horse, product, and feeding time.
-                            Morning and evening quantities are separate. Saving
-                            a ration does not deduct stock or change past
-                            feedings.
-                          </p>
-                          <SubmitButton>Save ration</SubmitButton>
-                        </form>
-                      ) : (
-                        <p className="record-form muted">
-                          Add a horse and an active inventory product first.
-                        </p>
-                      )}
-                    </ActionPanel>{" "}
                     <SavedRations
                       horses={horses.data ?? []}
                       rations={rations.data ?? []}

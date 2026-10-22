@@ -140,7 +140,8 @@ export default async function Horses({
               {
                 name: "feeding_instructions",
                 label: "Feeding instructions",
-                placeholder: "Feed, amounts, supplements, and schedule.",
+                placeholder:
+                  "Special care or feeding notes. Set quantities in the horse’s Feeding plan tab.",
               },
               {
                 name: "health_notes",
@@ -236,10 +237,16 @@ export default async function Horses({
                 </div>
                 <div className="row-actions">
                   <Link
-                    href={`/admin/horses?edit=${horse.id}#record-form`}
+                    href={`/admin/horses/${horse.id}`}
                     className="text-link"
                   >
-                    View / edit profile
+                    View horse record
+                  </Link>
+                  <Link
+                    className="text-link"
+                    href={`/admin/horses/${horse.id}#horse-rations`}
+                  >
+                    Feeding plan
                   </Link>
                   <form action={deleteRecord.bind(null, "horses")}>
                     <input type="hidden" name="id" value={horse.id} />
