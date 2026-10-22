@@ -1,6 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { preparedReceipt, attachReceipt } from "@/lib/receipt-storage";
 import { requireAdmin } from "@/lib/auth";
 import { choice, dateValue, identifier, text } from "@/lib/validation";
 import { weightInOunces } from "@/lib/weight-units";
@@ -88,9 +89,14 @@ export async function recordStock(form: FormData) {
   let issue: string | undefined;
   let product: string | null = null;
   let expense: string | null = null;
+  let receiptAttached = false;
   try {
     const values = stockValues(form);
     product = values.p_product;
+    const receipt =
+      values.p_kind === "purchase"
+        ? await preparedReceipt(form.get("receipt"))
+        : null;
     if (values.p_kind === "feeding") {
       const result = await db.rpc("record_bulk_extra_feeding", {
         p_request: values.p_request,
@@ -106,11 +112,21 @@ export async function recordStock(form: FormData) {
       const result = await db.rpc("record_stock_movement", values);
       issue = message(result.error);
       expense = result.data?.expense_id;
+      if (expense && !issue && receipt) {
+        await attachReceipt(db, expense, receipt);
+        receiptAttached = true;
+      }
     }
   } catch (e) {
     issue = e instanceof Error ? e.message : "Could not record stock.";
   }
   revalidatePath("/admin", "layout");
+  if (expense && issue)
+    redirect(
+      `/admin/expenses?edit=${expense}&error=${encodeURIComponent(issue)}#receipts`,
+    );
+  if (expense && !issue && receiptAttached)
+    redirect(`/admin/inventory?success=Purchase,+stock,+and+receipt+saved.`);
   if (expense && !issue)
     redirect(
       `/admin/expenses?edit=${expense}&success=Purchase+and+stock+saved.+Attach+the+receipt+below.#receipts`,

@@ -21,7 +21,7 @@ import {
   Send,
   Paperclip,
 } from "lucide-react";
-const links = [
+export const navigationLinks = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/horses", label: "Horses", icon: Fence },
   { href: "/admin/customers", label: "Customers", icon: UsersRound },
@@ -45,7 +45,7 @@ export function Navigation() {
   const path = usePathname();
   return (
     <nav className="navigation" aria-label="Main navigation">
-      {links.map(({ href, label, icon: Icon }) => (
+      {navigationLinks.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
           href={href}

@@ -10,7 +10,7 @@ import { today, dateLabel } from "@/lib/format";
 import { feedingTimeLabel } from "@/lib/feeding-times";
 import { PageHeading, Notice, Field } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
-import { ProductUnitFields } from "@/components/stock-forms";
+import { ProductQuantityFields } from "@/components/stock-forms";
 import { saveRation, saveFeedingTime } from "@/app/admin/inventory/actions";
 
 export default async function Feeding({
@@ -163,21 +163,12 @@ export default async function Feeding({
                           ))}
                       </select>
                     </label>
-                    <ProductUnitFields
+                    <ProductQuantityFields
                       products={products.data ?? []}
                       units={units.data ?? []}
                       initialProduct={selected?.product_id}
                       initialUnit={selected?.unit_id}
-                    />
-                    <Field
-                      name="quantity"
-                      label="Quantity for this feeding (selected unit)"
-                      type="number"
-                      min={0.000001}
-                      max={1000000000}
-                      step="0.000001"
-                      required
-                      defaultValue={selected?.quantity}
+                      initialQuantity={selected?.quantity}
                     />
                   </div>
                   <label className="inline-checkbox">

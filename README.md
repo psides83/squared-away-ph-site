@@ -185,3 +185,11 @@ Existing daily totals stay unassigned. Edit each line to assign its time and per
 Apply `20261021001900_service_defaults_invoice_format.sql`. In Settings, monthly feed and board charges prefill new training stays; blank means unset and zero is allowed. Existing stays retain their terms. Actual business expenses are still recorded separately.
 
 Choose **Invoice format** on each customer: itemized, or combined training/feed/board. Other charges stay separate. Manual invoice lines choose a category; generated service lines classify automatically. The invoice document and portal show the customer format, while **Review detailed charges** preserves the full internal breakdown. Finalization saves the selected format; changing a customer later does not restyle issued invoices. Existing issued invoices remain itemized.
+
+### Mobile forms and receipt capture
+
+Admin mobile screens use bottom navigation and full-screen editors. Inputs are compact; currency and quantities show their signs/units without changing stored numeric values. US phones display as `(123) 456-7890`. Serving-count units have touch buttons; standard numeric browser spinners are hidden. Training focus shortcuts speed up routine logs.
+
+Stock purchases can include a private receipt from **Take photo** or **Choose file**, with larger photos prepared on the device. Purchase/expense data saves first; receipt failures direct you to the saved expense for attachment retry. Identical receipt content is attached once per expense. Existing expense attachments use the same capture controls. This increment needs no new database migration, but the existing private receipt/storage migrations must already be applied.
+
+Automatic receipt reading is not connected. See [receipt-scanning.md](docs/receipt-scanning.md) for the extraction, product matching, review, and multi-item purchase work that remains.

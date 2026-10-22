@@ -1,4 +1,5 @@
 "use client";
+import { FormInput } from "@/components/form-input";
 import { useState } from "react";
 import { money } from "@/lib/format";
 import { splitAllocation, type AllocationBasis } from "@/lib/allocations";
@@ -100,7 +101,8 @@ export function AllocationForm({
                     <span className="sr-only">
                       Boarding days for {h.horse_name}
                     </span>
-                    <input
+                    <FormInput
+                      suffix="days"
                       name={`days_${h.horse_id}`}
                       type="number"
                       min="0"

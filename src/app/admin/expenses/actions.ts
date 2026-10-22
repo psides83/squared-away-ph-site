@@ -3,7 +3,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { dateValue, identifier, text } from "@/lib/validation";
-import { expenseValues, receiptLimit, receiptType } from "@/lib/inventory";
+import { preparedReceipt, attachReceipt } from "@/lib/receipt-storage";
+import { expenseValues } from "@/lib/inventory";
 
 export async function saveExpense(form: FormData) {
   const { db } = await requireAdmin();
@@ -103,38 +104,15 @@ export async function uploadReceipt(form: FormData) {
   let expense: string | null = null;
   try {
     expense = identifier(form, "expense_id", true);
-    const file = form.get("receipt");
-    if (!(file instanceof File) || file.size > receiptLimit)
-      throw new Error("Select a receipt up to 3 MB.");
+    const receipt = await preparedReceipt(form.get("receipt"));
+    if (!receipt) throw new Error("Select a receipt first.");
     const { data: record, error: lookup } = await db
       .from("expenses")
       .select("id")
       .eq("id", expense)
       .single();
     if (lookup || !record) throw new Error("Expense not found.");
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const type = receiptType(bytes);
-    const path = `${expense}/${crypto.randomUUID()}.${type.extension}`;
-    const { error: upload } = await db.storage
-      .from("expense-receipts")
-      .upload(path, bytes, { contentType: type.mime, upsert: false });
-    if (upload)
-      throw new Error(
-        "Receipt upload failed. Check that the receipt storage migration is applied.",
-      );
-    const { error: metadata } = await db.from("expense_receipts").insert({
-      expense_id: expense,
-      object_path: path,
-      file_name: file.name.slice(0, 200) || `receipt.${type.extension}`,
-      content_type: type.mime,
-      size_bytes: bytes.length,
-    });
-    if (metadata) {
-      await db.storage.from("expense-receipts").remove([path]);
-      throw new Error(
-        "Receipt could not be attached. Your expense is still saved; try uploading again.",
-      );
-    }
+    await attachReceipt(db, expense!, receipt);
   } catch (e) {
     issue = e instanceof Error ? e.message : "Receipt could not be uploaded.";
   }

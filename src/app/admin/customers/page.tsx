@@ -1,3 +1,4 @@
+import { phoneDisplay } from "@/lib/input-format";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { UsersRound, X, ArrowUpRight } from "lucide-react";
@@ -171,7 +172,7 @@ export default async function Customers({
                           <span className="muted">No email added</span>
                         )}
                         {row.phone && (
-                          <a href={`tel:${row.phone}`}>{row.phone}</a>
+                          <a href={`tel:${phoneDisplay(row.phone)}`}>{phoneDisplay(row.phone)}</a>
                         )}
                       </div>
                     </td>

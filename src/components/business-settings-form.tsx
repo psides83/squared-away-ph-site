@@ -1,5 +1,6 @@
 "use client";
 
+import { FormInput } from "@/components/form-input";
 import { useActionState, useState } from "react";
 import { saveBusinessSettings } from "@/app/admin/settings/actions";
 import { type SettingsFormValues } from "@/lib/business-settings";
@@ -25,10 +26,16 @@ export function BusinessSettingsForm({
       placeholder?: string;
     } = {},
   ) => (
-    <label>
-      {label}
-      {options.required && <span className="required"> *</span>}
-      <input
+    <label className={`field field-${options.type ?? "text"}`}>
+      <span className="field-label">
+        {options.type === "number" ? label.replace(/\s*\(\$\)/g, "") : label}
+        {options.required && <span className="required"> *</span>}
+      </span>
+      <FormInput
+        aria-label={label}
+        prefix={
+          options.type === "number" && options.step === "0.01" ? "$" : undefined
+        }
         name={name}
         value={values[name]}
         onChange={(event) =>

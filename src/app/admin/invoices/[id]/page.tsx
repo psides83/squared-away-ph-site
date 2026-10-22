@@ -1,3 +1,4 @@
+import { phoneDisplay } from "@/lib/input-format";
 import { CustomerInvoiceLines } from "@/components/customer-invoice-lines";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
@@ -189,7 +190,7 @@ export default async function Invoice({
               {invoiceStatus(invoice, date)}
               {draft ? " · Not a finalized bill" : ""}
             </p>
-            {business?.phone && <p>{business.phone}</p>}
+            {business?.phone && <p>{phoneDisplay(business.phone)}</p>}
             {business?.email && <p>{business.email}</p>}
           </div>
           <div>
@@ -207,7 +208,7 @@ export default async function Invoice({
           <p className="eyebrow">BILL TO</p>
           <h2>{snapshot?.name}</h2>
           {snapshot?.email && <p>{snapshot.email}</p>}
-          {snapshot?.phone && <p>{snapshot.phone}</p>}
+          {snapshot?.phone && <p>{phoneDisplay(snapshot.phone)}</p>}
         </div>
         <CustomerInvoiceLines lines={presentation.data?.lines ?? []} />
         <ActionPanel id="invoice-breakdown" label="Review detailed charges">

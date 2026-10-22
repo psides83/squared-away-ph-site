@@ -1911,3 +1911,413 @@ body:has(.action-dialog[open]) {
 .ration-horse-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
 }
+
+/* Compact form controls with units separate from their submitted numeric values. */
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  max-width: 16ch;
+}
+.field {
+  min-width: 0;
+  width: 100%;
+  max-width: 36ch;
+}
+.field-number {
+  max-width: 25ch;
+}
+.field-date {
+  max-width: 23ch;
+}
+.field-time {
+  max-width: 18ch;
+}
+.field-tel {
+  max-width: 25ch;
+}
+.field-label {
+  display: block;
+  min-height: 1.6em;
+}
+.input-control {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  margin-top: 7px;
+  border: 1px solid #d6d0c4;
+  border-radius: 6px;
+  background: #fffefa;
+}
+.input-control input {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+  border-radius: 6px;
+}
+.input-control:focus-within {
+  outline: 2px solid #a67e50;
+  outline-offset: 1px;
+}
+.input-control input:focus {
+  outline: none;
+}
+.input-affix {
+  flex: 0 0 auto;
+  color: var(--leather);
+  font-weight: 600;
+  font-size: 14px;
+  pointer-events: none;
+}
+.input-prefix {
+  padding-left: 12px;
+}
+.input-suffix {
+  padding-right: 12px;
+}
+.input-control.has-prefix input {
+  padding-left: 6px;
+}
+.input-control.has-suffix input {
+  padding-right: 6px;
+}
+.quantity-button {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  min-width: 44px;
+  min-height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  color: var(--leather);
+  background: #f0e9dd;
+}
+.quantity-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.input-control.with-controls {
+  max-width: 260px;
+}
+.input-control.with-controls input {
+  text-align: center;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.form-grid {
+  align-items: end;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.form-grid > label {
+  min-width: 0;
+  max-width: 40ch;
+}
+.form-grid select {
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+.record-form > .button,
+.stack > .button,
+.record-form > button,
+.stack > button {
+  justify-self: start;
+  width: auto;
+}
+.record-form .form-actions {
+  flex-wrap: wrap;
+}
+.action-dialog-body > form.stack {
+  padding: 24px;
+}
+.settings-save {
+  padding: 0 24px 24px;
+}
+.conversion-row label {
+  flex: 0 1 180px;
+}
+.category-content > form {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+.batch-horse-row .input-control {
+  max-width: 230px;
+}
+.receipt-picker {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+.receipt-picker legend {
+  padding: 0 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.receipt-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.receipt-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.receipt-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  min-height: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+}
+.mobile-tabbar {
+  display: none;
+}
+.mobile-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.mobile-menu-grid a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  min-height: 52px;
+  border-radius: 7px;
+  background: #f2ede3;
+  font-size: 13px;
+}
+.mobile-menu-grid a[aria-current="page"] {
+  background: #e4d7c3;
+}
+.mobile-quick-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+@media (max-width: 700px) {
+  .sidebar {
+    padding: 12px 18px;
+  }
+  .sidebar-brand {
+    padding: 0;
+  }
+  .sidebar > .navigation {
+    display: none;
+  }
+  .topbar {
+    height: 44px;
+    padding: 0 18px;
+  }
+  .main-content {
+    padding: 20px 16px calc(90px + env(safe-area-inset-bottom));
+  }
+  input,
+  select,
+  textarea,
+  .input-control input {
+    font-size: 16px;
+  }
+  input[type="date"] {
+    min-width: 0;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .form-grid > label {
+    max-width: 100%;
+  }
+  .form-grid > .field-number {
+    max-width: 25ch;
+  }
+  .form-grid > .field-date {
+    max-width: 23ch;
+  }
+  .form-grid > .field-tel {
+    max-width: 25ch;
+  }
+  .record-form {
+    padding: 20px;
+    gap: 18px;
+  }
+  .button,
+  .text-button,
+  .text-link {
+    min-height: 44px;
+  }
+  .text-button,
+  .text-link {
+    display: inline-flex;
+    align-items: center;
+  }
+  .action-dialog {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+  }
+  .action-dialog-bar {
+    padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
+  }
+  .action-dialog-footer {
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+  }
+  .action-dialog {
+    overscroll-behavior: contain;
+  }
+  .mobile-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: #fcfaf5f5;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 -4px 20px #30291f0a;
+  }
+  .mobile-tabbar > a,
+  .mobile-tabbar > .action-launcher > button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    min-height: 52px;
+    padding: 5px;
+    font-size: 11px;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: #7e715e;
+  }
+  .mobile-tabbar > a[aria-current="page"] {
+    background: #efe6d7;
+    color: #67482e;
+    font-weight: 700;
+  }
+  .mobile-tabbar > .action-launcher {
+    margin: 0;
+    display: block;
+  }
+  .mobile-tabbar > .action-launcher > button {
+    width: 100%;
+  }
+  .mobile-tabbar > .action-launcher > button::before {
+    content: "•••";
+    font-size: 22px;
+    line-height: 21px;
+    letter-spacing: 2px;
+  }
+  .app-footer {
+    padding-bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+  .batch-horse-row {
+    flex-wrap: wrap;
+  }
+  .mobile-menu-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media print {
+  .mobile-tabbar {
+    display: none !important;
+  }
+}
+.training-focus-field {
+  grid-column: 1 / -1;
+}
+.focus-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.focus-chip {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #f4eee4;
+  color: var(--leather);
+  padding: 8px 13px;
+  font-size: 12px;
+  min-height: 40px;
+}
+@media (max-width: 700px) {
+  .focus-chip {
+    min-height: 44px;
+  }
+}
+
+.form-grid > .field-number:has(.with-controls) {
+  max-width: 280px;
+}
+.input-control.with-controls {
+  width: 250px;
+  max-width: 100%;
+}
+.input-control.with-controls input {
+  flex: 1 1 6ch;
+  min-width: 5ch;
+}
+
+.form-grid > .field-number {
+  max-width: 25ch;
+}
+.input-control:has(input[type="number"]) {
+  max-width: 200px;
+}
+.input-control.with-controls {
+  max-width: 100%;
+}
+.field:has(
+    input[name="billing_day"],
+    input[name="default_billing_day"],
+    input[name="sort_order"],
+    input[name="birth_year"],
+    input[name="invoice_due_days"],
+    input[name="default_invoice_due_days"]
+  )
+  .input-control {
+  max-width: 125px;
+}
+.settings-save {
+  padding-inline: 40px;
+}
+@media (max-width: 700px) {
+  .settings-save {
+    padding-inline: 36px;
+  }
+}
+
+@media (max-width: 700px) {
+  .sidebar {
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+}

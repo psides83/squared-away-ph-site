@@ -6,7 +6,10 @@ import { dateLabel, today } from "@/lib/format";
 import { identifier } from "@/lib/validation";
 import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
 import { DeleteButton, SubmitButton } from "@/components/submit-button";
-import { TrainingEntryFields } from "@/components/training-entry-fields";
+import {
+  TrainingEntryFields,
+  TrainingFocusField,
+} from "@/components/training-entry-fields";
 import { deleteRecord, saveRecord } from "@/app/admin/actions";
 
 export default async function TrainingLog({
@@ -143,12 +146,9 @@ export default async function TrainingLog({
                   initialKind={selected?.kind ?? "session"}
                   duration={selected?.duration_minutes}
                 />
-                <Field
-                  label="Focus / title"
-                  name="title"
-                  required
-                  defaultValue={selected?.title}
-                  placeholder="e.g. Rating cattle and staying quiet"
+                <TrainingFocusField
+                  initialTitle={selected?.title ?? ""}
+                  showShortcuts={!selected}
                 />
               </div>
               <label>
@@ -156,7 +156,7 @@ export default async function TrainingLog({
                 <textarea
                   name="notes"
                   required
-                  rows={5}
+                  rows={3}
                   maxLength={5000}
                   defaultValue={selected?.notes ?? ""}
                   placeholder="What you worked on, what improved, and what to work on next."

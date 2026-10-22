@@ -1,3 +1,4 @@
+import { phoneDisplay } from "@/lib/input-format";
 import { CustomerInvoiceLines } from "@/components/customer-invoice-lines";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -42,7 +43,7 @@ export default async function CustomerInvoice({
             </p>
             <h1>SAPH-{i.invoice_number}</h1>
             <p>{invoiceStatus(i, today())}</p>
-            {i.business?.phone && <p>{i.business.phone}</p>}
+            {i.business?.phone && <p>{phoneDisplay(i.business.phone)}</p>}
             {i.business?.email && <p>{i.business.email}</p>}
           </div>
           <div>
@@ -59,7 +60,7 @@ export default async function CustomerInvoice({
           <p className="eyebrow">BILL TO</p>
           <h2>{i.customer?.name}</h2>
           {i.customer?.email && <p>{i.customer.email}</p>}
-          {i.customer?.phone && <p>{i.customer.phone}</p>}
+          {i.customer?.phone && <p>{phoneDisplay(i.customer.phone)}</p>}
         </div>
         <CustomerInvoiceLines lines={i.lines} />
         <div className="invoice-totals">

@@ -1,3 +1,4 @@
+import { FormInput } from "@/components/form-input";
 import Link from "next/link";
 import { ArrowUpRight, Plus, type LucideIcon } from "lucide-react";
 
@@ -90,6 +91,8 @@ export function Field({
   min,
   max,
   step,
+  suffix,
+  controls = false,
 }: {
   label: string;
   name: string;
@@ -101,12 +104,24 @@ export function Field({
   min?: string | number;
   max?: string | number;
   step?: string;
+  suffix?: string;
+  controls?: boolean;
 }) {
   return (
-    <label>
-      {label}
-      {required && <span className="required"> *</span>}
-      <input
+    <label className={`field field-${type}`}>
+      <span className="field-label">
+        {type === "number" ? label.replace(/\s*\(\$\)/g, "") : label}
+        {required && <span className="required"> *</span>}
+      </span>
+      <FormInput
+        prefix={
+          type === "number" && (step === "0.01" || label.includes("$"))
+            ? "$"
+            : undefined
+        }
+        suffix={suffix ?? (name === "duration_minutes" ? "min" : undefined)}
+        controls={controls}
+        aria-label={suffix ? `${label} (${suffix})` : label}
         name={name}
         type={type}
         required={required}

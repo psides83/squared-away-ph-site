@@ -11,12 +11,14 @@ export function ActionPanel({
   children,
   defaultOpen = false,
   closeHref,
+  dismissLabel = "Close without saving",
 }: {
   id: string;
   label: string;
   children: ReactNode;
   defaultOpen?: boolean;
   closeHref?: string;
+  dismissLabel?: string;
 }) {
   const [revision, setRevision] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -87,7 +89,7 @@ export function ActionPanel({
           <button
             type="button"
             className="dialog-close"
-            aria-label="Close without saving"
+            aria-label={dismissLabel}
             onClick={() => dialog.current?.close()}
           >
             <X size={22} />
@@ -102,7 +104,7 @@ export function ActionPanel({
             className="text-button"
             onClick={() => dialog.current?.close()}
           >
-            Close without saving
+            {dismissLabel}
           </button>
         </div>
       </dialog>

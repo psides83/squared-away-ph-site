@@ -167,6 +167,14 @@ Features in this section are present in the application source. A feature being 
 - App preview/download routes issue 60-second signed links with private/no-store responses. Unpublishing, grant revocation, and account disable prevent fresh portal requests; previously issued links/copies are not withdrawn. Admin archival retains the object and audit metadata.
 - File lists are paginated, horse-filterable, and use authenticated image routes without the public image-optimization cache. Photos display in responsive grids; documents open/download through the same access checks.
 
+### Compact forms, mobile navigation, and fast barn entry
+
+- Shared inputs show dollar prefixes, selected quantity units, and minutes. Browser number spinners are hidden. Scoops/flakes and other small serving-count units have explicit touch-friendly plus/minus controls; fixed weights, money, dates, and general numeric fields keep direct entry. Changing the selected quantity unit clears its prior entered quantity.
+- Form widths, grid alignment, save-button alignment, and dialog padding are tightened. Financial splitting inputs also show dollar prefixes. US phone entry and customer/invoice/contact displays use `(123) 456-7890`, with international numbers and extensions preserved.
+- Mobile admin bottom tabs provide Home, Horses, Feed, Log, and More. More includes inventory-purchase/training quick actions, all office pages, and sign out. Mobile editors fill the screen, respect safe areas, use 16-pixel entry text, and provide larger touch targets. Desktop navigation remains available.
+- Training logging has explicit focus shortcuts for cow work, calf roping, colt starting, and conditioning, plus direct entry for custom focus and notes. Scheduled feeding and bulk feeding retain their existing stock/cost checks.
+- Camera/file receipt capture is available on stock purchases and existing expenses, with client photo preparation and private attachment after purchase. A failed attachment returns the administrator to the saved expense; content hashes prevent duplicate receipt attachments to the same expense. See `docs/receipt-scanning.md` for the remaining recognition workflow and limits.
+
 ### Customer invoice format and service charge defaults
 
 - Settings include optional monthly feed and board customer-charge defaults in exact cents, including zero and unset values. New stays use them; saved agreements keep their original terms. These are billing rates, not expense records or profit assumptions.
@@ -214,6 +222,9 @@ Features in this section are present in the application source. A feature being 
 - Call/text and inquiry actions, business contact details, domain, logo, and real photography/video.
 
 ### PWA and later improvements
+
+- Receipt recognition/OCR with provider selection, product/unit suggestions, reviewed draft entry, confidence/error handling, and duplicate-purchase checks. Multi-item receipt purchases need an atomic multi-product purchase/expense model and reviewed tax/discount allocation. Camera/file capture and private receipt attachment are implemented above; automatic recognition is not. See `docs/receipt-scanning.md`.
+- Continue device testing and refinement of mobile workflows, including keyboard/camera behavior on real iOS/Android devices. Native-style navigation and editors are implemented above; this does not imply offline entry or a native binary.
 
 - Extend bulk entry to additional workflows such as training logs or expense entry as their batch requirements are defined; bulk daily and extra/partial feeding are implemented above.
 
@@ -266,6 +277,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Mobile/forms/receipt-capture increment (October 22, 2026): all 113 tests, TypeScript checks, and the production build pass. Browser checks at a 390-pixel phone viewport cover compact fields, dollar/unit display, serving-button increments, phone formatting, training-focus selection, full-screen editors, and More navigation. Receipt tests cover pre-save file validation, repeat attachment deduplication, upload failure, and metadata cleanup using a mocked storage client. The temporary preview was removed. Actual iOS/Android camera capture, image-preparation compatibility, keyboard behavior, and live Supabase attachment flows remain unverified. No new database migration or external recognition service was added.
 
 - Service-defaults/invoice-format increment includes migration `20261021001900_service_defaults_invoice_format.sql`. All 109 tests, TypeScript checks, and the production build pass. Local tests cover blank/zero/exact-cent defaults, retained stay agreements, generated/manual charge categories, combined-service sums and separate other charges, draft preference changes, issued/legacy invoice format preservation, portal isolation/private-helper denial, payments, and adjustments. Browser checks used the actual Settings and invoice-line components with sample values; the temporary preview was removed. Remote migration and authenticated production flows remain unverified.
 

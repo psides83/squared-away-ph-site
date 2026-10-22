@@ -1,4 +1,7 @@
 "use client";
+import { weightUnits } from "@/lib/weight-units";
+import { servingStepper } from "@/lib/input-format";
+import { ReceiptPicker } from "@/components/receipt-picker";
 import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
 import { useState } from "react";
 import { Field } from "@/components/ui";
@@ -17,11 +20,13 @@ export function ProductUnitFields({
   units,
   initialProduct = "",
   initialUnit = "",
+  onUnitChange,
 }: {
   products: ProductOption[];
   units: UnitOption[];
   initialProduct?: string;
   initialUnit?: string;
+  onUnitChange?: (unit: UnitOption | undefined) => void;
 }) {
   const [product, setProduct] = useState(initialProduct);
   const [unit, setUnit] = useState(initialUnit);
@@ -36,6 +41,7 @@ export function ProductUnitFields({
           onChange={(e) => {
             setProduct(e.target.value);
             setUnit("");
+            onUnitChange?.(undefined);
           }}
         >
           <option value="" disabled>
@@ -59,7 +65,10 @@ export function ProductUnitFields({
           name="unit_id"
           required
           value={unit}
-          onChange={(e) => setUnit(e.target.value)}
+          onChange={(e) => {
+            setUnit(e.target.value);
+            onUnitChange?.(units.find((u) => u.id === e.target.value));
+          }}
         >
           <option value="" disabled>
             Select a unit
@@ -68,7 +77,9 @@ export function ProductUnitFields({
             .filter((u) => u.product_id === product)
             .map((u) => (
               <option key={u.id} value={u.id}>
-                {u.label} · {Number(u.ounces_per_unit)} oz each
+                {weightUnits.some((w) => w.label === u.label)
+                  ? `${weightUnits.find((w) => w.label === u.label)!.name} (${u.label})`
+                  : u.label}
               </option>
             ))}
         </select>
@@ -93,6 +104,7 @@ export function StockEntryForm({
   request: string;
   times?: FeedingTime[];
 }) {
+  const [selectedUnit, setSelectedUnit] = useState<UnitOption>();
   const [kind, setKind] = useState("purchase");
   const incoming = ["purchase", "opening", "adjustment_in"].includes(kind);
   return (
@@ -125,10 +137,14 @@ export function StockEntryForm({
           products={products}
           units={units}
           initialProduct={product}
+          onUnitChange={setSelectedUnit}
         />
         <Field
+          key={selectedUnit?.id ?? "no-unit"}
           name="quantity"
-          label="Quantity in selected unit"
+          label="Quantity"
+          suffix={selectedUnit?.label}
+          controls={servingStepper(selectedUnit?.label ?? "")}
           type="number"
           min={0.000001}
           max={1000000000}
@@ -192,6 +208,7 @@ export function StockEntryForm({
           </label>
         )}
       </div>
+      {kind === "purchase" && <ReceiptPicker />}
       <label>
         Notes / correction reason
         <textarea
@@ -209,5 +226,45 @@ export function StockEntryForm({
       </p>
       <SubmitButton>Record transaction</SubmitButton>
     </form>
+  );
+}
+
+export function ProductQuantityFields({
+  products,
+  units,
+  initialProduct,
+  initialUnit,
+  initialQuantity,
+}: {
+  products: ProductOption[];
+  units: UnitOption[];
+  initialProduct?: string;
+  initialUnit?: string;
+  initialQuantity?: number | string;
+}) {
+  const [unit, setUnit] = useState(units.find((u) => u.id === initialUnit));
+  return (
+    <>
+      <ProductUnitFields
+        products={products}
+        units={units}
+        initialProduct={initialProduct}
+        initialUnit={initialUnit}
+        onUnitChange={setUnit}
+      />
+      <Field
+        key={unit?.id ?? "no-unit"}
+        name="quantity"
+        label="Quantity for this feeding"
+        type="number"
+        min={0.000001}
+        max={1000000000}
+        step="0.000001"
+        suffix={unit?.label}
+        controls={servingStepper(unit?.label ?? "")}
+        required
+        defaultValue={unit?.id === initialUnit ? initialQuantity : ""}
+      />
+    </>
   );
 }

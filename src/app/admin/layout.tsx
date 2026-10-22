@@ -1,3 +1,4 @@
+import { MobileNavigation } from "@/components/mobile-navigation";
 import { InstallApp } from "@/components/install-app";
 import { requireAdmin } from "@/lib/auth";
 import { Brand } from "@/components/brand";
@@ -41,6 +42,7 @@ export default async function AdminLayout({
           </form>
         </div>
       </aside>
+      <MobileNavigation />
       <div className="workspace">
         <header className="topbar">
           <span>

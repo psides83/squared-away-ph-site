@@ -1,3 +1,4 @@
+import { ReceiptPicker } from "@/components/receipt-picker";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { Receipt, X } from "lucide-react";
@@ -362,15 +363,7 @@ export default async function Expenses({
               )}
               <form action={uploadReceipt} className="stack">
                 <input name="expense_id" value={selected.id} type="hidden" />
-                <label>
-                  Attach receipt (JPEG, PNG, WebP, or PDF; up to 3 MB)
-                  <input
-                    name="receipt"
-                    type="file"
-                    required
-                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                  />
-                </label>
+                <ReceiptPicker required />
                 <SubmitButton>Upload receipt</SubmitButton>
               </form>
             </div>

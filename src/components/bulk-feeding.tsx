@@ -1,6 +1,8 @@
 "use client";
 import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
 
+import { FormInput } from "@/components/form-input";
+import { servingStepper } from "@/lib/input-format";
 import { useState } from "react";
 import { Field } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
@@ -148,6 +150,7 @@ export function ExtraFeedingBatch({
   request: string;
   times?: FeedingTime[];
 }) {
+  const [selectedUnit, setSelectedUnit] = useState<UnitOption>();
   return (
     <form action={recordBulkFeeding} className="record-form">
       <input name="request_id" type="hidden" value={request} />
@@ -178,15 +181,23 @@ export function ExtraFeedingBatch({
               ))}
           </select>
         </label>
-        <ProductUnitFields products={products} units={units} />
+        <ProductUnitFields
+          products={products}
+          units={units}
+          onUnitChange={setSelectedUnit}
+        />
       </div>
       <div className="batch-horse-list">
         {horses.map((h) => (
           <label className="batch-horse-row" key={h.id}>
             <strong>{h.barn_name}</strong>
             <span>
-              Quantity in selected unit
-              <input
+              Quantity
+              <FormInput
+                key={`${h.id}-${selectedUnit?.id ?? "no-unit"}`}
+                suffix={selectedUnit?.label}
+                controls={servingStepper(selectedUnit?.label ?? "")}
+                aria-label={`${h.barn_name} quantity${selectedUnit ? ` (${selectedUnit.label})` : ""}`}
                 type="number"
                 name={`quantity_${h.id}`}
                 min="0.000001"

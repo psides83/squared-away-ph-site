@@ -1,4 +1,5 @@
 "use client";
+import { FormInput } from "@/components/form-input";
 import { useState } from "react";
 import { dateLabel, money } from "@/lib/format";
 import { SubmitButton } from "@/components/submit-button";
@@ -158,7 +159,8 @@ export function CostStayForm({
                     <span className="sr-only">
                       Cost for visit starting {s.arrival_date}
                     </span>
-                    <input
+                    <FormInput
+                      prefix="$"
                       name={`amount_${s.id}`}
                       type="number"
                       required

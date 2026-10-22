@@ -1,3 +1,4 @@
+import { phoneDisplay } from "@/lib/input-format";
 import Link from "next/link";
 import { requireCustomer } from "@/lib/auth";
 import { money, dateLabel } from "@/lib/format";
@@ -92,7 +93,7 @@ export default async function CustomerHome() {
                   className="text-link"
                   href={`tel:${String(profile.data.contact.phone).replace(/[^\d+]/g, "")}`}
                 >
-                  {profile.data.contact.phone}
+                  {phoneDisplay(profile.data.contact.phone)}
                 </a>
               )}
               {profile.data.contact.email && (
