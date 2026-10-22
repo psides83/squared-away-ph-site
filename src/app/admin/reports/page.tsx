@@ -3,6 +3,19 @@ import { requireAdmin } from "@/lib/auth";
 import { today, money } from "@/lib/format";
 import { PageHeading } from "@/components/ui";
 
+type HorseReport = {
+  horses: {
+    horse_id: string;
+    horse_name: string;
+    received_cents: number;
+    direct_cents: number;
+    shared_cents: number;
+    margin_cents: number;
+  }[];
+  unassigned_received_cents: number;
+  unallocated_paid_cents: number;
+};
+
 type Report = {
   received_cents: number;
   spent_cents: number;
@@ -34,10 +47,14 @@ export default async function Reports({
     validDate(to) &&
     from <= to &&
     Date.parse(to) - Date.parse(from) <= 3660 * 86400000;
-  const result = valid
-    ? await db.rpc("cash_report", { p_from: from, p_to: to })
-    : null;
+  const [result, horseResult] = valid
+    ? await Promise.all([
+        db.rpc("cash_report", { p_from: from, p_to: to }),
+        db.rpc("horse_cash_report", { p_from: from, p_to: to }),
+      ])
+    : [null, null];
   const report = result?.data as Report | null;
+  const horseReport = horseResult?.data as HorseReport | null;
   return (
     <>
       <PageHeading
@@ -62,7 +79,11 @@ export default async function Reports({
           </div>
         </form>
       </section>
-      {!valid || result?.error || !report ? (
+      {!valid ||
+      result?.error ||
+      horseResult?.error ||
+      !report ||
+      !horseReport ? (
         <p className="notice error" role="alert">
           {!valid
             ? "Choose valid dates in order, covering at most ten years."
@@ -163,11 +184,65 @@ export default async function Reports({
               period’s cash profit.
             </p>
           </section>
-          <p className="notice">
-            Horse-level profit and shared-cost allocations are still being
-            built. Shared barn costs are included in overall expenses here, but
-            have not been distributed across individual horses.
-          </p>
+          <section className="panel">
+            <div className="panel-heading">
+              <h2>Horse cash margins</h2>
+              <Link href="/admin/allocations" className="text-link">
+                Allocate shared costs
+              </Link>
+            </div>
+            <p>
+              Payments on stay-linked invoices belong to that stay’s horse.
+              Direct horse expenses and saved shared-cost splits use the expense
+              paid date. These are margins from assigned records, not complete
+              horse profitability.
+            </p>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Horse</th>
+                    <th>Received</th>
+                    <th>Direct costs paid</th>
+                    <th>Shared costs paid</th>
+                    <th>Recorded cash margin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {horseReport.horses.map((h) => (
+                    <tr key={h.horse_id}>
+                      <td>{h.horse_name}</td>
+                      <td>{money(h.received_cents)}</td>
+                      <td>{money(h.direct_cents)}</td>
+                      <td>{money(h.shared_cents)}</td>
+                      <td>{money(h.margin_cents)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {!horseReport.horses.length && <p>No horses on file yet.</p>}
+            <p className="notice">
+              Not assigned to a horse:{" "}
+              <strong>{money(horseReport.unassigned_received_cents)}</strong>{" "}
+              received on invoices without a training stay, and{" "}
+              <strong>{money(horseReport.unallocated_paid_cents)}</strong> in
+              paid shared expenses without an allocation. Resolve these amounts
+              before treating horse margins as complete. Manual invoice income
+              remains unassigned; customer ownership alone does not determine
+              the horse.
+            </p>
+            <p>
+              Reconciliation: horse margins{" "}
+              {money(
+                horseReport.horses.reduce((sum, h) => sum + h.margin_cents, 0),
+              )}{" "}
+              + unassigned receipts{" "}
+              {money(horseReport.unassigned_received_cents)} − unallocated
+              shared costs {money(horseReport.unallocated_paid_cents)} =
+              business net cash profit {money(report.net_cents)}.
+            </p>
+          </section>
         </>
       )}
     </>

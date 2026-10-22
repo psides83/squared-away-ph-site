@@ -209,11 +209,21 @@ export default async function Expenses({
                 />
               </label>
               <p className="muted form-hint">
-                A charge-back flag is a reminder for future billing; it does not
-                create an invoice or record customer payment.
+                Add flagged expenses explicitly to an invoice draft. The flag
+                alone does not create a bill or record payment.
               </p>
               <SubmitButton>Save expense</SubmitButton>
             </form>
+          )}
+          {selected && !selected.voided_at && !selected.horse_id && (
+            <p className="record-form">
+              <Link
+                href={`/admin/allocations?expense=${selected.id}`}
+                className="text-link"
+              >
+                Review / allocate this shared cost
+              </Link>
+            </p>
           )}
           {selected && !selected.voided_at && (
             <form action={expenseStatus} className="record-form separated">

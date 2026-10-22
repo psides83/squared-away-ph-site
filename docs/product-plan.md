@@ -100,6 +100,17 @@ Features in this section are present in the application source. A feature being 
 - Feed purchase expenses count once; inventory consumption is not deducted again. All recorded shared barn expenses count in business totals without claiming complete horse-level profit.
 - Current outstanding and overdue invoice balances across all dates, clearly separate from the selected cash period. These are available in Reports; overview dashboard cards remain planned.
 
+### Shared barn costs and horse cash margins
+
+- Paginated Shared costs screen for non-voided shared expenses, with a reviewed inclusive boarding period of up to 366 elapsed days.
+- Default boarding-day counts come from overlapping physical training stays, including arrival/departure. Actual days can be reviewed and overridden per horse with a required reason; include the owner's horse profiles and boarding outside training stays without creating a training agreement or invoice. Zero excludes a horse.
+- Live preview divides the original expense by boarding days. Database calculation uses largest remainder with stable ties to distribute every cent exactly once. Allocations do not create another expense or customer charge.
+- Saved splits snapshot horse names, approved days, training-stay day counts, and allocated cents. Later stay changes do not reprice saved splits. Revising or clearing retains history and reasons; retries do not duplicate revisions. The screen shows the latest ten revisions.
+- Active allocations protect source amount, horse assignment, expense date, and void status until cleared. Payment dates remain editable and determine when the cost appears in cash reports. The original expense is counted once in business totals.
+- Reports show per-horse receipts on stay-linked invoices, direct paid costs, allocated shared paid costs, and recorded cash margins. This includes the owner's horses, even without training stays or income.
+- Unassigned receipts from invoices without stays and unallocated paid shared expenses remain explicit. Horse margins plus unassigned receipts minus unallocated costs reconcile to business net cash profit; incomplete assignments are not labeled complete horse profitability.
+- Stay-linked invoices prevent subsequent reassignment of the stay to another horse, preserving income attribution. Reports and allocation records remain administrator-only.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -112,11 +123,11 @@ Features in this section are present in the application source. A feature being 
 
 #### Feed, boarding, and profitability details
 
-- Extend current horse/shared-barn expense assignments with training-stay attribution and allocations of shared costs across horses. Each allocation must reconcile to the original expense so business totals never count it twice, including the owner's horses.
-- Add reporting that separates costs absorbed by the business from costs charged back to customers, using the implemented expense-to-invoice links. Do not count a reimbursement twice as both separate revenue and the same invoice revenue.
-- Add horse/stay margins with clear treatment of allocated shared costs. Do not label horse-level profit as complete when shared costs have not been allocated. Overall cash profit for a selected period is implemented above.
-- Add separate inventory consumption cost views and horse-level cost allocations with their basis stated. Keep these separate from the implemented cash report so feed purchases and consumption are never deducted together.
-- Extend private reporting with allocated horse/stay margins; the current report covers business-wide recorded cash activity only.
+- Extend implemented horse/shared-barn assignments and shared-cost splits with explicit training-stay cost attribution and per-stay reporting. Add a workflow for attributing manual invoice receipts without a stay; these remain visibly unassigned today.
+- Add reimbursement-versus-absorbed-cost breakdowns using the implemented expense-to-invoice links. Cash reports already count received invoice payments once; do not add reimbursements a second time as separate revenue.
+- Add stay-level margins beyond the implemented horse-level recorded cash margins. Preserve visible unassigned amounts and allocation completeness indicators.
+- Add separate inventory consumption cost summaries in reports, beyond the existing inventory ledger. Keep these separate from cash reports so feed purchases and consumption are never deducted together.
+- Add persistent boarding occupancy records for horses outside training stays if useful; their actual boarding days can currently be entered in each shared-cost allocation.
 
 ### Horse records and customer portal
 
@@ -138,7 +149,7 @@ Features in this section are present in the application source. A feature being 
 
 - Store money as integer cents, service/billing dates as dates, and recorded activity times as timezone-aware timestamps. Business dates use America/Chicago.
 - Finalized invoice line items retain the billed customer, description, and amount even if current profiles or rates change. Use adjustments rather than silently overwriting finalized invoices.
-- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, payments, and invoice_adjustments. Sessions and progress notes share `training_entries`.
+- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, invoice_payments, and invoice_adjustments. Shared-cost revisions use expense_allocations and expense_allocation_lines. Sessions and progress notes share `training_entries`.
 - Enforce access in the database as well as the UI. Never commit credentials or expose server-only keys to the browser.
 - Keep preview/development databases separate from production. Apply migrations through a reviewed deployment workflow.
 - On every completed feature, move its delivered scope from Planned to Implemented in the same change. Split partially completed items so only unfinished work remains under Planned; do not leave completed features duplicated there. Update the next build sequence and record verification/deployment limitations below.
@@ -168,9 +179,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Shared-cost allocations and horse/stay reporting → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
+Stay-level attribution, manual-invoice attribution, and feed/boarding billing calculations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Shared-cost/horse-margin increment includes migration `20261021001000_shared_cost_allocations.sql`. All 55 tests, TypeScript checks, and the production build pass. Local database tests cover inclusive boarding defaults, owner horses without training stays, cent reconciliation, snapshots, repeat safety, replacement/clearing history, protected source amounts, income attribution, business-total reconciliation, and non-admin denial. Authenticated browser flows and live migration completion have not been verified.
 
 - Cash reporting includes migration `20261021000900_cash_reporting.sql`. All 48 tests, TypeScript checks, and the production build pass. Local database tests verify inclusive paid-date filtering, reversed payments, unpaid/void exclusions, empty months, current outstanding balances, totals across more than 1,000 expenses, date bounds, and non-admin denial. Live reporting and production migration completion have not been verified.
 

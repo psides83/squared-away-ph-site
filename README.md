@@ -21,7 +21,7 @@ Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-i
 
 ## Set up Supabase
 
-1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, billing-day inputs, invoices/payments, and cash reporting. No horse, customer, expense, or stock records are seeded. Installations already using the billing calendar need `20261021000800_invoices_payments.sql` before opening Invoices. Apply `20261021000900_cash_reporting.sql` before opening Reports.
+1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, billing-day inputs, invoices/payments, cash reporting, and shared-cost allocations. No horse, customer, expense, or stock records are seeded. Installations already using the billing calendar need `20261021000800_invoices_payments.sql` before opening Invoices. Apply `20261021000900_cash_reporting.sql` before opening Reports. Apply `20261021001000_shared_cost_allocations.sql` for Shared costs and the updated horse-margin report.
 2. In Supabase Authentication → Users, create your administrator account with an email and password. Confirm its email through the dashboard if needed. There is no public sign-up flow.
 3. Grant administrator access from the SQL Editor, replacing the example email with the exact account email:
 
@@ -61,13 +61,21 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Ownership transfer history, scheduled invoice generation, automatic feed/boarding invoice calculations, refunds/account credits, invoice emailing, shared-cost allocations, horse/stay profit reports, recurring expenses, expense filters, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Calendar-day training proration is available in reviewed invoice drafts; other policies and feed/boarding lines need manual review and entry. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Ownership transfer history, scheduled invoice generation, automatic feed/boarding invoice calculations, refunds/account credits, invoice emailing, stay-level cost attribution/reports, manual-invoice income attribution, recurring expenses, expense filters, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Calendar-day training proration is available in reviewed invoice drafts; other policies and feed/boarding lines need manual review and entry. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
 
 ## Cash reports
 
 Open **Reports** and choose an inclusive date range (defaults to the current year through today). View payments received, expenses paid, net cash profit, monthly results, and paid expense categories. Unpaid and reversed records are excluded; corrections update historical results. Feed consumption is not deducted again after its purchase expense. Totals include every matching record, even beyond API list limits.
 
-Outstanding and overdue invoices show current balances across all dates, separate from the cash period. Shared expenses are included in business totals; horse/stay margins and shared-cost allocations remain planned. Reports cover recorded activity only and do not move money.
+Outstanding and overdue invoices show current balances across all dates, separate from the cash period. Shared expenses are included once in business totals. Horse cash margins show receipts on stay-linked invoices, direct paid costs, and allocated shared paid costs. Manual invoices without a stay remain unassigned; unallocated shared expenses are shown separately. These amounts reconcile back to business net cash profit. Stay-level reporting remains planned. Reports cover recorded activity only and do not move money.
+
+## Shared barn costs
+
+1. Record a cost assigned to **Shared barn** in Expenses, or record a stock purchase in Inventory. Open **Shared costs**, select the expense, and choose the actual boarding period it covers (up to 366 elapsed days).
+2. Review the physical training-stay day defaults. Enter actual days for your own horse profiles and boarding outside training stays; zero excludes a horse. Your own horses use their existing horse profiles, with you recorded as owner. They do not need a training stay or invoice to receive an allocation.
+3. Review the dollar preview and enter a reason confirming the period, participants, and any overrides. Save the split. Every penny is distributed by boarding days using largest remainder; the original expense remains the only business cost.
+4. Review saved counts and history from the expense. Revising retains the earlier split; clearing requires a reason. Source amounts/assignments/date/void status are protected while an allocation is active. Later training-stay changes do not change saved splits.
+5. Open Reports. Shared costs appear in horse margins on the original expense's paid date, not the boarding-period dates. Unpaid costs stay outside cash results. Unassigned receipts and unallocated costs remain visible, so partial margins are not presented as complete horse profitability.
 
 ## Invoice workflow
 
