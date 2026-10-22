@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
@@ -343,7 +344,7 @@ export default async function Invoice({
         <div className="no-print">
           {draft && (
             <>
-              <section className="panel management-details">
+              <ActionPanel id="draft-details" label="Edit draft details">
                 <div className="panel-heading">
                   <h2>Review draft details</h2>
                 </div>
@@ -383,8 +384,8 @@ export default async function Invoice({
                   </p>
                   <SubmitButton>Save draft details</SubmitButton>
                 </form>
-              </section>
-              <section className="panel management-details">
+              </ActionPanel>
+              <ActionPanel id="invoice-line" label="Add an invoice line">
                 <div className="panel-heading">
                   <h2>Add a reviewed line</h2>
                 </div>
@@ -430,9 +431,12 @@ export default async function Invoice({
                   </p>
                   <SubmitButton>Add draft line</SubmitButton>
                 </form>
-              </section>
+              </ActionPanel>
               {stay.data && (
-                <section className="panel management-details">
+                <ActionPanel
+                  id="generate-services"
+                  label="Generate training and service charges"
+                >
                   <div className="panel-heading">
                     <h2>Training and service agreements</h2>
                     <Link
@@ -485,9 +489,9 @@ export default async function Invoice({
                       options={services.data}
                     />
                   </div>
-                </section>
+                </ActionPanel>
               )}
-              <section className="panel management-details">
+              <ActionPanel id="charge-back" label="Add an expense charge-back">
                 <div className="panel-heading">
                   <h2>Add an expense charge-back</h2>
                 </div>
@@ -528,7 +532,7 @@ export default async function Invoice({
                   </p>
                   <SubmitButton>Add charge-back</SubmitButton>
                 </form>
-              </section>
+              </ActionPanel>
               <section className="panel management-details">
                 <div className="record-form">
                   <h2>Ready to finalize?</h2>
@@ -550,7 +554,7 @@ export default async function Invoice({
           {issued && (
             <>
               {Number(invoice.balance_cents) > 0 ? (
-                <section className="panel management-details">
+                <ActionPanel id="record-payment" label="Record payment">
                   <div className="panel-heading">
                     <h2>Record a received payment</h2>
                   </div>
@@ -612,7 +616,7 @@ export default async function Invoice({
                     </p>
                     <SubmitButton>Record received payment</SubmitButton>
                   </form>
-                </section>
+                </ActionPanel>
               ) : (
                 <p className="notice management-details">
                   This invoice has no remaining balance.

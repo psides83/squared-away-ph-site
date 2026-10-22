@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { Receipt, X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
@@ -187,7 +188,12 @@ export default async function Expenses({
         </form>
       </section>
       {!failed && (params.new === "1" || selected) && (
-        <section className="panel editor-panel" id="record-form">
+        <ActionPanel
+          id="record-form"
+          label="Expense details"
+          defaultOpen
+          closeHref="/admin/expenses"
+        >
           <div className="panel-heading">
             <h2>
               {stockPurchase
@@ -369,7 +375,7 @@ export default async function Expenses({
               </form>
             </div>
           )}
-        </section>
+        </ActionPanel>
       )}
       <section className="panel">
         <div className="panel-heading">

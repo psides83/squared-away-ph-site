@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { CalendarDays, X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
@@ -53,7 +54,12 @@ export default async function Reminders({
         success={params.success}
       />
       {(params.new === "1" || selected) && (
-        <section className="panel editor-panel" id="record-form">
+        <ActionPanel
+          id="record-form"
+          label="Reminder details"
+          defaultOpen
+          closeHref="/admin/reminders"
+        >
           <div className="panel-heading">
             <h2>
               {selected ? "Edit reminder" : "Take it off your mental list"}
@@ -130,7 +136,7 @@ export default async function Reminders({
               </Link>
             </div>
           </form>
-        </section>
+        </ActionPanel>
       )}
       <div className="reminder-layout">
         <section className="panel">
@@ -208,7 +214,10 @@ export default async function Reminders({
                 />
               )}
         </section>
-        <section className="panel">
+        <ActionPanel
+          id="reminder-categories"
+          label="Manage reminder categories"
+        >
           <div className="panel-heading">
             <h2>Your categories</h2>
           </div>
@@ -252,7 +261,7 @@ export default async function Reminders({
               <SubmitButton>Add category</SubmitButton>
             </form>
           </div>
-        </section>
+        </ActionPanel>
       </div>
     </>
   );

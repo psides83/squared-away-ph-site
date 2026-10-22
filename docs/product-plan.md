@@ -167,6 +167,13 @@ Features in this section are present in the application source. A feature being 
 - App preview/download routes issue 60-second signed links with private/no-store responses. Unpublishing, grant revocation, and account disable prevent fresh portal requests; previously issued links/copies are not withdrawn. Admin archival retains the object and audit metadata.
 - File lists are paginated, horse-filterable, and use authenticated image routes without the public image-optimization cache. Photos display in responsive grids; documents open/download through the same access checks.
 
+### Deliberate editing and batch feeding
+
+- Admin pages keep record lists and summaries visible while add/edit/record actions open focused dialogs. Applied to customers, horses, expenses, training stays/logs, reminders and their categories, inventory products/stock, daily rations, calendar classifications, invoice builders/payments, customer updates/files, access management, cost/income matching, shared-cost allocations, and business settings. Filters and quick record actions remain on the overview.
+- Dialogs have labeled headings, native keyboard focus containment, Escape/close controls, return focus to the opener, and reset unsaved fields on dismissal. Existing Add/Edit links and form anchors open the appropriate dialog; successful navigation closes always-available editors so result messages are visible.
+- Bulk daily feeding confirms the saved daily rations for selected horses on one actual date. Existing confirmations remain safe to retry; a shortage or invalid horse rolls back the entire batch.
+- Bulk extra/partial feeding records one selected product/unit across multiple horses with individual quantities. Blank quantities skip a horse. Each batch preserves weighted cost and per-horse history, saves atomically, and rejects changed retries using a saved batch request. Requires migration `20261021001700_bulk_feeding.sql`.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -193,6 +200,8 @@ Features in this section are present in the application source. A feature being 
 - Call/text and inquiry actions, business contact details, domain, logo, and real photography/video.
 
 ### PWA and later improvements
+
+- Extend bulk entry to additional workflows such as training logs or expense entry as their batch requirements are defined; bulk daily and extra/partial feeding are implemented above.
 
 - Optional online payment processing, delivered notifications, and accounting export after core workflows are established.
 
@@ -267,3 +276,5 @@ Recurring billing and remaining admin expense/reporting improvements → custome
 - Training log increment: all 15 tests, TypeScript checks, and the production build pass. Database tests run the actual migrations locally and verify admin permissions, CRUD, duration constraints, retained history, and ownership/billing safeguards. The authenticated training-log UI has not been exercised against production. No production records were created for testing.
 - Settings increment includes migration `20261021000400_business_settings.sql`; apply it before using Settings or the updated training-stay form. All 19 tests, TypeScript checks, and the production build pass, including administrator access controls and protection of historical stay terms. The authenticated Settings UI has not been exercised against production; live deployment/migration completion has not been confirmed.
 - Expenses/inventory increment includes migrations `20261021000500_expenses_inventory.sql` and `20261021000600_private_receipts.sql`. All 30 tests, TypeScript checks, and the production build pass. Local PostgreSQL tests cover actual migrations, weighted costing, insufficient-stock rollback, daily retry safety, historical conversion snapshots, reversals, protected purchase amounts, private receipt policies, and denied non-admin access. Storage tables are simulated in local policy tests; actual uploads/downloads and authenticated browser flows still need verification against Supabase. No production expenses or stock were created for testing.
+
+- Deliberate-editing/batch-feeding verification: all 95 tests, TypeScript checks, and the production build pass. Local browser checks use sample horses in a temporary preview (removed from the final app); production authenticated screens and remote migration remain unverified. SQL tests cover batch rollback, repeat submission, changed retries, per-horse quantities, stock/value depletion, and admin access.

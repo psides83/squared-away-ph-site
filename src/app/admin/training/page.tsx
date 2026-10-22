@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { ClipboardList, X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
@@ -62,7 +63,12 @@ export default async function Training({
       {(params.new === "1" || selected) &&
         !failed &&
         (canAdd ? (
-          <section className="panel editor-panel" id="record-form">
+          <ActionPanel
+            id="record-form"
+            label="Training stay"
+            defaultOpen
+            closeHref="/admin/training"
+          >
             <div className="panel-heading">
               <h2>{selected ? "Edit training stay" : "Welcome to the barn"}</h2>
               <Link href="/admin/training" aria-label="Close training form">
@@ -200,7 +206,7 @@ export default async function Training({
                 </Link>
               </div>
             </form>
-          </section>
+          </ActionPanel>
         ) : (
           <p className="notice">
             First <Link href="/admin/horses?new=1">add a horse</Link> and{" "}

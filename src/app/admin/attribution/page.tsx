@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import { Receipt } from "lucide-react";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
@@ -198,7 +199,12 @@ export default async function Attribution({
         </div>
       </section>
       {!failed && data && invoice.data && (
-        <section className="panel">
+        <ActionPanel
+          id="match-income"
+          label="Match invoice income"
+          defaultOpen
+          closeHref="/admin/attribution"
+        >
           <div className="panel-heading">
             <h2>
               {invoiceLabel(invoice.data)} · choose the horse for these payments
@@ -258,10 +264,15 @@ export default async function Attribution({
               </p>
             ))}
           </div>
-        </section>
+        </ActionPanel>
       )}
       {!failed && data && source.data && (
-        <section className="panel">
+        <ActionPanel
+          id="match-cost"
+          label="Match a horse expense"
+          defaultOpen
+          closeHref="/admin/attribution"
+        >
           <div className="panel-heading">
             <h2>
               {horseName(source.data.horse_id)} ·{" "}
@@ -367,7 +378,7 @@ export default async function Attribution({
               amounts for the new share. The old amounts remain in history.
             </p>
           )}
-        </section>
+        </ActionPanel>
       )}
       {!failed && !source.data && costHistory.data?.length ? (
         <section className="panel">

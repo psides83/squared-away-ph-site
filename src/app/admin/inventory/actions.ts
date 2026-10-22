@@ -191,3 +191,62 @@ export async function reverseConsumption(form: FormData) {
     `/admin/inventory?${issue ? `error=${encodeURIComponent(issue)}` : "success=Correction+recorded.+Use+a+manual+feeding+entry+if+needed."}`,
   );
 }
+
+export async function confirmBulkFeeding(form: FormData) {
+  const { db } = await requireAdmin();
+  let issue: string | undefined;
+  try {
+    const horses = form.getAll("horse_id").map((value) => {
+      const row = new FormData();
+      row.set("horse_id", value);
+      return identifier(row, "horse_id", true)!;
+    });
+    if (!horses.length || horses.length > 100)
+      throw new Error("Choose between 1 and 100 horses.");
+    const { error } = await db.rpc("confirm_bulk_daily_feeding", {
+      p_horses: horses,
+      p_date: dateValue(form, "feeding_date", true),
+    });
+    issue = message(error);
+  } catch (e) {
+    issue = e instanceof Error ? e.message : "Could not confirm this batch.";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(
+    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Selected+daily+rations+confirmed.+Already+confirmed+horses+were+not+deducted+again."}`,
+  );
+}
+export async function recordBulkFeeding(form: FormData) {
+  const { db } = await requireAdmin();
+  let issue: string | undefined;
+  try {
+    const entries = [];
+    for (const [name, value] of form.entries()) {
+      if (!name.startsWith("quantity_") || value === "") continue;
+      const row = new FormData();
+      row.set("horse_id", name.slice(9));
+      row.set("quantity", value);
+      entries.push({
+        horse_id: identifier(row, "horse_id", true),
+        quantity: quantity(row),
+      });
+    }
+    if (!entries.length || entries.length > 100)
+      throw new Error("Enter quantities for between 1 and 100 horses.");
+    const { error } = await db.rpc("record_bulk_extra_feeding", {
+      p_request: identifier(form, "request_id", true),
+      p_product: identifier(form, "product_id", true),
+      p_unit: identifier(form, "unit_id", true),
+      p_date: dateValue(form, "feeding_date", true),
+      p_entries: entries,
+      p_notes: text(form, "notes", false, 5000),
+    });
+    issue = message(error);
+  } catch (e) {
+    issue = e instanceof Error ? e.message : "Could not record these feedings.";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(
+    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=All+feeding+entries+recorded+together."}`,
+  );
+}

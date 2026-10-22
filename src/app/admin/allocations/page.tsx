@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { dateLabel, money, today } from "@/lib/format";
@@ -100,7 +101,12 @@ export default async function Allocations({
         expenses already belong to that horse.
       </p>
       {expense && (
-        <section className="panel">
+        <ActionPanel
+          id="allocate-expense"
+          label="Divide this shared expense"
+          defaultOpen
+          closeHref="/admin/allocations"
+        >
           <div className="panel-heading">
             <h2>
               {expense.vendor || "Shared expense"} ·{" "}
@@ -250,7 +256,7 @@ export default async function Allocations({
               <p>No saved allocation yet.</p>
             )}
           </div>
-        </section>
+        </ActionPanel>
       )}
       <section className="panel">
         <div className="panel-heading">

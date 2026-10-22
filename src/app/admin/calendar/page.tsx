@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { CalendarCheck } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
@@ -145,7 +146,7 @@ export default async function Calendar({
             ))}
           </div>
           {dates.length ? (
-            <section className="panel editor-panel">
+            <ActionPanel id="classify-days" label="Mark training days">
               <div className="panel-heading">
                 <h2>Mark a day or date range</h2>
                 <Link
@@ -210,7 +211,7 @@ export default async function Calendar({
                 </p>
                 <SubmitButton>Save day classification</SubmitButton>
               </form>
-            </section>
+            </ActionPanel>
           ) : (
             <p className="notice management-details">
               No elapsed days of this stay fall in the selected month. Choose

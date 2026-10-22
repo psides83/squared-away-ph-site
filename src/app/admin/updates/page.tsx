@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { dateLabel, today } from "@/lib/format";
@@ -65,7 +66,12 @@ export default async function PublishedUpdates({
         <Link href="/admin/portal">Customer portal access</Link>.
       </p>
       {!failed && (selected || q.new === "1") && (
-        <section className="panel">
+        <ActionPanel
+          id="update-editor"
+          label="Customer update"
+          defaultOpen
+          closeHref="/admin/updates"
+        >
           <div className="panel-heading">
             <h2>
               {selected?.archived_at
@@ -225,7 +231,7 @@ export default async function PublishedUpdates({
               ))}
             </div>
           )}
-        </section>
+        </ActionPanel>
       )}
       <section className="panel">
         <div className="panel-heading">

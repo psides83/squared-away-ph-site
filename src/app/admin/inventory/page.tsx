@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { weightUnits } from "@/lib/weight-units";
 import { Package } from "lucide-react";
@@ -111,7 +112,7 @@ export default async function Inventory({
                     className="text-link"
                     href={`/admin/inventory?product=${p.id}#stock-entry`}
                   >
-                    Stock, conversions & history
+                    Record stock
                   </Link>
                 </article>
               );
@@ -128,14 +129,12 @@ export default async function Inventory({
               />
             </section>
           )}
-          <details
-            open={Boolean(selected) || !products.data?.length}
-            className="panel management-details"
+          <ActionPanel
             id="product-setup"
+            label={selected ? `Manage ${selected.name}` : "Add a product"}
+            defaultOpen={Boolean(selected) && !params.success && !params.error}
+            closeHref="/admin/inventory"
           >
-            <summary>
-              {selected ? `Manage ${selected.name}` : "Add a product"}
-            </summary>
             <form action={saveProduct} className="record-form">
               <input name="id" type="hidden" value={selected?.id ?? ""} />
               <div className="form-grid">
@@ -293,9 +292,9 @@ export default async function Inventory({
                 </form>
               </div>
             )}
-          </details>
+          </ActionPanel>
           {!!products.data?.some((p) => !p.archived) && (
-            <section className="panel editor-panel" id="stock-entry">
+            <ActionPanel id="stock-entry" label="Record stock or a feeding">
               <div className="panel-heading">
                 <h2>Record a stock transaction</h2>
               </div>
@@ -310,7 +309,7 @@ export default async function Inventory({
                 date={today()}
                 request={request}
               />
-            </section>
+            </ActionPanel>
           )}
           <section className="panel">
             <div className="panel-heading">

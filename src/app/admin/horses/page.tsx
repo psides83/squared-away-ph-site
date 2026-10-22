@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { ArrowUpRight, Fence, X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
@@ -59,7 +60,12 @@ export default async function Horses({
         </p>
       )}
       {showForm && !error && Boolean(customers.data?.length) && (
-        <section className="panel editor-panel" id="record-form">
+        <ActionPanel
+          id="record-form"
+          label="Horse details"
+          defaultOpen
+          closeHref="/admin/horses"
+        >
           <div className="panel-heading">
             <h2>
               {selected
@@ -167,7 +173,7 @@ export default async function Horses({
               </Link>
             </div>
           </form>
-        </section>
+        </ActionPanel>
       )}
       <section className="panel">
         <div className="panel-heading">

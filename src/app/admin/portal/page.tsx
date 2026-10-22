@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { today, dateLabel } from "@/lib/format";
@@ -83,7 +84,7 @@ export default async function CustomerAccess({
       </section>
       {!failed && customer && (
         <>
-          <section className="panel">
+          <ActionPanel id="sign-in-access" label="Manage sign-in access">
             <div className="panel-heading">
               <h2>{customer.name} · sign-in access</h2>
               <span className="tag">
@@ -145,8 +146,8 @@ export default async function CustomerAccess({
                 />
               </form>
             )}
-          </section>
-          <section className="panel">
+          </ActionPanel>
+          <ActionPanel id="horse-access" label="Manage shared horse access">
             <div className="panel-heading">
               <h2>Horse updates shared with {customer.name}</h2>
               <Link className="text-link" href="/admin/updates">
@@ -243,7 +244,7 @@ export default async function CustomerAccess({
                 )}
               </div>
             ))}
-          </section>
+          </ActionPanel>
           <section className="panel">
             <div className="panel-heading">
               <h2>Access history (latest 20)</h2>

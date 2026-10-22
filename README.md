@@ -167,3 +167,9 @@ Import `psides83/squared-away-ph-site`, select the Next.js framework, and use No
 No service worker caches private records. Authentication routes send private/no-store headers. The marketing website can receive its own public metadata when added.
 
 See [the product roadmap](docs/product-plan.md) for the larger scope.
+
+### Deliberate editing and bulk feeding
+
+Admin overviews show records first. Add/Edit/Record buttons open focused dialogs; Escape or Close dismisses the editor and resets unsaved fields. Existing direct links still open the relevant editor.
+
+Daily feeding offers **Confirm daily rations in bulk** and **Record feedings for multiple horses**. The latter uses one product/unit with a quantity per horse for extras or partial feedings. Batches save together, retain per-horse weighted costs, and are safe to retry. Apply `20261021001700_bulk_feeding.sql` before using these batch actions.

@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
@@ -62,7 +63,12 @@ export default async function Invoices({
         success={params.success}
       />
       {!failed && params.new === "1" && (
-        <section className="panel editor-panel" id="invoice-form">
+        <ActionPanel
+          id="invoice-form"
+          label="Create invoice"
+          defaultOpen
+          closeHref="/admin/invoices"
+        >
           <div className="panel-heading">
             <h2>Start a draft invoice</h2>
           </div>
@@ -108,7 +114,7 @@ export default async function Invoices({
               Add a customer before creating an invoice.
             </p>
           )}
-        </section>
+        </ActionPanel>
       )}
       <section className="panel">
         <div className="panel-heading">

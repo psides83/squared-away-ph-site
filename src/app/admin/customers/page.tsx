@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { UsersRound, X, ArrowUpRight } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
@@ -49,7 +50,12 @@ export default async function Customers({
         success={params.success}
       />
       {showForm && (
-        <section className="panel editor-panel" id="record-form">
+        <ActionPanel
+          id="record-form"
+          label="Customer details"
+          defaultOpen
+          closeHref="/admin/customers"
+        >
           <div className="panel-heading">
             <h2>{selected ? "Edit customer" : "A new relationship"}</h2>
             <Link href="/admin/customers" aria-label="Close customer form">
@@ -102,7 +108,7 @@ export default async function Customers({
               </Link>
             </div>
           </form>
-        </section>
+        </ActionPanel>
       )}
       <section className="panel">
         <div className="panel-heading">

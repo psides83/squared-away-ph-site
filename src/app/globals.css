@@ -1744,3 +1744,135 @@ td strong {
   padding: 24px;
   margin-bottom: 0;
 }
+
+/* Editing is opened deliberately; page content remains a readable overview. */
+.action-launcher {
+  display: inline-block;
+  vertical-align: top;
+  margin: 0 12px 24px 0;
+  scroll-margin-top: 24px;
+}
+.action-dialog {
+  width: min(850px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper, #fcfaf6);
+  color: inherit;
+  box-shadow: 0 24px 90px #20180f55;
+}
+.action-dialog::backdrop {
+  background: #20180f99;
+  backdrop-filter: blur(3px);
+}
+.action-dialog-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  background: #f6f1e8;
+  border-bottom: 1px solid var(--line);
+}
+.action-dialog-bar h2 {
+  font-size: 24px;
+  margin: 0;
+}
+.dialog-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  color: inherit;
+  flex-shrink: 0;
+}
+.action-dialog-body > .panel-heading {
+  padding-top: 16px;
+  padding-bottom: 8px;
+}
+.action-dialog-body > .panel-heading h2 {
+  font-size: 19px;
+}
+.action-dialog-body .panel {
+  margin: 16px;
+}
+.action-dialog-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+}
+.action-dialog :focus-visible {
+  outline: 3px solid var(--leather, #885b38);
+  outline-offset: 3px;
+}
+.batch-horse-list {
+  display: grid;
+  gap: 8px;
+}
+.batch-horse-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.batch-horse-row input[type="number"] {
+  max-width: 150px;
+}
+@media (max-width: 600px) {
+  .action-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+  .action-dialog-bar {
+    padding: 14px 16px;
+  }
+  .action-launcher {
+    margin-bottom: 16px;
+  }
+}
+@media print {
+  .action-launcher {
+    display: none !important;
+  }
+}
+
+.batch-horse-row small {
+  display: block;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.action-dialog-body > .settings-form {
+  padding: 0;
+}
+
+.action-dialog {
+  margin: auto;
+}
+.record-form .batch-horse-row {
+  display: flex;
+}
+.batch-horse-row > span:first-child {
+  flex: 1;
+}
+.record-form .batch-horse-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  padding: 0;
+  flex: 0 0 20px;
+  accent-color: var(--leather);
+}
+
+body:has(.action-dialog[open]) {
+  overflow: hidden;
+}

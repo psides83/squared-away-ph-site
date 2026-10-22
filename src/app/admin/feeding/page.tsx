@@ -1,3 +1,8 @@
+import {
+  DailyFeedingBatch,
+  ExtraFeedingBatch,
+} from "@/components/bulk-feeding";
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { today, dateLabel } from "@/lib/format";
@@ -17,21 +22,31 @@ export default async function Feeding({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const [rations, horses, products, units, confirmations] = await Promise.all([
-    db.from("feed_rations").select("*").order("horse_id"),
-    db.from("horses").select("id,barn_name").order("barn_name"),
-    db.from("inventory_products").select("*").order("name"),
-    db.from("inventory_units").select("*"),
-    db
-      .from("feeding_confirmations")
-      .select("*")
-      .order("feeding_date", { ascending: false })
-      .limit(50),
-  ]);
+  const [rations, horses, products, units, confirmations, todayConfirmations] =
+    await Promise.all([
+      db.from("feed_rations").select("*").order("horse_id"),
+      db.from("horses").select("id,barn_name").order("barn_name"),
+      db.from("inventory_products").select("*").order("name"),
+      db.from("inventory_units").select("*"),
+      db
+        .from("feeding_confirmations")
+        .select("*")
+        .order("feeding_date", { ascending: false })
+        .limit(50),
+      db
+        .from("feeding_confirmations")
+        .select("horse_id")
+        .eq("feeding_date", today()),
+    ]);
   const selected = rations.data?.find((r) => r.id === params.edit);
-  const failed = [rations, horses, products, units, confirmations].some(
-    (r) => r.error,
-  );
+  const failed = [
+    rations,
+    horses,
+    products,
+    units,
+    confirmations,
+    todayConfirmations,
+  ].some((r) => r.error);
   return (
     <>
       <PageHeading
@@ -56,13 +71,46 @@ export default async function Feeding({
       </p>
       {!failed && (
         <>
+          <div className="feeding-actions">
+            <ActionPanel id="batch-daily" label="Confirm daily rations in bulk">
+              <DailyFeedingBatch
+                date={today()}
+                horses={(horses.data ?? [])
+                  .filter((h) =>
+                    rations.data?.some((r) => r.horse_id === h.id && r.active),
+                  )
+                  .map((h) => ({
+                    ...h,
+                    ration: (rations.data ?? [])
+                      .filter((r) => r.horse_id === h.id && r.active)
+                      .map(
+                        (r) =>
+                          `${Number(r.quantity)} ${units.data?.find((u) => u.id === r.unit_id)?.label ?? ""} ${products.data?.find((p) => p.id === r.product_id)?.name ?? ""}`,
+                      )
+                      .join(" · "),
+                  }))}
+              />
+            </ActionPanel>
+            <ActionPanel
+              id="batch-extras"
+              label="Record feedings for multiple horses"
+            >
+              <ExtraFeedingBatch
+                date={today()}
+                request={crypto.randomUUID()}
+                horses={horses.data ?? []}
+                products={products.data ?? []}
+                units={units.data ?? []}
+              />
+            </ActionPanel>
+          </div>
           <div className="horse-grid inventory-grid">
             {horses.data?.map((h) => {
               const active =
                 rations.data?.filter((r) => r.horse_id === h.id && r.active) ??
                 [];
-              const confirmed = confirmations.data?.some(
-                (c) => c.horse_id === h.id && c.feeding_date === today(),
+              const confirmed = todayConfirmations.data?.some(
+                (c) => c.horse_id === h.id,
               );
               return (
                 <section className="horse-card" key={h.id}>
@@ -83,28 +131,45 @@ export default async function Feeding({
                     )}
                   </div>
                   {active.length > 0 && (
-                    <form action={confirmFeeding} className="stack">
-                      <input name="horse_id" type="hidden" value={h.id} />
-                      <Field
-                        name="feeding_date"
-                        label="Actual feeding date"
-                        type="date"
-                        required
-                        defaultValue={today()}
-                        max={today()}
-                      />
-                      <SubmitButton>
+                    <>
+                      <p className="muted">
                         {confirmed
-                          ? "Today confirmed · safe to retry"
-                          : "Confirm daily ration fed"}
-                      </SubmitButton>
-                    </form>
+                          ? "Today’s ration confirmed"
+                          : "Not confirmed today"}
+                      </p>
+                      <ActionPanel
+                        id={`feeding-${h.id}`}
+                        label="Record daily feeding"
+                      >
+                        <form action={confirmFeeding} className="stack">
+                          <input name="horse_id" type="hidden" value={h.id} />
+                          <Field
+                            name="feeding_date"
+                            label="Actual feeding date"
+                            type="date"
+                            required
+                            defaultValue={today()}
+                            max={today()}
+                          />
+                          <SubmitButton>
+                            {confirmed
+                              ? "Today confirmed · safe to retry"
+                              : "Confirm daily ration fed"}
+                          </SubmitButton>
+                        </form>
+                      </ActionPanel>
+                    </>
                   )}
                 </section>
               );
             })}
           </div>
-          <section className="panel editor-panel" id="ration-form">
+          <ActionPanel
+            id="ration-form"
+            label={selected ? "Edit daily ration" : "Add a daily ration"}
+            defaultOpen={Boolean(selected)}
+            closeHref="/admin/feeding"
+          >
             <div className="panel-heading">
               <h2>
                 {selected
@@ -183,7 +248,7 @@ export default async function Feeding({
                 Add a horse and an active inventory product first.
               </p>
             )}
-          </section>
+          </ActionPanel>
           <section className="panel">
             <div className="panel-heading">
               <h2>Saved rations</h2>

@@ -1,3 +1,4 @@
+import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { dateLabel } from "@/lib/format";
@@ -67,7 +68,7 @@ export default async function HorseFiles({
         invoices, payment records, and sensitive financial receipts in their
         billing records, rather than sharing them with co-owners here.
       </p>
-      <section className="panel">
+      <ActionPanel id="upload-file" label="Upload a private file">
         <div className="panel-heading">
           <h2>Upload a private file</h2>
         </div>
@@ -115,9 +116,14 @@ export default async function HorseFiles({
             Archived files are retained for owner review.
           </p>
         </form>
-      </section>
+      </ActionPanel>
       {!failed && file && (
-        <section className="panel">
+        <ActionPanel
+          id="review-file"
+          label="Review file and sharing"
+          defaultOpen
+          closeHref="/admin/files"
+        >
           <div className="panel-heading">
             <h2>{file.title}</h2>
             <span className="tag">
@@ -236,7 +242,7 @@ export default async function HorseFiles({
               </p>
             ))}
           </div>
-        </section>
+        </ActionPanel>
       )}
       <section className="panel">
         <form className="log-filter" method="get">
