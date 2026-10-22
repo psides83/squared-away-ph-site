@@ -1,4 +1,3 @@
-import { ActionPanel } from "@/components/action-panel";
 import { requireAdmin } from "@/lib/auth";
 import { settingsFormValues } from "@/lib/business-settings";
 import { BusinessSettingsForm } from "@/components/business-settings-form";
@@ -28,9 +27,7 @@ export default async function Settings() {
             Manage your business details, billing defaults, and payment links.
             Changes here set defaults for future records.
           </p>
-          <ActionPanel id="business-settings" label="Edit business settings">
-            <BusinessSettingsForm initialValues={settingsFormValues(data)} />
-          </ActionPanel>
+          <BusinessSettingsForm initialValues={settingsFormValues(data)} />
         </>
       )}
     </>

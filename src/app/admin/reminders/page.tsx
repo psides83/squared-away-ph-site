@@ -1,3 +1,4 @@
+import { SectionTabs } from "@/components/section-tabs";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { CalendarDays, X } from "lucide-react";
@@ -138,131 +139,170 @@ export default async function Reminders({
           </form>
         </ActionPanel>
       )}
-      <div className="reminder-layout">
-        <section className="panel">
-          <div className="panel-heading">
-            <h2>On your radar</h2>
-            <span className="count-badge">
-              {sorted.filter((r) => !r.completed_at).length} open
-            </span>
-          </div>
-          {sorted.length
-            ? sorted.map((reminder) => (
-                <article
-                  key={reminder.id}
-                  className={`reminder-item ${reminder.completed_at ? "completed" : ""}`}
-                >
-                  <div className="reminder-item-head">
-                    <h3>{reminder.title}</h3>
-                    <span className="tag">
-                      {reminder.completed_at
-                        ? "Completed"
-                        : reminder.due_date < today()
-                          ? "Overdue"
-                          : reminder.due_date === today()
-                            ? "Today"
-                            : "Upcoming"}
+      <SectionTabs
+        id="reminders"
+        label="Reminder sections"
+        sections={[
+          {
+            id: "tasks",
+            label: "Reminders",
+            content: (
+              <>
+                <section className="panel">
+                  <div className="panel-heading">
+                    <h2>On your radar</h2>
+                    <span className="count-badge">
+                      {sorted.filter((r) => !r.completed_at).length} open
                     </span>
                   </div>
-                  <div className="reminder-meta">
-                    <span>{dateLabel(reminder.due_date)}</span>
-                    <span>·</span>
-                    <span>
-                      {horses.data?.find((h) => h.id === reminder.horse_id)
-                        ?.barn_name ?? "General barn"}
-                    </span>
-                    <span>·</span>
-                    <span>
-                      {categories.data?.find(
-                        (c) => c.id === reminder.category_id,
-                      )?.name ?? "Uncategorized"}
-                    </span>
+                  {sorted.length
+                    ? sorted.map((reminder) => (
+                        <article
+                          key={reminder.id}
+                          className={`reminder-item ${reminder.completed_at ? "completed" : ""}`}
+                        >
+                          <div className="reminder-item-head">
+                            <h3>{reminder.title}</h3>
+                            <span className="tag">
+                              {reminder.completed_at
+                                ? "Completed"
+                                : reminder.due_date < today()
+                                  ? "Overdue"
+                                  : reminder.due_date === today()
+                                    ? "Today"
+                                    : "Upcoming"}
+                            </span>
+                          </div>
+                          <div className="reminder-meta">
+                            <span>{dateLabel(reminder.due_date)}</span>
+                            <span>·</span>
+                            <span>
+                              {horses.data?.find(
+                                (h) => h.id === reminder.horse_id,
+                              )?.barn_name ?? "General barn"}
+                            </span>
+                            <span>·</span>
+                            <span>
+                              {categories.data?.find(
+                                (c) => c.id === reminder.category_id,
+                              )?.name ?? "Uncategorized"}
+                            </span>
+                          </div>
+                          {reminder.notes && (
+                            <p className="muted">{reminder.notes}</p>
+                          )}
+                          <div className="row-actions">
+                            <form action={toggleReminder}>
+                              <input
+                                type="hidden"
+                                name="id"
+                                value={reminder.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="complete"
+                                value={reminder.completed_at ? "no" : "yes"}
+                              />
+                              <SubmitButton className="text-button">
+                                {reminder.completed_at
+                                  ? "Reopen"
+                                  : "Mark complete"}
+                              </SubmitButton>
+                            </form>
+                            <Link
+                              className="text-button"
+                              href={`/admin/reminders?edit=${reminder.id}#record-form`}
+                            >
+                              Edit
+                            </Link>
+                            <form action={deleteRecord.bind(null, "reminders")}>
+                              <input
+                                type="hidden"
+                                name="id"
+                                value={reminder.id}
+                              />
+                              <DeleteButton />
+                            </form>
+                          </div>
+                        </article>
+                      ))
+                    : !failed && (
+                        <EmptyState
+                          icon={CalendarDays}
+                          title="A clear head for the work ahead."
+                          description="Add a farrier visit, a vaccination date, or any task you want to keep on your radar."
+                          href="/admin/reminders?new=1#record-form"
+                          label="Create your first reminder"
+                        />
+                      )}
+                </section>
+              </>
+            ),
+          },
+          {
+            id: "categories",
+            label: "Categories",
+            content: (
+              <>
+                <section className="panel" id="reminder-categories">
+                  <div className="panel-heading">
+                    <h2>Your categories</h2>
                   </div>
-                  {reminder.notes && <p className="muted">{reminder.notes}</p>}
-                  <div className="row-actions">
-                    <form action={toggleReminder}>
-                      <input type="hidden" name="id" value={reminder.id} />
-                      <input
-                        type="hidden"
-                        name="complete"
-                        value={reminder.completed_at ? "no" : "yes"}
+                  <div className="category-content">
+                    <p className="muted">
+                      Make this list fit your barn. Rename, add, or remove
+                      categories anytime.
+                    </p>
+                    {categories.data?.map((category) => (
+                      <div className="category-row" key={category.id}>
+                        <form
+                          action={saveRecord.bind(null, "reminder_categories")}
+                        >
+                          <input type="hidden" name="id" value={category.id} />
+                          <label>
+                            <span className="sr-only">Category name</span>
+                            <input
+                              name="name"
+                              required
+                              maxLength={100}
+                              defaultValue={category.name}
+                            />
+                          </label>
+                          <SubmitButton className="text-button">
+                            Save
+                          </SubmitButton>
+                        </form>
+                        <form
+                          action={deleteRecord.bind(
+                            null,
+                            "reminder_categories",
+                          )}
+                        >
+                          <input type="hidden" name="id" value={category.id} />
+                          <DeleteButton
+                            label="Remove"
+                            confirmText="Remove this category? Its reminders will stay and become uncategorized."
+                          />
+                        </form>
+                      </div>
+                    ))}
+                    <form action={saveRecord.bind(null, "reminder_categories")}>
+                      <Field
+                        label="New category"
+                        name="name"
+                        required
+                        maxLength={100}
+                        placeholder="e.g. Dental"
                       />
-                      <SubmitButton className="text-button">
-                        {reminder.completed_at ? "Reopen" : "Mark complete"}
-                      </SubmitButton>
-                    </form>
-                    <Link
-                      className="text-button"
-                      href={`/admin/reminders?edit=${reminder.id}#record-form`}
-                    >
-                      Edit
-                    </Link>
-                    <form action={deleteRecord.bind(null, "reminders")}>
-                      <input type="hidden" name="id" value={reminder.id} />
-                      <DeleteButton />
+                      <SubmitButton>Add category</SubmitButton>
                     </form>
                   </div>
-                </article>
-              ))
-            : !failed && (
-                <EmptyState
-                  icon={CalendarDays}
-                  title="A clear head for the work ahead."
-                  description="Add a farrier visit, a vaccination date, or any task you want to keep on your radar."
-                  href="/admin/reminders?new=1#record-form"
-                  label="Create your first reminder"
-                />
-              )}
-        </section>
-        <ActionPanel
-          id="reminder-categories"
-          label="Manage reminder categories"
-        >
-          <div className="panel-heading">
-            <h2>Your categories</h2>
-          </div>
-          <div className="category-content">
-            <p className="muted">
-              Make this list fit your barn. Rename, add, or remove categories
-              anytime.
-            </p>
-            {categories.data?.map((category) => (
-              <div className="category-row" key={category.id}>
-                <form action={saveRecord.bind(null, "reminder_categories")}>
-                  <input type="hidden" name="id" value={category.id} />
-                  <label>
-                    <span className="sr-only">Category name</span>
-                    <input
-                      name="name"
-                      required
-                      maxLength={100}
-                      defaultValue={category.name}
-                    />
-                  </label>
-                  <SubmitButton className="text-button">Save</SubmitButton>
-                </form>
-                <form action={deleteRecord.bind(null, "reminder_categories")}>
-                  <input type="hidden" name="id" value={category.id} />
-                  <DeleteButton
-                    label="Remove"
-                    confirmText="Remove this category? Its reminders will stay and become uncategorized."
-                  />
-                </form>
-              </div>
-            ))}
-            <form action={saveRecord.bind(null, "reminder_categories")}>
-              <Field
-                label="New category"
-                name="name"
-                required
-                maxLength={100}
-                placeholder="e.g. Dental"
-              />
-              <SubmitButton>Add category</SubmitButton>
-            </form>
-          </div>
-        </ActionPanel>
-      </div>
+                </section>
+              </>
+            ),
+          },
+        ]}
+      />
     </>
   );
 }

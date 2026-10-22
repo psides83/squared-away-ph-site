@@ -191,10 +191,15 @@ Features in this section are present in the application source. A feature being 
 
 ### Deliberate editing and batch feeding
 
-- Admin pages keep record lists and summaries visible while add/edit/record actions open focused dialogs. Applied to customers, horses, expenses, training stays/logs, reminders and their categories, inventory products/stock, daily rations, calendar classifications, invoice builders/payments, customer updates/files, access management, cost/income matching, shared-cost allocations, and business settings. Filters and quick record actions remain on the overview.
+- Focused record creation and editing use dialogs where helpful. Settings is an open form with Contact, Training & billing, and Payment methods tabs and one save action. Routine bulk feeding, inventory purchases, feeding-time configuration, reminder categories, invoice payments, and charge review are open within their own sections. Other focused editors remain deliberate dialogs.
 - Dialogs have labeled headings, native keyboard focus containment, Escape/close controls, return focus to the opener, and reset unsaved fields on dismissal. Existing Add/Edit links and form anchors open the appropriate dialog; successful navigation closes always-available editors so result messages are visible.
 - Bulk scheduled feeding confirms the saved rations for selected horses at one feeding time on one actual date. Existing confirmations remain safe to retry; a shortage or invalid horse rolls back the entire batch.
 - Bulk extra/partial feeding records one selected product/unit across multiple horses with individual quantities. Blank quantities skip a horse. Each batch preserves weighted cost and per-horse history, saves atomically, and rejects changed retries using a saved batch request. Requires migration `20261021001700_bulk_feeding.sql`.
+
+### Task navigation and feeding-time setup
+
+- Feeding, Inventory, Reports, Reminders, invoice details, and Settings use accessible tabs to separate tasks. Tabs support keyboard navigation and direct section links; mounted panels preserve unsaved inputs. Invoice printing selects the customer invoice regardless of the active tab.
+- Feeding-time setup supports adding and removing any number of draft rows, then saving all new times together atomically (up to 1,000 per save). Saved times have individual Edit actions. Failed saves preserve drafts; retrying a batch cannot duplicate its times. Editing a saved time leaves unfinished new entries intact.
 
 ## Planned (not implemented)
 
@@ -264,10 +269,8 @@ Features in this section are present in the application source. A feature being 
 
 ## Decisions still needed
 
-
 - Public About page and landing-page information are deferred at the owner's request on October 21, 2026. Trainer biography, final logo, and real media will be supplied later.
 - Public visual direction is an illustrated western design until real photographs and a final logo are available, confirmed October 21, 2026.
-
 
 - Product names, actual package/serving conversion values, and opening quantities will be entered during inventory setup. Supported units and configurable conversions are agreed; actual scoop/flake weights must come from the relevant product or measured batch.
 - Actual starting rates, contact details, and payment instructions can now be entered by the owner in Settings. These are business setup values, not unresolved development decisions.
@@ -277,6 +280,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Tabs/feeding-time setup increment (October 22, 2026): all 114 tests and TypeScript checks pass. Local database tests cover six-time setup, atomic conflict rollback, case-insensitive duplicate names, invalid clock times, safe retries, individual edits, and non-admin denial. Browser preview checks confirm four draft rows, tab-switch preservation, individual edit expansion, and phone-width rendering. The production build also passes. Migration `20261022002000_batch_feeding_times.sql` must be applied; remote migration and authenticated production flows remain unverified.
 
 - Mobile/forms/receipt-capture increment (October 22, 2026): all 113 tests, TypeScript checks, and the production build pass. Browser checks at a 390-pixel phone viewport cover compact fields, dollar/unit display, serving-button increments, phone formatting, training-focus selection, full-screen editors, and More navigation. Receipt tests cover pre-save file validation, repeat attachment deduplication, upload failure, and metadata cleanup using a mocked storage client. The temporary preview was removed. Actual iOS/Android camera capture, image-preparation compatibility, keyboard behavior, and live Supabase attachment flows remain unverified. No new database migration or external recognition service was added.
 

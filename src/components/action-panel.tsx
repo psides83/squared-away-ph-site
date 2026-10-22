@@ -38,19 +38,30 @@ export function ActionPanel({
       dialog.current.close();
     }
     previousLocation.current = location;
+    let frame = 0;
+    const openDialog = () => {
+      window.cancelAnimationFrame(frame);
+      dialog.current?.dispatchEvent(new Event("reveal-tab", { bubbles: true }));
+      frame = window.requestAnimationFrame(() => {
+        if (dialog.current && !dialog.current.open) dialog.current.showModal();
+      });
+    };
     const openForHash = () => {
       if (window.location.hash === `#${id}` && !dialog.current?.open)
-        dialog.current?.showModal();
+        openDialog();
     };
     if (
       defaultOpen &&
       !dialog.current?.open &&
       (!window.location.hash || window.location.hash === `#${id}`)
     )
-      dialog.current?.showModal();
+      openDialog();
     openForHash();
     window.addEventListener("hashchange", openForHash);
-    return () => window.removeEventListener("hashchange", openForHash);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", openForHash);
+    };
   }, [defaultOpen, id, location]);
   function close() {
     setRevision((value) => value + 1);

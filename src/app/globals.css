@@ -2321,3 +2321,87 @@ input[type="number"] {
     padding-top: calc(12px + env(safe-area-inset-top));
   }
 }
+
+/* Tabs separate tasks; configuration stays open within its own section. */
+.section-tablist {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+  padding: 0 0 1px;
+  overscroll-behavior-x: contain;
+}
+.section-tablist > button {
+  flex: 0 0 auto;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: #796c5a;
+  padding: 13px 18px;
+  min-height: 48px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.section-tablist > button[aria-selected="true"] {
+  color: var(--leather);
+  background: #f0e8da;
+  border-bottom-color: var(--leather);
+}
+.section-tablist > button:focus-visible {
+  outline-offset: -3px;
+}
+.section-tabpanel {
+  min-width: 0;
+}
+.section-tabpanel[hidden] {
+  display: none;
+}
+.settings-form .settings-save {
+  padding: 0;
+}
+.settings-form > .settings-fieldset {
+  gap: 20px;
+}
+@media (max-width: 700px) {
+  .section-tablist {
+    margin: 0 -2px 18px;
+  }
+  .section-tablist > button {
+    padding: 12px 15px;
+    font-size: 13px;
+  }
+  .section-tabpanel:focus {
+    outline-offset: -2px;
+  }
+}
+@media print {
+  .section-tablist {
+    display: none !important;
+  }
+  .section-tabpanel[data-print-panel="false"] {
+    display: none !important;
+  }
+  .section-tabpanel[data-print-panel="true"] {
+    display: block !important;
+  }
+}
+.print-only {
+  display: none;
+}
+.report-period-form .form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 220px));
+}
+@media print {
+  .print-only {
+    display: block !important;
+  }
+}
+.feeding-time-manager fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}

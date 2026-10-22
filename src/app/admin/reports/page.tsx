@@ -1,3 +1,4 @@
+import { SectionTabs } from "@/components/section-tabs";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { today, money, dateLabel } from "@/lib/format";
@@ -79,19 +80,21 @@ export default async function Reports({
         description="Payments received minus expenses paid, for the dates you choose."
       />
       <section className="panel">
-        <form method="get" className="form-grid">
-          <label>
-            From
-            <input name="from" type="date" required defaultValue={from} />
-          </label>
-          <label>
-            Through
-            <input name="to" type="date" required defaultValue={to} />
-          </label>
-          <div className="form-actions">
-            <button className="button primary" type="submit">
-              Update report
-            </button>
+        <form method="get" className="record-form report-period-form">
+          <div className="form-grid">
+            <label>
+              From
+              <input name="from" type="date" required defaultValue={from} />
+            </label>
+            <label>
+              Through
+              <input name="to" type="date" required defaultValue={to} />
+            </label>
+            <div className="form-actions">
+              <button className="button primary" type="submit">
+                Update report
+              </button>
+            </div>
           </div>
         </form>
       </section>
@@ -122,216 +125,275 @@ export default async function Reports({
             expenses; consuming that feed does not subtract its cost again. This
             report covers recorded activity only.
           </p>
-          <section className="panel">
-            <div className="panel-heading">
-              <h2>Monthly cash results</h2>
-            </div>
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Received</th>
-                    <th>Paid out</th>
-                    <th>Net cash profit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.months.map((m) => (
-                    <tr key={m.month}>
-                      <td>{m.month}</td>
-                      <td>{money(m.received_cents)}</td>
-                      <td>{money(m.spent_cents)}</td>
-                      <td>{money(m.received_cents - m.spent_cents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-          <section className="panel">
-            <div className="panel-heading">
-              <h2>Paid expenses by category</h2>
-              <Link href="/admin/expenses" className="text-link">
-                View expenses
-              </Link>
-            </div>
-            {report.categories.length ? (
-              <div className="table-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Category</th>
-                      <th>Expenses</th>
-                      <th>Paid</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.categories.map((c) => (
-                      <tr key={c.name}>
-                        <td>{c.name}</td>
-                        <td>{c.expense_count}</td>
-                        <td>{money(c.amount_cents)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p>No expenses paid in this period.</p>
-            )}
-          </section>
-          <section className="panel">
-            <div className="panel-heading">
-              <h2>Outstanding now</h2>
-              <Link href="/admin/invoices" className="text-link">
-                View invoices
-              </Link>
-            </div>
-            <p>
-              All issued invoices, across all dates:{" "}
-              <strong>{money(report.outstanding_cents)}</strong> outstanding,
-              including <strong>{money(report.overdue_cents)}</strong> overdue
-              as of today. These balances are separate from the selected
-              period’s cash profit.
-            </p>
-          </section>
-          <section className="panel">
-            <div className="panel-heading">
-              <h2>Horse cash margins</h2>
-              <Link href="/admin/allocations" className="text-link">
-                Allocate shared costs
-              </Link>
-            </div>
-            <p>
-              Payments on stay-linked invoices belong to that stay’s horse.
-              Manual invoice receipts use their saved reporting assignment.
-              Direct horse expenses and saved shared-cost splits use the expense
-              paid date. These are margins from assigned records, not complete
-              horse profitability.
-            </p>
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Horse</th>
-                    <th>Received</th>
-                    <th>Direct costs paid</th>
-                    <th>Shared costs paid</th>
-                    <th>Recorded cash margin</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {horseReport.horses.map((h) => (
-                    <tr key={h.horse_id}>
-                      <td>{h.horse_name}</td>
-                      <td>{money(h.received_cents)}</td>
-                      <td>{money(h.direct_cents)}</td>
-                      <td>{money(h.shared_cents)}</td>
-                      <td>{money(h.margin_cents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {!horseReport.horses.length && <p>No horses on file yet.</p>}
-            <p className="notice">
-              Not assigned to a horse:{" "}
-              <strong>{money(horseReport.unassigned_received_cents)}</strong>{" "}
-              received without a horse reporting assignment, and{" "}
-              <strong>{money(horseReport.unallocated_paid_cents)}</strong> in
-              paid shared expenses without an allocation. Resolve these amounts
-              before treating horse margins as complete. Use Match income &
-              expenses to assign manual invoices; customer ownership alone does
-              not determine the horse.
-            </p>
-            <p>
-              Reconciliation: horse margins{" "}
-              {money(
-                horseReport.horses.reduce((sum, h) => sum + h.margin_cents, 0),
-              )}{" "}
-              + unassigned receipts{" "}
-              {money(horseReport.unassigned_received_cents)} − unallocated
-              shared costs {money(horseReport.unallocated_paid_cents)} =
-              business net cash profit {money(report.net_cents)}.
-            </p>
-          </section>
-          <section className="panel">
-            <div className="panel-heading">
-              <h2>Training-stay cash margins</h2>
-              <Link href="/admin/attribution" className="text-link">
-                Match income & expenses
-              </Link>
-            </div>
-            <p>
-              Receipts use the invoice’s original stay or a saved reporting
-              link. Costs use reviewed stay splits on direct horse expenses and
-              current shared-cost portions. Dates below identify the stay; the
-              selected report period still uses payment dates. Unassigned
-              amounts remain separate.
-            </p>
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Horse / billing customer</th>
-                    <th>Stay</th>
-                    <th>Received</th>
-                    <th>Direct costs paid</th>
-                    <th>Shared costs paid</th>
-                    <th>Recorded cash margin</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stayReport.stays.map((s) => (
-                    <tr key={s.stay_id}>
-                      <td>
-                        {s.horse_name}
-                        <small className="cell-secondary">
-                          {s.customer_name}
-                        </small>
-                      </td>
-                      <td>
-                        {dateLabel(s.arrival_date)} –{" "}
-                        {s.departure_date
-                          ? dateLabel(s.departure_date)
-                          : "ongoing"}
-                      </td>
-                      <td>{money(s.received_cents)}</td>
-                      <td>{money(s.direct_cents)}</td>
-                      <td>{money(s.shared_cents)}</td>
-                      <td>{money(s.margin_cents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {!stayReport.stays.length && <p>No training stays yet.</p>}
-            <p className="notice">
-              Not assigned to stays: receipts{" "}
-              {money(stayReport.unassigned_received_cents)}, direct horse costs{" "}
-              {money(stayReport.unassigned_direct_cents)}, and allocated horse
-              shares {money(stayReport.unassigned_shared_cents)}. Shared barn
-              costs not yet allocated to horses:{" "}
-              {money(stayReport.unallocated_shared_cents)}. Owner-horse costs
-              with no training stay correctly remain outside stay margins. These
-              figures represent assigned recorded activity, not complete stay
-              profitability.
-            </p>
-            <p>
-              Reconciliation: stay margins{" "}
-              {money(
-                stayReport.stays.reduce((sum, s) => sum + s.margin_cents, 0),
-              )}{" "}
-              + unassigned receipts{" "}
-              {money(stayReport.unassigned_received_cents)} − unassigned direct
-              costs {money(stayReport.unassigned_direct_cents)} − unassigned
-              horse shares {money(stayReport.unassigned_shared_cents)} −
-              unallocated barn costs{" "}
-              {money(stayReport.unallocated_shared_cents)} = business net cash
-              profit {money(report.net_cents)}.
-            </p>
-          </section>
+          <SectionTabs
+            id="reports"
+            label="Financial report sections"
+            sections={[
+              {
+                id: "cash",
+                label: "Monthly cash",
+                content: (
+                  <>
+                    <section className="panel">
+                      <div className="panel-heading">
+                        <h2>Monthly cash results</h2>
+                      </div>
+                      <div className="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Month</th>
+                              <th>Received</th>
+                              <th>Paid out</th>
+                              <th>Net cash profit</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {report.months.map((m) => (
+                              <tr key={m.month}>
+                                <td>{m.month}</td>
+                                <td>{money(m.received_cents)}</td>
+                                <td>{money(m.spent_cents)}</td>
+                                <td>
+                                  {money(m.received_cents - m.spent_cents)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </section>
+                    <section className="panel">
+                      <div className="panel-heading">
+                        <h2>Outstanding now</h2>
+                        <Link href="/admin/invoices" className="text-link">
+                          View invoices
+                        </Link>
+                      </div>
+                      <p>
+                        All issued invoices, across all dates:{" "}
+                        <strong>{money(report.outstanding_cents)}</strong>{" "}
+                        outstanding, including{" "}
+                        <strong>{money(report.overdue_cents)}</strong> overdue
+                        as of today. These balances are separate from the
+                        selected period’s cash profit.
+                      </p>
+                    </section>
+                  </>
+                ),
+              },
+              {
+                id: "expenses",
+                label: "Expenses",
+                content: (
+                  <>
+                    <section className="panel">
+                      <div className="panel-heading">
+                        <h2>Paid expenses by category</h2>
+                        <Link href="/admin/expenses" className="text-link">
+                          View expenses
+                        </Link>
+                      </div>
+                      {report.categories.length ? (
+                        <div className="table-scroll">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Category</th>
+                                <th>Expenses</th>
+                                <th>Paid</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {report.categories.map((c) => (
+                                <tr key={c.name}>
+                                  <td>{c.name}</td>
+                                  <td>{c.expense_count}</td>
+                                  <td>{money(c.amount_cents)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p>No expenses paid in this period.</p>
+                      )}
+                    </section>
+                  </>
+                ),
+              },
+              {
+                id: "horses",
+                label: "By horse",
+                content: (
+                  <>
+                    <section className="panel">
+                      <div className="panel-heading">
+                        <h2>Horse cash margins</h2>
+                        <Link href="/admin/allocations" className="text-link">
+                          Allocate shared costs
+                        </Link>
+                      </div>
+                      <p>
+                        Payments on stay-linked invoices belong to that stay’s
+                        horse. Manual invoice receipts use their saved reporting
+                        assignment. Direct horse expenses and saved shared-cost
+                        splits use the expense paid date. These are margins from
+                        assigned records, not complete horse profitability.
+                      </p>
+                      <div className="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Horse</th>
+                              <th>Received</th>
+                              <th>Direct costs paid</th>
+                              <th>Shared costs paid</th>
+                              <th>Recorded cash margin</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {horseReport.horses.map((h) => (
+                              <tr key={h.horse_id}>
+                                <td>{h.horse_name}</td>
+                                <td>{money(h.received_cents)}</td>
+                                <td>{money(h.direct_cents)}</td>
+                                <td>{money(h.shared_cents)}</td>
+                                <td>{money(h.margin_cents)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {!horseReport.horses.length && (
+                        <p>No horses on file yet.</p>
+                      )}
+                      <p className="notice">
+                        Not assigned to a horse:{" "}
+                        <strong>
+                          {money(horseReport.unassigned_received_cents)}
+                        </strong>{" "}
+                        received without a horse reporting assignment, and{" "}
+                        <strong>
+                          {money(horseReport.unallocated_paid_cents)}
+                        </strong>{" "}
+                        in paid shared expenses without an allocation. Resolve
+                        these amounts before treating horse margins as complete.
+                        Use Match income & expenses to assign manual invoices;
+                        customer ownership alone does not determine the horse.
+                      </p>
+                      <p>
+                        Reconciliation: horse margins{" "}
+                        {money(
+                          horseReport.horses.reduce(
+                            (sum, h) => sum + h.margin_cents,
+                            0,
+                          ),
+                        )}{" "}
+                        + unassigned receipts{" "}
+                        {money(horseReport.unassigned_received_cents)} −
+                        unallocated shared costs{" "}
+                        {money(horseReport.unallocated_paid_cents)} = business
+                        net cash profit {money(report.net_cents)}.
+                      </p>
+                    </section>
+                  </>
+                ),
+              },
+              {
+                id: "stays",
+                label: "By training stay",
+                content: (
+                  <>
+                    <section className="panel">
+                      <div className="panel-heading">
+                        <h2>Training-stay cash margins</h2>
+                        <Link href="/admin/attribution" className="text-link">
+                          Match income & expenses
+                        </Link>
+                      </div>
+                      <p>
+                        Receipts use the invoice’s original stay or a saved
+                        reporting link. Costs use reviewed stay splits on direct
+                        horse expenses and current shared-cost portions. Dates
+                        below identify the stay; the selected report period
+                        still uses payment dates. Unassigned amounts remain
+                        separate.
+                      </p>
+                      <div className="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Horse / billing customer</th>
+                              <th>Stay</th>
+                              <th>Received</th>
+                              <th>Direct costs paid</th>
+                              <th>Shared costs paid</th>
+                              <th>Recorded cash margin</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {stayReport.stays.map((s) => (
+                              <tr key={s.stay_id}>
+                                <td>
+                                  {s.horse_name}
+                                  <small className="cell-secondary">
+                                    {s.customer_name}
+                                  </small>
+                                </td>
+                                <td>
+                                  {dateLabel(s.arrival_date)} –{" "}
+                                  {s.departure_date
+                                    ? dateLabel(s.departure_date)
+                                    : "ongoing"}
+                                </td>
+                                <td>{money(s.received_cents)}</td>
+                                <td>{money(s.direct_cents)}</td>
+                                <td>{money(s.shared_cents)}</td>
+                                <td>{money(s.margin_cents)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {!stayReport.stays.length && (
+                        <p>No training stays yet.</p>
+                      )}
+                      <p className="notice">
+                        Not assigned to stays: receipts{" "}
+                        {money(stayReport.unassigned_received_cents)}, direct
+                        horse costs {money(stayReport.unassigned_direct_cents)},
+                        and allocated horse shares{" "}
+                        {money(stayReport.unassigned_shared_cents)}. Shared barn
+                        costs not yet allocated to horses:{" "}
+                        {money(stayReport.unallocated_shared_cents)}.
+                        Owner-horse costs with no training stay correctly remain
+                        outside stay margins. These figures represent assigned
+                        recorded activity, not complete stay profitability.
+                      </p>
+                      <p>
+                        Reconciliation: stay margins{" "}
+                        {money(
+                          stayReport.stays.reduce(
+                            (sum, s) => sum + s.margin_cents,
+                            0,
+                          ),
+                        )}{" "}
+                        + unassigned receipts{" "}
+                        {money(stayReport.unassigned_received_cents)} −
+                        unassigned direct costs{" "}
+                        {money(stayReport.unassigned_direct_cents)} − unassigned
+                        horse shares {money(stayReport.unassigned_shared_cents)}{" "}
+                        − unallocated barn costs{" "}
+                        {money(stayReport.unallocated_shared_cents)} = business
+                        net cash profit {money(report.net_cents)}.
+                      </p>
+                    </section>
+                  </>
+                ),
+              },
+            ]}
+          />
         </>
       )}
     </>
