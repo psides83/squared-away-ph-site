@@ -17,7 +17,9 @@ export async function saveExpense(form: FormData) {
     });
     if (error)
       throw new Error(
-        "Expense could not be saved. Inventory purchases must be corrected through their stock history.",
+        error.code === "P0001"
+          ? error.message
+          : "Expense could not be saved. Inventory purchases must be corrected through their stock history.",
       );
     saved = data;
   } catch (e) {
@@ -40,7 +42,9 @@ export async function expenseStatus(form: FormData) {
     });
     if (error)
       throw new Error(
-        "Unable to update expense. Inventory purchases cannot be voided separately from stock.",
+        error.code === "P0001"
+          ? error.message
+          : "Unable to update expense. Inventory purchases cannot be voided separately from stock.",
       );
   } catch (e) {
     issue = e instanceof Error ? e.message : "Unable to update expense.";
@@ -118,15 +122,13 @@ export async function uploadReceipt(form: FormData) {
       throw new Error(
         "Receipt upload failed. Check that the receipt storage migration is applied.",
       );
-    const { error: metadata } = await db
-      .from("expense_receipts")
-      .insert({
-        expense_id: expense,
-        object_path: path,
-        file_name: file.name.slice(0, 200) || `receipt.${type.extension}`,
-        content_type: type.mime,
-        size_bytes: bytes.length,
-      });
+    const { error: metadata } = await db.from("expense_receipts").insert({
+      expense_id: expense,
+      object_path: path,
+      file_name: file.name.slice(0, 200) || `receipt.${type.extension}`,
+      content_type: type.mime,
+      size_bytes: bytes.length,
+    });
     if (metadata) {
       await db.storage.from("expense-receipts").remove([path]);
       throw new Error(

@@ -21,7 +21,7 @@ Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-i
 
 ## Set up Supabase
 
-1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, and billing-day inputs. No horse, customer, expense, or stock records are seeded. Installations already using expenses/inventory need `20261021000700_billing_days_agreements.sql` for the calendar and updated training-stay form.
+1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, billing-day inputs, and invoices/payments. No horse, customer, expense, or stock records are seeded. Installations already using the billing calendar need `20261021000800_invoices_payments.sql` before opening Invoices.
 2. In Supabase Authentication → Users, create your administrator account with an email and password. Confirm its email through the dashboard if needed. There is no public sign-up flow.
 3. Grant administrator access from the SQL Editor, replacing the example email with the exact account email:
 
@@ -48,20 +48,29 @@ You can use the app without the Supabase GitHub integration; that integration ma
 - Private training log with dated sessions and progress notes, optional session duration, create/edit/delete, horse filtering, and 25-entry pagination. Quick entry links are available on the dashboard and horse cards. Training history remains with the horse after sales and prevents accidental horse deletion.
 - Mobile layouts, accessible form labels, pending submission states, and delete confirmations.
 - Server-side authorization and database row-level security.
-- Admin-only business settings for contact information, optional default monthly rate, billing day, partial-month policy, payment terms, and payment instructions/links. New stays prefill from those settings while existing stays retain recorded values. Payment instructions are stored for future billing screens; this does not implement invoices or collect payments.
+- Admin-only business settings for contact information, optional default monthly rate, billing day, partial-month policy, payment terms, and payment instructions/links. New stays prefill from those settings while existing stays retain recorded values. Finalized invoices preserve these contact/payment details. Payment links do not collect or confirm payments.
 - Expenses with user-managed categories, horse/shared-barn assignments, paid dates, charge-back flags, editing/voids of standalone costs, and private receipt attachments (JPEG/PNG/WebP/PDF, 3 MB maximum).
 - Feed/hay/supplement inventory with product-specific weight conversions, purchases/opening stock, weighted average valuation, waste/adjustments, and retained transaction snapshots. Stock purchases create their expense and quantity/value movement atomically; repeated requests cannot duplicate them.
 - Saved daily rations and once-per-horse/date confirmation. Extras and partial feeding use manual inventory entries. Insufficient stock rolls back every line of a confirmation; saving a ration does not deduct anything. Outgoing stock reversals retain history and restore original cost once.
 - Billing calendar with worked, billable-rest, and non-billable days, plus unclassified dates. Only elapsed days within a physical stay can be classified; only worked/rest count as billable. Corrections/clearing retain private audit history. Training logs do not automatically classify dates.
 - Per-stay feed/boarding choices: unrecorded, included, separate monthly rate, actual cost, or not provided. Monthly prices are recorded on the stay; cost allocation and invoice calculation remain future work.
 
-Billing days currently support 1–28. End-of-month billing conventions can be added when billing is implemented. Dashboard active stays include arrival and departure dates and exclude future stays. Business dates use America/Chicago.
+Billing days currently support 1–28. End-of-month billing conventions remain planned. Dashboard active stays include arrival and departure dates and exclude future stays. Business dates use America/Chicago.
 
 Open **Settings** to enter your business values. A blank default training rate means not set; a zero rate remains a valid explicit choice. Terms use whole days with 0 meaning due upon receipt. Existing stays without previously recorded payment terms show an empty term field when edited, requiring an explicit choice rather than silently adopting today's default.
 
 ## Deliberately not implemented yet
 
-Ownership transfer history, invoices/payments, shared-cost allocations, profitability reports, recurring expenses, expense filters, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Training stay/service policies and billable days are recorded only; no charges or proration are calculated. Reminders do not send notifications. Charge-back flags do not generate invoices. No fake records are displayed.
+Ownership transfer history, scheduled invoice generation, automatic feed/boarding invoice calculations, refunds/account credits, invoice emailing, shared-cost allocations, profitability reports, recurring expenses, expense filters, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Calendar-day training proration is available in reviewed invoice drafts; other policies and feed/boarding lines need manual review and entry. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+
+## Invoice workflow
+
+1. Open **Invoices** and create a draft for a customer, optionally linking a training stay and billing period. Confirm the due date; stay terms take precedence over today's defaults. Legacy stays with unknown terms require a manually chosen due date.
+2. Add manual charges/credits or generate training charges from classified calendar days. Automatic training calculations currently require calendar-day proration and an elapsed period within one month. Review the calculation and enter any feed/boarding charges manually from the agreement.
+3. Add eligible reimbursable expenses, optionally with an explicit handling fee. A source expense or billable date cannot be claimed twice. Removing a draft line releases its source.
+4. Review and finalize. The assigned number, original charges, customer, and business payment details are preserved. Use **Print / save PDF** for a printable copy.
+5. Record actual payments after receiving them. Multiple partial payments reduce the remaining balance. Opening Venmo/PayPal links does not record a payment; Apple Cash uses your saved instructions.
+6. Correct issued bills using adjustments or reasoned payment reversals. These records do not transfer or refund money. A void retains history and requires all payments to have been reversed; source claims are then released.
 
 ## Billing calendar workflow
 

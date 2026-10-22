@@ -13,6 +13,7 @@ import {
   Package,
   Wheat,
   CalendarCheck,
+  FileText,
 } from "lucide-react";
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -20,6 +21,7 @@ const links = [
   { href: "/admin/customers", label: "Customers", icon: UsersRound },
   { href: "/admin/training", label: "Training stays", icon: ClipboardList },
   { href: "/admin/calendar", label: "Billing calendar", icon: CalendarCheck },
+  { href: "/admin/invoices", label: "Invoices", icon: FileText },
   { href: "/admin/log", label: "Training log", icon: BookOpen },
   { href: "/admin/reminders", label: "Reminders", icon: CalendarDays },
   { href: "/admin/expenses", label: "Expenses", icon: Receipt },
@@ -35,8 +37,16 @@ export function Navigation() {
         <Link
           key={href}
           href={href}
-          aria-current={path === href ? "page" : undefined}
-          className={path === href ? "nav-item active" : "nav-item"}
+          aria-current={
+            path === href || (href !== "/admin" && path.startsWith(`${href}/`))
+              ? "page"
+              : undefined
+          }
+          className={
+            path === href || (href !== "/admin" && path.startsWith(`${href}/`))
+              ? "nav-item active"
+              : "nav-item"
+          }
         >
           <Icon size={19} />
           <span>{label}</span>

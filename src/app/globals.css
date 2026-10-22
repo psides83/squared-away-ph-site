@@ -1,5 +1,96 @@
 @import "tailwindcss";
 
+.invoice-toolbar {
+  margin-bottom: 24px;
+}
+.invoice-doc-header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 32px;
+  border-bottom: 1px solid var(--line);
+}
+.invoice-doc-header h1 {
+  font-size: 34px;
+  margin-bottom: 12px;
+}
+.invoice-party {
+  padding: 24px 32px;
+}
+.invoice-notes {
+  padding: 24px 32px;
+  border-top: 1px solid var(--line);
+}
+.invoice-notes > p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.invoice-totals {
+  max-width: 430px;
+  margin: 24px 32px 24px auto;
+  padding-left: 24px;
+}
+.invoice-totals > p {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 7px 0;
+  font-size: 13px;
+}
+.invoice-balance {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  font-size: 17px !important;
+}
+.invoice-void {
+  margin: 24px;
+}
+@media print {
+  .sidebar,
+  .topbar,
+  .app-footer,
+  .no-print,
+  .skip-link {
+    display: none !important;
+  }
+  .workspace {
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  .main-content {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  body {
+    background: white;
+    font-size: 11pt;
+  }
+  .invoice-document {
+    border: 0;
+    background: white;
+    overflow: visible;
+  }
+  .table-scroll {
+    overflow: visible;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  .invoice-totals,
+  .invoice-notes {
+    break-inside: avoid;
+  }
+  a {
+    color: inherit;
+  }
+  @page {
+    margin: 16mm;
+  }
+}
+
 .calendar-stats {
   margin-top: 24px;
 }

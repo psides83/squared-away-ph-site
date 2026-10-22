@@ -30,7 +30,7 @@ Features in this section are present in the application source. A feature being 
 
 - Create/view/edit/delete stays with arrival/departure dates, one billing customer, individual monthly rates, billing day (1–28), private agreement notes, and a recorded partial-month policy.
 - Database prevention of overlapping stays for a horse and retention of historical billing assignments.
-- These are agreement records only. Automatic invoices, charges, and proration calculations remain planned.
+- Stay terms support reviewed invoice drafts. Automatic scheduling remains planned.
 
 ### Reminders
 
@@ -49,7 +49,7 @@ Features in this section are present in the application source. A feature being 
 ### Master admin settings
 
 - Admin-only Settings page for public business phone/email, optional default monthly rate, billing day (1–28), partial-month policy, and invoice payment terms in days (0 means due upon receipt).
-- Saved general payment instructions, HTTPS Venmo/PayPal links, and Apple Cash instructions. Invoice/public-page display of these details remains planned.
+- Saved general payment instructions, HTTPS Venmo/PayPal links, and Apple Cash instructions. Finalized invoices snapshot these details; public-page display remains planned.
 - New training stays prefill from settings and allow individual overrides. The rate, billing day, partial-month policy, and payment terms are stored on the stay; changing defaults does not change existing agreements.
 - Legacy stays retain their recorded values. Previously unrecorded payment terms remain unknown until explicitly entered when editing.
 - No business dollar rate or contact detail is hard-coded. Settings validation preserves blank or zero rates, validates payment links, and retains typed form values when saving fails.
@@ -59,7 +59,7 @@ Features in this section are present in the application source. A feature being 
 - Paginated expense book with date, vendor, category, amount, horse/shared-barn assignment, paid date, and customer charge-back flag. Categories can be added, renamed, or removed when unused.
 - Standalone expenses can be edited or voided while retaining the record. Purchase expense amounts are protected because they are linked to inventory; purchase payment dates remain editable.
 - Private JPEG/PNG/WebP/PDF receipt attachments up to 3 MB, with signature/type checks, authenticated downloads using short-lived signed links, and removal. Attach receipts after saving an expense or stock purchase.
-- Stock purchases create their expense and inventory movement together. Opening inventory, feeding, waste, and inventory corrections do not create another cash expense. Charge-back flags do not yet generate invoices or record reimbursement.
+- Stock purchases create their expense and inventory movement together. Opening inventory, feeding, waste, and inventory corrections do not create another cash expense. Eligible charge-backs can be added to invoice drafts with their source expense retained.
 
 ### Feed inventory and daily feeding
 
@@ -80,24 +80,32 @@ Features in this section are present in the application source. A feature being 
 - Private change history records previous/new status, notes, actor, and time. Unchanged retries do not duplicate events; clearing retains history.
 - Stay date changes cannot strand classified days outside the stay. Stays with billing-day history cannot be reassigned to another horse or accidentally deleted.
 - Per-stay feed and boarding choices: unrecorded, included, separate monthly rate, actual cost, or not provided. Rates are required only for separate monthly billing; legacy agreements remain unrecorded until chosen.
-- These are billing inputs only. No invoices, automatic charges, or actual-cost allocations are generated yet.
+- Marked days support reviewed training invoice lines. Automatic feed/boarding calculations and actual-cost allocations remain planned.
+
+### Invoices and recorded payments
+
+- Customer/stay invoice drafts with editable dates, notes, and manual charge/credit lines. Payment due dates use recorded stay terms or current defaults for manual invoices; legacy unknown terms require an explicit date.
+- Generate a training line for an elapsed period within one calendar month using the stay's calendar-day policy, recorded monthly rate, and explicitly worked/rest dates. Every eligible date must be classified before calculation. Review the saved calculation before finalizing; other policies require manual lines.
+- Link eligible horse expenses at cost with an optional explicit handling fee. Source reservations prevent duplicate billing and protect billed expense amounts and training-day classifications; removing a draft line or voiding releases reservations.
+- Finalization assigns an invoice number and preserves customer, business contact/payment instructions, line amounts, and calculation snapshots. Later profile/settings changes do not rewrite issued invoices.
+- Record multiple/partial payments and derive remaining balances. Payment links do not confirm payments or transfer money. Overpayments are rejected.
+- Issued invoices use retained adjustment entries and reasoned payment reversals. Voiding retains history and requires no active payments; a reversal records a correction, not a refund transfer.
+- Paginated invoice list, payment/adjustment history, and a printable invoice view with browser print/save-PDF support.
 
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
 
 - Expense search and date/horse filters, recurring expense scheduling, and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
-- Invoices, line items, recorded payments, partial payments, adjustments, and derived outstanding balances.
-- Optional Venmo, Apple Cash, and PayPal payment instructions/links where supported. Visiting a link must not count as payment confirmation.
-- Configurable billing schedules beyond the current 1–28 range, automated training charges, and explicit partial-month calculations.
-- Populate future invoices/public pages from business settings, with contact/payment-instruction snapshots on finalized invoices so later settings changes do not rewrite history.
+- Configurable billing schedules beyond the current 1–28 range, scheduled invoice generation, and additional automatic calculations for policies beyond calendar-day proration.
+- Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 - Calculate invoice feed/boarding lines from recorded service agreements, with explicit period/proration rules and cost sources for actual-cost billing.
 - Dashboard outstanding balances and recent activity beyond the current horse/reminder overview.
 
 #### Feed, boarding, and profitability details
 
 - Extend current horse/shared-barn expense assignments with training-stay attribution and allocations of shared costs across horses. Each allocation must reconcile to the original expense so business totals never count it twice, including the owner's horses.
-- Distinguish costs absorbed by the business from costs charged back to customers. Link reimbursable expenses to their eventual invoice items; do not count a reimbursement twice as both separate revenue and the same invoice revenue.
+- Distinguish costs absorbed by the business from costs charged back to customers. Use implemented expense-to-invoice links in reporting; do not count a reimbursement twice as both separate revenue and the same invoice revenue.
 - Report revenue, total costs, and net profit (revenue minus costs) for a selected period. Show horse/stay margins with clear treatment of shared costs, plus overall business profitability. Do not label horse-level profit as complete when shared costs have not been allocated.
 - Begin with clearly labeled cash reporting: payments received minus expenses paid, with unpaid invoices separate. Show inventory consumption costs separately from cash spent on feed purchases; do not deduct both in the same profit calculation. Show horse-level cost allocations with their basis stated.
 - Keep profitability reporting private to the administrator. Profit reports are not implemented; the current expense, inventory, and feeding screens do not claim to show overall profit.
@@ -121,8 +129,8 @@ Features in this section are present in the application source. A feature being 
 ## Implementation conventions
 
 - Store money as integer cents, service/billing dates as dates, and recorded activity times as timezone-aware timestamps. Business dates use America/Chicago.
-- Future invoice line items must retain the billed customer, description, and amount even if current profiles or rates change. Use adjustments rather than silently overwriting finalized invoices.
-- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Proposed billing entities include invoices, invoice_items, payments, and payment_allocations. Sessions and progress notes share `training_entries`.
+- Finalized invoice line items retain the billed customer, description, and amount even if current profiles or rates change. Use adjustments rather than silently overwriting finalized invoices.
+- Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, payments, and invoice_adjustments. Sessions and progress notes share `training_entries`.
 - Enforce access in the database as well as the UI. Never commit credentials or expose server-only keys to the browser.
 - Keep preview/development databases separate from production. Apply migrations through a reviewed deployment workflow.
 - On every completed feature, move its delivered scope from Planned to Implemented and record verification/deployment limitations below.
@@ -152,9 +160,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Invoices, charge-backs, and recorded payments (using implemented settings, calendar, agreements, and expenses) → revenue/cost/profit reporting and shared-cost allocations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
+Revenue/cost/profit reporting and shared-cost allocations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Invoice increment includes migration `20261021000800_invoices_payments.sql`. All 47 tests, TypeScript checks, and the production build pass. Local database tests cover source reservations, calculation completeness, snapshots, partial payments, repeat safety, overpayment/over-credit guards, adjustments, reversals, voids, and denied non-admin access. Live migration completion, authenticated invoice/browser printing flows, and external payment links have not been verified; no production billing records were created.
 
 - Billing groundwork includes migration `20261021000700_billing_days_agreements.sql`. All 38 tests, TypeScript checks, and the production build pass, covering explicit day counts, repeat safety, audit history, clearing classifications, date/horse guards, service-rate constraints, and administrator access. Authenticated live calendar flows and production migration completion have not been confirmed.
 
