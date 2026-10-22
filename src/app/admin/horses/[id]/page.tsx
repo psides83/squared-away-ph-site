@@ -1,3 +1,8 @@
+import {
+  HorseStatus,
+  HorseQuickActions,
+  type HorseStatusData,
+} from "@/components/horse-status";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
@@ -25,15 +30,18 @@ export default async function HorseRecord({
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
     notFound();
-  const [horse, rations, products, units, times] = await Promise.all([
+  const [horse, rations, products, units, times, overview] = await Promise.all([
     db.from("horses").select("*").eq("id", id).maybeSingle(),
     db.from("feed_rations").select("*").eq("horse_id", id),
     db.from("inventory_products").select("*").order("name"),
     db.from("inventory_units").select("*"),
     db.from("feeding_times").select("*").order("sort_order").order("name"),
+    db.rpc("horse_overview"),
   ]);
   if (!horse.data && !horse.error) notFound();
-  const failed = [horse, rations, products, units, times].some((r) => r.error);
+  const failed = [horse, rations, products, units, times, overview].some(
+    (r) => r.error,
+  );
   const selected = rations.data?.find((r) => r.id === query.ration);
   const h = horse.data;
   return (
@@ -56,6 +64,18 @@ export default async function HorseRecord({
         }
         success={query.success}
       />
+      {h && (
+        <section className="panel">
+          <div className="record-form">
+            <HorseQuickActions id={id} />
+            <HorseStatus
+              status={(overview.data as HorseStatusData[] | null)?.find(
+                (s) => s.horse_id === id,
+              )}
+            />
+          </div>
+        </section>
+      )}
       {!failed && h && (
         <SectionTabs
           id="horse"

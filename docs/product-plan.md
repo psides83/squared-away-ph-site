@@ -196,6 +196,11 @@ Features in this section are present in the application source. A feature being 
 - Bulk scheduled feeding confirms the saved rations for selected horses at one feeding time on one actual date. Existing confirmations remain safe to retry; a shortage or invalid horse rolls back the entire batch.
 - Bulk extra/partial feeding records one selected product/unit across multiple horses with individual quantities. Blank quantities skip a horse. Each batch preserves weighted cost and per-horse history, saves atomically, and rejects changed retries using a saved batch request. Requires migration `20261021001700_bulk_feeding.sql`.
 
+### Horse activity and billing cards
+
+- Horse book cards and individual records show last recorded feeding, last training session/focus, outstanding invoice balances, and past-due amounts. Expand outstanding bills to open individual invoices. Feed and Log training buttons start horse-specific workflows; Feed opens that horse’s ration confirmations.
+- Billing follows explicit invoice-to-stay or active reporting assignments, independent of current ownership. Remaining issued balances count once; drafts, voids, paid invoices, and unassigned customer bills are excluded. Due today is outstanding, not past due. Missing activity and unavailable summaries are shown explicitly.
+
 ### Training worklist
 
 - Training log opens to current training horses with Log session, Add note, History, and Feeding plan actions. Entry forms are tied to the chosen horse without a horse dropdown. History uses horse buttons and a separate tab, retaining former-horse history.
@@ -285,6 +290,8 @@ Features in this section are present in the application source. A feature being 
 Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Horse-overview increment (October 22, 2026): migration `20261022002200_horse_overview.sql` adds an administrator-only activity and billing summary for every horse. All 116 tests, TypeScript checks, and the production build pass. Tests cover partial balances, due-today boundaries, stay/manual assignment, shared-customer isolation, paid/draft/void exclusions, ownership independence, and access denial. Local browser preview covers mobile status cards, quick-action links, and expandable invoice details. Remote migration and authenticated production flows remain unverified.
 
 - Training-worklist increment (October 22, 2026): adds migration `20261022002100_training_worklist.sql` for the administrator-only, per-horse latest-activity query. All 115 tests pass (the original 114 plus the new worklist test), along with TypeScript checks and the production build. Local tests cover current/future/departed stays, inclusive departure dates, missing activity, note/future-session exclusion, reversed-feed exclusion, and non-admin denial. Browser previews verify the actual horse-card component, action links, missing-history labels, and phone-width layout. Remote migration and authenticated production flows remain unverified.
 

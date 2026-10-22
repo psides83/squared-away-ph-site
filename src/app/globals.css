@@ -2439,3 +2439,25 @@ input[type="number"] {
 .entry-horse-name {
   grid-column: 1 / -1;
 }
+.horse-quick-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0;
+}
+.training-activity .billing-past-due {
+  color: #9b352c;
+  font-weight: 600;
+}
+.horse-billing-details {
+  margin: 16px 0;
+  font-size: 13px;
+}
+.horse-billing-details summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 0;
+  font-weight: 600;
+}
+.horse-billing-details .stack {
+  padding: 10px 0;
+}

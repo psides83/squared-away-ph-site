@@ -105,6 +105,17 @@ export default async function Feeding({
               its scheduled feedings.
             </p>
           )}
+          {params.horse && (
+            <p className="notice">
+              Feeding plan for{" "}
+              {horses.data?.find((h) => h.id === params.horse)?.barn_name ??
+                "unknown horse"}
+              .{" "}
+              <Link className="text-link" href="/admin/feeding#feeding-rations">
+                Show all horses
+              </Link>
+            </p>
+          )}
           <SectionTabs
             id="feeding"
             label="Feeding sections"
@@ -115,7 +126,9 @@ export default async function Feeding({
                 content: (
                   <>
                     <SavedRations
-                      horses={horses.data ?? []}
+                      horses={(horses.data ?? []).filter(
+                        (h) => !params.horse || h.id === params.horse,
+                      )}
                       rations={rations.data ?? []}
                       times={times.data ?? []}
                       products={products.data ?? []}

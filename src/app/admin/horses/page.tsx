@@ -1,3 +1,8 @@
+import {
+  HorseStatus,
+  HorseQuickActions,
+  type HorseStatusData,
+} from "@/components/horse-status";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { ArrowUpRight, Fence, X } from "lucide-react";
@@ -19,10 +24,11 @@ export default async function Horses({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const [horses, customers, relationships] = await Promise.all([
+  const [horses, customers, relationships, overview] = await Promise.all([
     db.from("horses").select("*").order("barn_name"),
     db.from("customers").select("id, name").order("name"),
     db.from("horse_customers").select("horse_id, customer_id"),
+    db.rpc("horse_overview"),
   ]);
   const { data } = horses;
   const error = horses.error || customers.error || relationships.error;
@@ -50,6 +56,12 @@ export default async function Horses({
         }
         success={params.success}
       />
+      {overview.error && (
+        <p className="notice error">
+          Activity and billing status could not load. Check the latest database
+          migration and refresh.
+        </p>
+      )}
       {showForm && !error && !customers.data?.length && (
         <p className="notice">
           Add a customer before adding or updating a horse.{" "}
@@ -194,7 +206,7 @@ export default async function Horses({
                   </span>
                 </div>
                 <h3>
-                  <Link href={`/admin/horses?edit=${horse.id}#record-form`}>
+                  <Link href={`/admin/horses/${horse.id}`}>
                     {horse.barn_name}
                     <ArrowUpRight size={17} />
                   </Link>
@@ -203,18 +215,6 @@ export default async function Horses({
                   {horse.registered_name || "Registered name not added"}
                 </p>
                 <div className="horse-details">
-                  <Link
-                    className="text-link"
-                    href={`/admin/log?horse=${horse.id}`}
-                  >
-                    Training history
-                  </Link>
-                  <Link
-                    className="text-link"
-                    href={`/admin/log?horse=${horse.id}&new=1#record-form`}
-                  >
-                    Log a session / note
-                  </Link>
                   <span>
                     Customers:{" "}
                     {(relationships.data ?? [])
@@ -235,6 +235,12 @@ export default async function Horses({
                       : "Birth year not added"}
                   </span>
                 </div>
+                <HorseStatus
+                  status={(overview.data as HorseStatusData[] | null)?.find(
+                    (s) => s.horse_id === horse.id,
+                  )}
+                />
+                <HorseQuickActions id={horse.id} />
                 <div className="row-actions">
                   <Link
                     href={`/admin/horses/${horse.id}`}
