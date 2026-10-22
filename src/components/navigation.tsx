@@ -19,6 +19,7 @@ import {
   Link2,
   UserRoundCheck,
   Send,
+  Paperclip,
 } from "lucide-react";
 const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -35,6 +36,7 @@ const links = [
   { href: "/admin/expenses", label: "Expenses", icon: Receipt },
   { href: "/admin/inventory", label: "Inventory", icon: Package },
   { href: "/admin/feeding", label: "Feeding", icon: Wheat },
+  { href: "/admin/files", label: "Horse files", icon: Paperclip },
   { href: "/admin/updates", label: "Customer updates", icon: Send },
   { href: "/admin/portal", label: "Portal access", icon: UserRoundCheck },
   { href: "/admin/settings", label: "Settings", icon: Settings },

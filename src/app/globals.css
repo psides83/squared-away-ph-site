@@ -1723,3 +1723,24 @@ td strong {
   padding: 10px;
   font-size: 11px;
 }
+
+.horse-file-thumb {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #e4dac8;
+}
+.horse-file-preview {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 550px;
+  object-fit: contain;
+  margin: 20px 0;
+  border-radius: 4px;
+}
+.file-grid {
+  padding: 24px;
+  margin-bottom: 0;
+}

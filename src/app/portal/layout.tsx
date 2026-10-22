@@ -22,6 +22,7 @@ export default async function CustomerLayout({
         <nav aria-label="Customer navigation">
           <Link href="/portal">Overview</Link>
           <Link href="/portal/horses">Your horses</Link>
+          <Link href="/portal/files">Photos & docs</Link>
           <Link href="/portal/billing">Billing</Link>
         </nav>
         <form action={signOut}>

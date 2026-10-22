@@ -155,6 +155,15 @@ Features in this section are present in the application source. A feature being 
 - Installation help on sign-in and in both portals, with an install button when supported and browser-specific home-screen instructions otherwise. Installed standalone sessions hide the prompt.
 - A connection is required. No service worker or offline private-response cache is registered; signed-out admin/customer routes redirect to sign-in with private/no-store headers.
 
+### Private horse photos and shared documents
+
+- Admin Horse files screen for private JPEG/PNG/WebP photos and image/PDF documents up to 3 MB. Uploads verify file signatures/types, store private objects, and attach horse/file metadata. No video upload is included yet.
+- File review, authenticated preview/download, explicit publish/unpublish, private title revisions, and archive with retained owner copy and administrator history. Published titles must be unpublished before changing. Files are never shared automatically from receipts or private training notes.
+- Customer Photos & docs page shows only published, unarchived files allowed by the customer's manual horse grant and publication-date bound. Co-owners with permitted access share those horse files; customer-specific financial documents stay in billing records.
+- Database-scoped metadata functions and Storage object policies both enforce access. Customers cannot upload, rename, publish, or delete files. Direct administrator metadata tables stay closed to customer reads.
+- App preview/download routes issue 60-second signed links with private/no-store responses. Unpublishing, grant revocation, and account disable prevent fresh portal requests; previously issued links/copies are not withdrawn. Admin archival retains the object and audit metadata.
+- File lists are paginated, horse-filterable, and use authenticated image routes without the public image-optimization cache. Photos display in responsive grids; documents open/download through the same access checks.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -172,8 +181,8 @@ Features in this section are present in the application source. A feature being 
 
 ### Horse records and customer portal
 
-- Horse photos/media, documents, and an ownership transfer history.
-- Extend the implemented customer portal with deliberately shared media, care records, and customer documents. Add in-app email invitations and password setup/recovery beyond owner-provisioned Supabase accounts.
+- Video uploads and an ownership transfer history beyond the existing editable owner links and manual portal grants.
+- Add structured customer-shared care records, in-app email invitations, and password setup/recovery beyond owner-provisioned Supabase accounts. Photo/document sharing and published updates are implemented above.
 
 ### Marketing website
 
@@ -202,6 +211,7 @@ Features in this section are present in the application source. A feature being 
 - Vet, farrier, and hauling reimbursements default to actual cost; allow an explicitly entered markup or handling fee.
 - Invoice payment terms are configurable, with due upon receipt as the starting default. Permit multiple/partial payments and show the remaining balance.
 - No training deposit.
+- Recurring billing: dates on the 29th–31st use the last day of shorter months and return to the original anchor in longer months. Automatically finalize invoices only when required billing records are complete; otherwise leave them for review. Confirmed October 21, 2026.
 - Customer portal: explicitly granted customers share published horse updates, but each customer sees only invoices and payments billed to their own customer record. Horse portal access is granted/revoked manually by the administrator; ownership edits do not automatically grant access. Confirmed October 21, 2026.
 - Feed and boarding inclusion/separate billing is determined for each horse/training agreement. Separately billed monthly feed and boarding use all physical boarding days, with actual calendar days as the monthly denominator. Actual-cost feed uses recorded weighted consumption costs; actual-cost boarding uses reviewed costs assigned to the stay. The owner confirmed these calculation bases on October 21, 2026.
 - Feed inventory includes hay and all supplement types from the start, alongside purchases, receipts, and consumption tracking.
@@ -214,6 +224,8 @@ Features in this section are present in the application source. A feature being 
 
 ## Decisions still needed
 
+- Automatic actual-cost billing completeness: awaiting whether the owner marks periods ready or the scheduled run uses currently recorded costs. Asked October 21, 2026; this determines when an invoice can be finalized automatically.
+
 - Public About page and landing-page information are deferred at the owner's request on October 21, 2026. Trainer biography, final logo, and real media will be supplied later.
 - Public visual direction is an illustrated western design until real photographs and a final logo are available, confirmed October 21, 2026.
 
@@ -223,9 +235,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Customer media/documents and onboarding → remaining admin expense/reporting improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Recurring billing and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Horse files include migration `20261021001500_horse_files.sql`. All 89 tests, TypeScript checks, and the production build pass. Local database/storage-policy tests cover private-by-default uploads, explicit publication, co-owner grants, safe metadata projections, publication-date bounds, account/grant revocation, unpublishing/title revision/archive history, and denied customer/anonymous writes. Storage tables are simulated: actual Supabase uploads/downloads, signed URL behavior, and authenticated browser flows remain unverified.
 
 - PWA installation: TypeScript and production build pass. Local production HTTP checks verify the manifest, icon dimensions/responses, sign-in manifest link/install help, and private/no-store signed-out redirects for both portals. Icons were visually checked. Actual device installation, browser install-prompt eligibility, and authenticated live flows remain unverified. No service worker was added.
 
