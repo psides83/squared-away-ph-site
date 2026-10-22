@@ -3,6 +3,7 @@ import { Receipt, X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { dateLabel, money, today } from "@/lib/format";
 import { PageHeading, Notice, Field, EmptyState } from "@/components/ui";
+import { expenseFilters, expenseListHref } from "@/lib/expense-filters";
 import { SubmitButton, DeleteButton } from "@/components/submit-button";
 import {
   saveExpense,
@@ -17,6 +18,12 @@ export default async function Expenses({
   searchParams,
 }: {
   searchParams: Promise<{
+    from?: string;
+    to?: string;
+    horse?: string;
+    category?: string;
+    status?: string;
+    q?: string;
     new?: string;
     edit?: string;
     page?: string;
@@ -26,17 +33,18 @@ export default async function Expenses({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const page = Math.max(
-    1,
-    Math.min(10000, Math.floor(Number(params.page) || 1)),
-  );
-  const [expenses, categories, horses, editing] = await Promise.all([
-    db
-      .from("expenses")
-      .select("*,inventory_movements(id)", { count: "exact" })
-      .order("expense_date", { ascending: false })
-      .order("created_at", { ascending: false })
-      .range((page - 1) * 25, page * 25 - 1),
+  let filterError: string | undefined;
+  let filters: ReturnType<typeof expenseFilters> | undefined;
+  try {
+    filters = expenseFilters(params);
+  } catch (e) {
+    filterError = e instanceof Error ? e.message : "Check the expense filters.";
+  }
+  const page = filters?.p_page ?? 1;
+  const [search, categories, horses, editing] = await Promise.all([
+    filters
+      ? db.rpc("search_expenses", filters)
+      : Promise.resolve({ data: null, error: null }),
     db.from("expense_categories").select("*").order("name"),
     db.from("horses").select("id,barn_name").order("barn_name"),
     params.edit && /^[0-9a-f-]{36}$/i.test(params.edit)
@@ -47,6 +55,23 @@ export default async function Expenses({
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
+  type ExpenseRow = {
+    id: string;
+    expense_date: string;
+    paid_on: string | null;
+    vendor: string | null;
+    category_id: string;
+    horse_id: string | null;
+    amount_cents: number;
+    reimbursable: boolean;
+    voided_at: string | null;
+    inventory_movements: { id: string }[];
+  };
+  const expenses = {
+    data: search.data?.rows as ExpenseRow[] | undefined,
+    count: Number(search.data?.total ?? 0),
+    error: search.error,
+  };
   const selected = editing.data;
   const receipts = selected
     ? await db
@@ -80,7 +105,8 @@ export default async function Expenses({
         error={
           failed
             ? "Expenses couldn’t load. Confirm the expense and receipt migrations have completed, then refresh."
-            : params.error ||
+            : filterError ||
+              params.error ||
               (params.edit && !selected ? "Expense not found." : undefined)
         }
         success={params.success}
@@ -91,6 +117,75 @@ export default async function Expenses({
         the expense and stock are saved together. Don’t enter the same purchase
         twice.
       </p>
+      <section className="panel">
+        <form method="get" className="record-form">
+          <div className="form-grid">
+            <Field
+              label="Search vendor or notes"
+              name="q"
+              defaultValue={params.q}
+              maxLength={200}
+            />
+            <Field
+              label="Expense date from"
+              name="from"
+              type="date"
+              defaultValue={params.from}
+            />
+            <Field
+              label="Through"
+              name="to"
+              type="date"
+              defaultValue={params.to}
+            />
+            <label>
+              Horse / barn
+              <select name="horse" defaultValue={params.horse ?? ""}>
+                <option value="">All horses and shared barn</option>
+                <option value="shared">Shared barn only</option>
+                {horses.data?.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.barn_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Category
+              <select name="category" defaultValue={params.category ?? ""}>
+                <option value="">All categories</option>
+                {categories.data?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Status
+              <select name="status" defaultValue={params.status ?? "all"}>
+                <option value="all">All, including voided</option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="voided">Voided</option>
+              </select>
+            </label>
+          </div>
+          <div className="row-actions">
+            <button type="submit" className="button">
+              Filter expenses
+            </button>
+            <Link href="/admin/expenses" className="text-link">
+              Clear filters
+            </Link>
+          </div>
+          <p className="muted">
+            Dates filter when the expense occurred. Cash reports use its paid
+            date instead. Search matches literal text in vendor names and
+            private notes.
+          </p>
+        </form>
+      </section>
       {!failed && (params.new === "1" || selected) && (
         <section className="panel editor-panel" id="record-form">
           <div className="panel-heading">
@@ -355,10 +450,20 @@ export default async function Expenses({
             </table>
           </div>
         ) : (
-          !failed && (
+          !failed &&
+          !filterError && (
             <EmptyState
               icon={Receipt}
-              title="Good records start with the first receipt."
+              title={
+                params.q ||
+                params.from ||
+                params.to ||
+                params.horse ||
+                params.category ||
+                params.status
+                  ? "No expenses match these filters."
+                  : "Good records start with the first receipt."
+              }
               description="Record expenses for a horse or the barn. Feed purchases belong in Inventory."
               href="/admin/expenses?new=1#record-form"
               label="Add your first expense"
@@ -369,7 +474,7 @@ export default async function Expenses({
           {page > 1 ? (
             <Link
               className="text-link"
-              href={`/admin/expenses?page=${page - 1}`}
+              href={expenseListHref(params, page - 1)}
             >
               Previous
             </Link>
@@ -380,7 +485,7 @@ export default async function Expenses({
           {page * 25 < (expenses.count ?? 0) ? (
             <Link
               className="text-link"
-              href={`/admin/expenses?page=${page + 1}`}
+              href={expenseListHref(params, page + 1)}
             >
               Next
             </Link>

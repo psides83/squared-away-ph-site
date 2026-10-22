@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  FinancialOverview,
+  type FinancialOverviewData,
+} from "@/components/financial-overview";
 import { requireAdmin } from "@/lib/auth";
 import { dateLabel, today } from "@/lib/format";
 import { PageHeading, EmptyState } from "@/components/ui";
@@ -16,7 +20,7 @@ import {
 
 export default async function Dashboard() {
   const { db } = await requireAdmin();
-  const [horses, customers, stays, reminders] = await Promise.all([
+  const [horses, customers, stays, reminders, finance] = await Promise.all([
     db
       .from("horses")
       .select("id, barn_name, breed", { count: "exact" })
@@ -34,6 +38,7 @@ export default async function Dashboard() {
       .is("completed_at", null)
       .order("due_date")
       .limit(5),
+    db.rpc("admin_financial_overview"),
   ]);
   const failed = [horses, customers, stays, reminders].some(
     (result) => result.error,
@@ -112,6 +117,15 @@ export default async function Dashboard() {
               </Link>
             ))}
           </div>
+          {finance.error || !finance.data ? (
+            <p className="notice error" role="alert">
+              Financial totals couldn’t load. Check the latest database
+              migration and refresh. Your barn records are still available
+              below.
+            </p>
+          ) : (
+            <FinancialOverview data={finance.data as FinancialOverviewData} />
+          )}
           <div className="dashboard-grid">
             <section className="panel">
               <div className="panel-heading">

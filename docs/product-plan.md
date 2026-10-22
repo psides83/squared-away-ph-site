@@ -98,7 +98,7 @@ Features in this section are present in the application source. A feature being 
 - Monthly cash results, including empty months, and paid expense totals by category. Database aggregation covers all matching records without API row-limit truncation.
 - Received amounts use active payment dates on issued invoices; expenses use paid dates. Drafts, unpaid costs, voided expenses, and reversed payments are excluded. Corrections restate affected past periods rather than creating refund cash flows.
 - Feed purchase expenses count once; inventory consumption is not deducted again. All recorded shared barn expenses count in business totals without claiming complete horse-level profit.
-- Current outstanding and overdue invoice balances across all dates, clearly separate from the selected cash period. These are available in Reports; overview dashboard cards remain planned.
+- Current outstanding and overdue invoice balances across all dates, clearly separate from the selected cash period. These are available in Reports and the overview dashboard.
 
 ### Shared barn costs and horse cash margins
 
@@ -122,15 +122,21 @@ Features in this section are present in the application source. A feature being 
 - Reports include training-stay receipts, direct/shared costs paid, and recorded cash margins, with unassigned receipts, direct-cost remainders, shared-cost remainders, and barn costs shown separately. Stay and horse reconciliations agree with the same business total.
 - Business, horse, and stay summaries are returned together from a consistent database snapshot. Labels identify recorded cash margins rather than claiming complete profitability when records or assignments are incomplete.
 
+### Expense filters and financial overview
+
+- Literal, case-insensitive search across expense vendors/private notes, with inclusive expense-date, direct horse/shared-barn, category, and paid/unpaid/voided filters. Shared allocations remain under the original shared expense assignment.
+- Filtered totals and stable 25-record pagination are calculated together in the database; page links retain filters. Search text is treated literally, including punctuation and percent characters.
+- Overview dashboard cards for current outstanding/overdue balances and counts, month-to-date receipts, and net cash after expenses paid. Chicago business dates and the same financial rules as Reports apply.
+- Recent invoice, payment/reversal, expense, and training records with direct links. This is a latest-record list, not a complete change audit. Missing financial migrations show a notice without hiding otherwise available barn records.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
 
-- Expense search and date/horse filters, recurring expense scheduling, and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
+- Recurring expense scheduling and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
 - Configurable billing schedules beyond the current 1–28 range, scheduled invoice generation, and additional automatic calculations for policies beyond calendar-day proration.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 - Calculate invoice feed/boarding lines from recorded service agreements, with explicit period/proration rules and cost sources for actual-cost billing.
-- Dashboard outstanding balances and recent activity beyond the current horse/reminder overview.
 
 #### Feed, boarding, and profitability details
 
@@ -173,7 +179,7 @@ Features in this section are present in the application source. A feature being 
 - Vet, farrier, and hauling reimbursements default to actual cost; allow an explicitly entered markup or handling fee.
 - Invoice payment terms are configurable, with due upon receipt as the starting default. Permit multiple/partial payments and show the remaining balance.
 - No training deposit.
-- Feed and boarding inclusion/separate billing is determined for each horse/training agreement.
+- Feed and boarding inclusion/separate billing is determined for each horse/training agreement. Separately billed monthly feed and boarding use all physical boarding days, with actual calendar days as the monthly denominator. Actual-cost feed uses recorded weighted consumption costs; actual-cost boarding uses reviewed costs assigned to the stay. The owner confirmed these calculation bases on October 21, 2026.
 - Feed inventory includes hay and all supplement types from the start, alongside purchases, receipts, and consumption tracking.
 - Support all discussed purchase/feeding units with product-specific relationships between pounds/weight ounces and scoops, flakes, bags, bales, tubs, and other measures. Conversion values are configurable rather than universal assumptions, and historical transactions retain their conversion snapshots.
 - Feeding workflow: saved daily rations per horse, quick confirmation of actual feeding, and manual entries for extras or changes. Only confirmed consumption affects inventory; ration changes apply prospectively.
@@ -192,6 +198,8 @@ Features in this section are present in the application source. A feature being 
 Feed/boarding billing calculations → customer portal → public marketing website → PWA installation and refinements. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Overview/expense-filter increment includes migration `20261021001200_overview_expense_filters.sql`. All 66 tests, TypeScript checks, and the production build pass. Local tests cover literal search, combined filters, exact pagination, Chicago month dates, financial exclusions, recent record links, and non-admin denial. Authenticated live flows and migration completion remain unverified.
 
 - Stay-reporting increment includes migration `20261021001100_stay_reporting.sql`. All 63 tests, TypeScript checks, and the production build pass. Local database tests cover manual receipt assignments, historical billing-customer validation, bill preservation, partial direct/shared cost splits, residuals, over-assignment/cross-horse rejection, repeated requests, revisions/clears, retired source handling, full cash reconciliation, and denied non-admin access. Authenticated browser flows, retired-history UI, and production migration completion have not been verified; no production records were created for testing.
 

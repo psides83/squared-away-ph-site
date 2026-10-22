@@ -21,7 +21,7 @@ Open http://127.0.0.1:3000. The root opens the admin area, which requires sign-i
 
 ## Set up Supabase
 
-1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, billing-day inputs, invoices/payments, cash reporting, shared-cost allocations, and stay-reporting links. No horse, customer, expense, or stock records are seeded. Installations already using the billing calendar need `20261021000800_invoices_payments.sql` before opening Invoices. Apply `20261021000900_cash_reporting.sql` before opening Reports. Apply `20261021001000_shared_cost_allocations.sql` for Shared costs and the updated horse-margin report. Apply `20261021001100_stay_reporting.sql` for Income & cost links and the updated Reports screen.
+1. Apply the files in `supabase/migrations/` in filename order through your configured migration workflow, or through the Supabase SQL Editor (once per file). **Do not rerun migrations the GitHub integration has already applied.** The migrations provide the foundation, horse/customer save, training log, settings, expenses/inventory, receipts, billing-day inputs, invoices/payments, cash reporting, shared-cost allocations, and stay-reporting links. No horse, customer, expense, or stock records are seeded. Installations already using the billing calendar need `20261021000800_invoices_payments.sql` before opening Invoices. Apply `20261021000900_cash_reporting.sql` before opening Reports. Apply `20261021001000_shared_cost_allocations.sql` for Shared costs and the updated horse-margin report. Apply `20261021001100_stay_reporting.sql` for Income & cost links and the updated Reports screen. Apply `20261021001200_overview_expense_filters.sql` for expense filters and overview financial cards.
 2. In Supabase Authentication → Users, create your administrator account with an email and password. Confirm its email through the dashboard if needed. There is no public sign-up flow.
 3. Grant administrator access from the SQL Editor, replacing the example email with the exact account email:
 
@@ -61,7 +61,13 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Ownership transfer history, scheduled invoice generation, automatic feed/boarding invoice calculations, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, expense filters, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Calendar-day training proration is available in reviewed invoice drafts; other policies and feed/boarding lines need manual review and entry. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Ownership transfer history, scheduled invoice generation, automatic feed/boarding invoice calculations, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, purchase-cost/inbound-stock corrections, customer accounts/customer-visible updates, public marketing pages, and PWA installation/offline features. Calendar-day training proration is available in reviewed invoice drafts; other policies and feed/boarding lines need manual review and entry. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+
+## Overview and expense filters
+
+The overview shows current invoice balances, overdue counts, month-to-date receipts/net cash, and recent invoice/payment/expense/training records. Financial cards use Chicago business dates and exclude voided/reversed activity from cash totals. The recent list is not a complete audit log.
+
+Use Expenses filters to search literal vendor/note text and narrow by expense date, direct horse/shared-barn assignment, category, or payment/void status. Filters stay in place across pages. These dates refer to when the expense occurred; cash reports use its paid date. Shared allocations remain under Shared barn in the expense book.
 
 ## Cash reports
 
