@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import { BillingScheduleFields } from "@/components/billing-schedule-fields";
 import { billingScheduleLabels } from "@/lib/billing-schedule";
 import { ActionPanel } from "@/components/action-panel";
@@ -91,7 +92,7 @@ export default async function Training({
               <div className="form-grid">
                 <label>
                   Horse <span className="required">*</span>
-                  <select
+                  <AppSelect
                     name="horse_id"
                     required
                     defaultValue={selected?.horse_id ?? ""}
@@ -104,11 +105,11 @@ export default async function Training({
                         {horse.barn_name}
                       </option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
                 <label>
                   Billing customer <span className="required">*</span>
-                  <select
+                  <AppSelect
                     name="billing_customer_id"
                     required
                     defaultValue={selected?.billing_customer_id ?? ""}
@@ -121,7 +122,7 @@ export default async function Training({
                         {customer.name}
                       </option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
                 <Field
                   name="arrival_date"
@@ -154,13 +155,16 @@ export default async function Training({
                 />
                 <label>
                   Partial month policy
-                  <select name="proration" defaultValue={defaults?.proration}>
+                  <AppSelect
+                    name="proration"
+                    defaultValue={defaults?.proration}
+                  >
                     <option value="manual">Decide manually</option>
                     <option value="calendar_days">
                       Prorate by calendar days
                     </option>
                     <option value="none">No proration</option>
-                  </select>
+                  </AppSelect>
                 </label>
                 <Field
                   name="invoice_due_days"

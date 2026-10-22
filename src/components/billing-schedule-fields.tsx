@@ -1,4 +1,6 @@
 "use client";
+import { AppSelect } from "@/components/app-select";
+
 import { useState } from "react";
 import { Field } from "@/components/ui";
 export function BillingScheduleFields({
@@ -18,7 +20,7 @@ export function BillingScheduleFields({
     <>
       <label>
         Billing schedule
-        <select
+        <AppSelect
           name="billing_schedule"
           value={mode}
           onChange={(e) => setMode(e.target.value)}
@@ -26,7 +28,7 @@ export function BillingScheduleFields({
           <option value="first_of_month">First of month</option>
           <option value="arrival_anniversary">Arrival anniversary</option>
           <option value="custom">Custom day of month</option>
-        </select>
+        </AppSelect>
       </label>
       {mode === "custom" ? (
         <Field

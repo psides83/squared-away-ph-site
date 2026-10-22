@@ -1,5 +1,5 @@
 "use client";
-import { useFormStatus } from "react-dom";
+import { ConfirmButton } from "@/components/confirm-button";
 export function InvoiceConfirmButton({
   children,
   prompt,
@@ -7,19 +7,7 @@ export function InvoiceConfirmButton({
   children: React.ReactNode;
   prompt: string;
 }) {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      className="button"
-      type="submit"
-      disabled={pending}
-      onClick={(e) => {
-        if (!window.confirm(prompt)) e.preventDefault();
-      }}
-    >
-      {pending ? "Saving…" : children}
-    </button>
-  );
+  return <ConfirmButton message={prompt}>{children}</ConfirmButton>;
 }
 export function PrintInvoice() {
   return (

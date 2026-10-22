@@ -1,4 +1,5 @@
 "use client";
+import { AppSelect } from "@/components/app-select";
 
 import { FormInput } from "@/components/form-input";
 import { useState } from "react";
@@ -16,14 +17,14 @@ export function TrainingEntryFields({
     <>
       <label>
         Entry type <span className="required">*</span>
-        <select
+        <AppSelect
           name="kind"
           value={kind}
           onChange={(event) => setKind(event.target.value)}
         >
           <option value="session">Training session</option>
           <option value="note">Progress note</option>
-        </select>
+        </AppSelect>
       </label>
       {kind === "session" && (
         <Field

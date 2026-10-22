@@ -1,4 +1,5 @@
 "use client";
+import { ConfirmButton } from "@/components/confirm-button";
 import { useFormStatus } from "react-dom";
 export function SubmitButton({
   children,
@@ -21,17 +22,13 @@ export function DeleteButton({
   label?: string;
   confirmText?: string;
 }) {
-  const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
+    <ConfirmButton
+      destructive
       className="text-button danger"
-      disabled={pending}
-      onClick={(event) => {
-        if (!window.confirm(confirmText)) event.preventDefault();
-      }}
+      message={confirmText}
     >
-      {pending ? "Working…" : label}
-    </button>
+      {label}
+    </ConfirmButton>
   );
 }

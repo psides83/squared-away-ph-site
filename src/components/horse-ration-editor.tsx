@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
 import { SubmitButton } from "@/components/submit-button";
 import {
@@ -41,7 +42,7 @@ export function HorseRationEditor({
             <input type="hidden" name="horse_id" value={horse.id} />
             <label>
               Feeding time
-              <select
+              <AppSelect
                 name="feeding_time_id"
                 required
                 defaultValue={selected?.feeding_time_id ?? ""}
@@ -59,7 +60,7 @@ export function HorseRationEditor({
                       {t.archived ? " (archived)" : ""}
                     </option>
                   ))}
-              </select>
+              </AppSelect>
             </label>
             <ProductQuantityFields
               products={products}

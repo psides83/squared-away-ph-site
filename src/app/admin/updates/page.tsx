@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
@@ -97,7 +98,7 @@ export default async function PublishedUpdates({
               <div className="form-grid">
                 <label>
                   Horse
-                  <select
+                  <AppSelect
                     name="horse_id"
                     required
                     defaultValue={selected?.horse_id ?? ""}
@@ -110,7 +111,7 @@ export default async function PublishedUpdates({
                         {h.barn_name}
                       </option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
                 <Field
                   label="Update date"

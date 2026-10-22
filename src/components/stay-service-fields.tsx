@@ -1,4 +1,6 @@
 "use client";
+import { AppSelect } from "@/components/app-select";
+
 import { useState } from "react";
 import { Field } from "@/components/ui";
 import { serviceModes, serviceLabels } from "@/lib/billing-days";
@@ -19,7 +21,7 @@ export function StayServiceFields({
     <>
       <label>
         Feed agreement
-        <select
+        <AppSelect
           name="feed_billing"
           value={feed}
           onChange={(e) => setFeed(e.target.value)}
@@ -29,7 +31,7 @@ export function StayServiceFields({
               {serviceLabels[mode]}
             </option>
           ))}
-        </select>
+        </AppSelect>
       </label>
       {feed === "separate_monthly" && (
         <Field
@@ -49,7 +51,7 @@ export function StayServiceFields({
       )}
       <label>
         Boarding agreement
-        <select
+        <AppSelect
           name="boarding_billing"
           value={boarding}
           onChange={(e) => setBoarding(e.target.value)}
@@ -59,7 +61,7 @@ export function StayServiceFields({
               {serviceLabels[mode]}
             </option>
           ))}
-        </select>
+        </AppSelect>
       </label>
       {boarding === "separate_monthly" && (
         <Field

@@ -93,7 +93,9 @@ export function ActionPanel({
         ref={dialog}
         className="action-dialog"
         aria-labelledby={titleId}
-        onClose={close}
+        onClose={(event) => {
+          if (event.target === event.currentTarget) close();
+        }}
       >
         <div className="action-dialog-bar">
           <h2 id={titleId}>{label}</h2>

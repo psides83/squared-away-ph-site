@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import {
   CustomerSummary,
   CustomerActions,
@@ -122,7 +123,7 @@ export default async function Customers({
             </div>
             <label>
               Invoice format
-              <select
+              <AppSelect
                 name="invoice_presentation"
                 defaultValue={selected?.invoice_presentation ?? "itemized"}
               >
@@ -132,7 +133,7 @@ export default async function Customers({
                 <option value="combined_services">
                   Combined training, feed, and board total
                 </option>
-              </select>
+              </AppSelect>
             </label>
             <p className="muted">
               Vet, farrier, hauling, and other charges stay separate. Detailed
@@ -180,7 +181,7 @@ export default async function Customers({
           />
           <label>
             Show
-            <select
+            <AppSelect
               name="status"
               defaultValue={params.status ?? "all"}
               disabled={Boolean(overview.error)}
@@ -189,7 +190,7 @@ export default async function Customers({
               <option value="training">Currently billed for training</option>
               <option value="outstanding">Outstanding bills</option>
               <option value="overdue">Past-due bills</option>
-            </select>
+            </AppSelect>
           </label>
         </div>
         <div className="form-actions">

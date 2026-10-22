@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import Link from "next/link";
 import { requireCustomer } from "@/lib/auth";
 import { PageHeading } from "@/components/ui";
@@ -33,14 +34,14 @@ export default async function CustomerFiles({
             <form method="get" className="log-filter">
               <label>
                 Horse
-                <select name="horse" defaultValue={horse ?? ""}>
+                <AppSelect name="horse" defaultValue={horse ?? ""}>
                   <option value="">All shared horses</option>
                   {horses.data?.map((h: { id: string; barn_name: string }) => (
                     <option key={h.id} value={h.id}>
                       {h.barn_name}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
               <button className="button secondary" type="submit">
                 Show files

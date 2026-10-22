@@ -97,6 +97,7 @@ export function ReceiptPicker({ required = false }: { required?: boolean }) {
       <input
         ref={input}
         className="receipt-file-input"
+        data-app-trigger={help + "-choose"}
         type="file"
         name="receipt"
         aria-label="Receipt file"
@@ -118,6 +119,7 @@ export function ReceiptPicker({ required = false }: { required?: boolean }) {
         <button
           type="button"
           className="text-button"
+          id={help + "-choose"}
           disabled={busy}
           onClick={() => choose(false)}
         >

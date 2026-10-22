@@ -12,6 +12,8 @@ Features in this section are present in the application source. A feature being 
 
 ### App foundation and security
 
+- Shared branded confirmation dialogs replace browser confirm prompts for deletion and invoice actions. Visible dropdown menus use searchable app pickers; date/month/time fields use app calendars and time choices with typed entry. Pickers preserve form values, support keyboard/Escape/focus return, and mount their choice content when opened. Checkboxes, disclosures, file-selection buttons, and validation messages share app styling. Browser constraint validation remains active with inline feedback. Device camera/file selection, browser installation, and printing retain their required system interfaces.
+
 - Repeatable, read-only public deployment check (`npm run verify:deployment -- <URL>`) validates sign-in availability, private/no-store protection on signed-out admin/customer routes, install manifest settings, and all declared PNG icon dimensions. Authenticated database and real-device checks remain separate.
 
 - Next.js App Router, TypeScript, Tailwind CSS, a traditional western design, and responsive admin layouts.
@@ -295,6 +297,8 @@ Features in this section are present in the application source. A feature being 
 
 ## Implementation conventions
 
+- App-owned controls must use the shared styled components. Do not introduce browser alert/confirm/prompt dialogs, visible native select menus, or browser date/time popups. Use `AppSelect`, `FormInput`/`TemporalInput`, `ConfirmButton` (or its Delete/Invoice wrappers), and the file/receipt pickers. Keep native form semantics and server validation. Required device/browser capabilities such as camera, file selection, installation, and printing may use their system interfaces.
+
 - Store money as integer cents, service/billing dates as dates, and recorded activity times as timezone-aware timestamps. Business dates use America/Chicago.
 - Finalized invoice line items retain the billed customer, description, and amount even if current profiles or rates change. Use adjustments rather than silently overwriting finalized invoices.
 - Implemented financial/stock entities include expenses, expense_receipts, inventory_products, inventory_units, inventory_balances, inventory_movements, feed_rations, and feeding_confirmations. Billing entities include invoices, invoice_lines, invoice_expense_claims, invoice_day_claims, invoice_payments, and invoice_adjustments. Service source reservations use invoice_service_days, invoice_feed_claims, and invoice_boarding_claims. Shared-cost revisions use expense_allocations and expense_allocation_lines. Reporting assignments use invoice_reporting_links, cost_stay_splits, and cost_stay_split_lines. Sessions and progress notes share `training_entries`.
@@ -339,6 +343,8 @@ Features in this section are present in the application source. A feature being 
 Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Shared-controls increment (October 22, 2026): no migration required. All 130 tests pass, including new calendar-date, leap-year/century, range, month-navigation, and clock validation checks. TypeScript checks and the production build pass. Local browser checks verify inline required/invalid-date errors, dependent product/unit and customer/stay choices, due-date recalculation, typed date/time values, searchable choices, explicit confirmation submission, Cancel/Escape focus return, nested-editor state retention, and 390-pixel calendar/choice layouts. Lazy-mounted controls were retested in a clean preview with no console warnings. No production records were changed. Physical-device keyboards, camera/file prompts, screen-reader behavior, and authenticated production submissions remain unverified.
 
 - Ownership-history increment (October 22, 2026): migration `20261022002800_ownership_history.sql` adds private history, migration baselines, and automatic relationship audit triggers. All 126 tests, TypeScript checks, and the production build pass. Tests cover baseline preservation, co-owners, unchanged retries, relationship edits, retained names, transaction rejection, history protection, customer/anonymous denial, historical billing preservation, and unchanged existing portal grants. Local browser preview verifies tab navigation and the 390-pixel layout. Remote migration and authenticated production ownership changes remain unverified.
 

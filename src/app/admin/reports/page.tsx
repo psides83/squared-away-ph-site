@@ -1,3 +1,4 @@
+import { TemporalInput } from "@/components/temporal-input";
 import {
   InventoryUsageReport,
   type InventoryUsage,
@@ -91,11 +92,16 @@ export default async function Reports({
           <div className="form-grid">
             <label>
               From
-              <input name="from" type="date" required defaultValue={from} />
+              <TemporalInput
+                name="from"
+                type="date"
+                required
+                defaultValue={from}
+              />
             </label>
             <label>
               Through
-              <input name="to" type="date" required defaultValue={to} />
+              <TemporalInput name="to" type="date" required defaultValue={to} />
             </label>
             <div className="form-actions">
               <button className="button primary" type="submit">

@@ -1,3 +1,5 @@
+import { FilePicker } from "@/components/file-picker";
+import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
@@ -76,7 +78,7 @@ export default async function HorseFiles({
           <div className="form-grid">
             <label>
               Horse
-              <select name="horse_id" required defaultValue={horse ?? ""}>
+              <AppSelect name="horse_id" required defaultValue={horse ?? ""}>
                 <option value="" disabled>
                   Select a horse
                 </option>
@@ -85,14 +87,14 @@ export default async function HorseFiles({
                     {h.barn_name}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
             <label>
               Type
-              <select name="kind" defaultValue="photo">
+              <AppSelect name="kind" defaultValue="photo">
                 <option value="photo">Photo</option>
                 <option value="document">Document</option>
-              </select>
+              </AppSelect>
             </label>
           </div>
           <Field
@@ -103,9 +105,8 @@ export default async function HorseFiles({
           />
           <label>
             JPEG, PNG, WebP, or PDF · up to 3 MB
-            <input
+            <FilePicker
               name="file"
-              type="file"
               required
               accept="image/jpeg,image/png,image/webp,application/pdf"
             />
@@ -248,14 +249,14 @@ export default async function HorseFiles({
         <form className="log-filter" method="get">
           <label>
             Horse
-            <select name="horse" defaultValue={horse ?? ""}>
+            <AppSelect name="horse" defaultValue={horse ?? ""}>
               <option value="">All horses</option>
               {horses.data?.map((h) => (
                 <option key={h.id} value={h.id}>
                   {h.barn_name}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
           <button className="button secondary" type="submit">
             Filter files

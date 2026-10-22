@@ -1,4 +1,6 @@
 "use client";
+import { AppSelect } from "@/components/app-select";
+
 import { FormInput } from "@/components/form-input";
 import { useState } from "react";
 import { dateLabel, money } from "@/lib/format";
@@ -44,7 +46,7 @@ export function InvoiceReportingForm({
       <div className="form-grid">
         <label>
           Horse
-          <select
+          <AppSelect
             name="horse_id"
             required
             value={horse}
@@ -61,11 +63,11 @@ export function InvoiceReportingForm({
                 {h.barn_name}
               </option>
             ))}
-          </select>
+          </AppSelect>
         </label>
         <label>
           Training visit (optional)
-          <select
+          <AppSelect
             name="stay_id"
             value={stay}
             onChange={(e) => setStay(e.target.value)}
@@ -82,7 +84,7 @@ export function InvoiceReportingForm({
                   {s.departure_date ? dateLabel(s.departure_date) : "ongoing"}
                 </option>
               ))}
-          </select>
+          </AppSelect>
         </label>
       </div>
       <label>

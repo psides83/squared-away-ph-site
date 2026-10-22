@@ -23,8 +23,6 @@ export function SectionTabs({
     : sections[0]?.id;
   const root = useRef<HTMLDivElement>(null);
   const previousDefault = useRef(defaultTab);
-  const validating = useRef(false);
-  const reporting = useRef(false);
   useLayoutEffect(() => {
     function followHash() {
       let hash: string;
@@ -75,21 +73,11 @@ export function SectionTabs({
       className="tabbed-content"
       ref={root}
       onInvalidCapture={(e) => {
-        if (reporting.current) return;
         e.preventDefault();
-        if (validating.current) return;
-        validating.current = true;
         const target = e.target as HTMLInputElement;
         const panel = target.closest<HTMLElement>(`[data-tab-owner="${id}"]`);
         if (panel?.dataset.tabKey && panel.dataset.tabKey !== visible)
           flushSync(() => setActive(panel.dataset.tabKey!));
-        window.requestAnimationFrame(() => {
-          target.focus();
-          reporting.current = true;
-          target.reportValidity();
-          reporting.current = false;
-          validating.current = false;
-        });
       }}
     >
       <div className="section-tablist" role="tablist" aria-label={label}>

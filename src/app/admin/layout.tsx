@@ -50,7 +50,7 @@ export default async function AdminLayout({
           </span>
           <div className="account">
             <span>Business owner</span>
-            <span className="avatar" title={user.email}>
+            <span className="avatar" aria-label={user.email}>
               SA
             </span>
           </div>

@@ -1,4 +1,5 @@
 "use client";
+import { AppSelect } from "@/components/app-select";
 
 import { SectionTabs } from "@/components/section-tabs";
 import { FormInput } from "@/components/form-input";
@@ -169,7 +170,7 @@ export function BusinessSettingsForm({
                       )}
                       <label>
                         Default partial-month policy
-                        <select
+                        <AppSelect
                           name="default_proration"
                           value={values.default_proration}
                           onChange={(event) =>
@@ -184,7 +185,7 @@ export function BusinessSettingsForm({
                           </option>
                           <option value="manual">Decide manually</option>
                           <option value="none">No proration</option>
-                        </select>
+                        </AppSelect>
                       </label>
                       {field(
                         "default_invoice_due_days",

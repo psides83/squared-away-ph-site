@@ -1,4 +1,6 @@
 "use client";
+import { AppSelect } from "@/components/app-select";
+
 import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
 
 import { FormInput } from "@/components/form-input";
@@ -44,7 +46,7 @@ export function DailyFeedingBatch({
       </p>
       <label>
         Feeding time
-        <select
+        <AppSelect
           name="feeding_time_id"
           required
           value={time}
@@ -63,7 +65,7 @@ export function DailyFeedingBatch({
                 {feedingTimeLabel(t)}
               </option>
             ))}
-        </select>
+        </AppSelect>
       </label>
       <Field
         name="feeding_date"
@@ -170,7 +172,7 @@ export function ExtraFeedingBatch({
         />
         <label>
           Feeding time
-          <select name="feeding_time_id" defaultValue="">
+          <AppSelect name="feeding_time_id" defaultValue="">
             <option value="">Unscheduled extra / partial feeding</option>
             {times
               .filter((t) => !t.archived)
@@ -179,7 +181,7 @@ export function ExtraFeedingBatch({
                   {feedingTimeLabel(t)}
                 </option>
               ))}
-          </select>
+          </AppSelect>
         </label>
         <ProductUnitFields
           products={products}

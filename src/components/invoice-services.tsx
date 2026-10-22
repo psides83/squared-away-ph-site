@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import Link from "next/link";
 import { dateLabel, money } from "@/lib/format";
 import { SubmitButton } from "@/components/submit-button";
@@ -74,7 +75,7 @@ export function InvoiceServices({
             {hidden}
             <label>
               Reviewed stay cost
-              <select name="split_id" required defaultValue="">
+              <AppSelect name="split_id" required defaultValue="">
                 <option value="" disabled>
                   Select a boarding cost
                 </option>
@@ -84,7 +85,7 @@ export function InvoiceServices({
                     {money(c.amount_cents)} · {c.kind}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
             <p className="notice">
               Select only the portion that belongs to boarding for this invoice

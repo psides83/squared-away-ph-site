@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { CalendarCheck } from "lucide-react";
@@ -106,7 +107,7 @@ export default async function Calendar({
         <form action="/admin/calendar" className="log-filter">
           <label>
             Training stay
-            <select name="stay" required defaultValue={selected?.id ?? ""}>
+            <AppSelect name="stay" required defaultValue={selected?.id ?? ""}>
               <option value="" disabled>
                 Select a stay
               </option>
@@ -115,7 +116,7 @@ export default async function Calendar({
                   {stayLabel(s)}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
           <Field
             name="month"
@@ -187,7 +188,7 @@ export default async function Calendar({
                   />
                   <label>
                     Classification
-                    <select name="status" required defaultValue="">
+                    <AppSelect name="status" required defaultValue="">
                       <option value="" disabled>
                         Choose a status
                       </option>
@@ -197,7 +198,7 @@ export default async function Calendar({
                       <option value="clear">
                         Clear classification (unclassified)
                       </option>
-                    </select>
+                    </AppSelect>
                   </label>
                 </div>
                 <label>

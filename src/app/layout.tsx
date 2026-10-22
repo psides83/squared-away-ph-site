@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/form-validation";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
@@ -27,7 +28,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <FormValidation />
+      </body>
     </html>
   );
 }

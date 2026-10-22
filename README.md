@@ -201,3 +201,7 @@ Run `npm run verify:deployment -- https://squaredawayperformancehorses.vercel.ap
 ## Ownership history
 
 Apply `20261022002800_ownership_history.sql` in migration order. Horse records then show **Customers & ownership** with current links and recorded additions/removals or relationship changes. Existing links receive an explicit starting baseline; the app does not infer earlier sale dates. History retains the name recorded at the time, is administrator-only, and prevents horse deletion. Correct links through the horse editor; past events remain. Ownership changes do not change existing stay billing responsibility or manual portal grants.
+
+## Shared app controls
+
+Use the shared app controls for consistent UI: `AppSelect` for choices, `FormInput`/`TemporalInput` for formatted fields and calendar/time pickers, and `ConfirmButton` or its Delete/Invoice wrappers for confirmations. The global validation component displays inline errors while preserving HTML constraints and server validation. Pickers use styled dialogs with focus containment and Escape dismissal; closing a nested picker does not reset its surrounding editor. Native camera/file selection, installation, and printing remain system capabilities launched from app controls. Avoid new browser alert/confirm/prompt calls or visible native dropdown/date/time menus.

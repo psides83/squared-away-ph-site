@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import { ReminderList } from "@/components/reminder-list";
 import { reminderBuckets, reminderBucketLabels } from "@/lib/reminders";
 import { SectionTabs } from "@/components/section-tabs";
@@ -155,7 +156,7 @@ export default async function Reminders({
               />
               <label>
                 Horse
-                <select
+                <AppSelect
                   name="horse_id"
                   defaultValue={selected?.horse_id ?? filterHorse ?? ""}
                 >
@@ -165,11 +166,11 @@ export default async function Reminders({
                       {h.barn_name}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
               <label>
                 Category
-                <select
+                <AppSelect
                   name="category_id"
                   defaultValue={selected?.category_id ?? filterCategory ?? ""}
                 >
@@ -179,7 +180,7 @@ export default async function Reminders({
                       {c.name}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
             </div>
             <label>
@@ -219,7 +220,7 @@ export default async function Reminders({
           />
           <label>
             Horse
-            <select name="horse" defaultValue={params.horse ?? ""}>
+            <AppSelect name="horse" defaultValue={params.horse ?? ""}>
               <option value="">All horses and barn tasks</option>
               <option value="general">General barn</option>
               {horses.data?.map((h) => (
@@ -227,11 +228,11 @@ export default async function Reminders({
                   {h.barn_name}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
           <label>
             Category
-            <select name="category" defaultValue={params.category ?? ""}>
+            <AppSelect name="category" defaultValue={params.category ?? ""}>
               <option value="">All categories</option>
               <option value="none">Uncategorized</option>
               {categories.data?.map((c) => (
@@ -239,7 +240,7 @@ export default async function Reminders({
                   {c.name}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
         </div>
         <div className="form-actions">

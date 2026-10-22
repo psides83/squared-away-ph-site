@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import {
   InvoiceCostReadiness,
   type CostReadiness,
@@ -577,7 +578,7 @@ export default async function Invoice({
                             />
                             <label>
                               Charge category
-                              <select
+                              <AppSelect
                                 name="billing_category"
                                 defaultValue="other"
                               >
@@ -587,7 +588,7 @@ export default async function Invoice({
                                 <option value="training">Training</option>
                                 <option value="feed">Feed</option>
                                 <option value="boarding">Board</option>
-                              </select>
+                              </AppSelect>
                             </label>
                             <p className="muted">
                               Choose Training, Feed, or Board to include this
@@ -597,10 +598,10 @@ export default async function Invoice({
                             <div className="form-grid">
                               <label>
                                 Line type
-                                <select name="direction">
+                                <AppSelect name="direction">
                                   <option value="charge">Charge</option>
                                   <option value="credit">Credit</option>
-                                </select>
+                                </AppSelect>
                               </label>
                               <Field
                                 name="amount"
@@ -700,7 +701,7 @@ export default async function Invoice({
                             {invoiceId}
                             <label>
                               Unbilled expense (latest 100 candidates)
-                              <select
+                              <AppSelect
                                 name="expense_id"
                                 required
                                 defaultValue=""
@@ -715,7 +716,7 @@ export default async function Invoice({
                                     {money(e.amount_cents)}
                                   </option>
                                 ))}
-                              </select>
+                              </AppSelect>
                             </label>
                             <Field
                               name="markup"
@@ -832,13 +833,13 @@ export default async function Invoice({
                                 />
                                 <label>
                                   Method
-                                  <select name="method">
+                                  <AppSelect name="method">
                                     {paymentMethods.map((method) => (
                                       <option key={method} value={method}>
                                         {paymentMethodLabels[method]}
                                       </option>
                                     ))}
-                                  </select>
+                                  </AppSelect>
                                 </label>
                                 <Field
                                   name="reference"
@@ -928,14 +929,14 @@ export default async function Invoice({
                             <div className="form-grid">
                               <label>
                                 Type
-                                <select name="direction">
+                                <AppSelect name="direction">
                                   <option value="credit">
                                     Credit / reduce bill
                                   </option>
                                   <option value="charge">
                                     Additional charge
                                   </option>
-                                </select>
+                                </AppSelect>
                               </label>
                               <Field
                                 name="amount"

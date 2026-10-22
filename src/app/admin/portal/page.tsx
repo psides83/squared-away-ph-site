@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
@@ -66,7 +67,7 @@ export default async function CustomerAccess({
         <form method="get" className="record-form">
           <label>
             Customer
-            <select name="customer" defaultValue={id ?? ""} required>
+            <AppSelect name="customer" defaultValue={id ?? ""} required>
               <option value="" disabled>
                 Select a customer
               </option>
@@ -75,7 +76,7 @@ export default async function CustomerAccess({
                   {c.name}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
           <button className="button secondary" type="submit">
             Manage access
@@ -174,7 +175,7 @@ export default async function CustomerAccess({
               <div className="form-grid">
                 <label>
                   Horse
-                  <select name="horse_id" required defaultValue="">
+                  <AppSelect name="horse_id" required defaultValue="">
                     <option value="" disabled>
                       Select a horse
                     </option>
@@ -183,7 +184,7 @@ export default async function CustomerAccess({
                         {h.barn_name}
                       </option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
                 <Field
                   name="visible_from"

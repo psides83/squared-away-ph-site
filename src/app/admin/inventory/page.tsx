@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import { SectionTabs } from "@/components/section-tabs";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
@@ -177,18 +178,18 @@ export default async function Inventory({
                           />
                           <label>
                             Type
-                            <select
+                            <AppSelect
                               name="category"
                               defaultValue={selected?.category ?? "feed"}
                             >
                               <option value="feed">Feed</option>
                               <option value="hay">Hay</option>
                               <option value="supplement">Supplement</option>
-                            </select>
+                            </AppSelect>
                           </label>
                           <label>
                             Purchase expense category
-                            <select
+                            <AppSelect
                               name="expense_category_id"
                               required
                               defaultValue={selected?.expense_category_id ?? ""}
@@ -201,7 +202,7 @@ export default async function Inventory({
                                   {c.name}
                                 </option>
                               ))}
-                            </select>
+                            </AppSelect>
                           </label>
                         </div>
                         {selected && (
@@ -281,7 +282,7 @@ export default async function Inventory({
                                       required
                                       defaultValue={u.ounces_per_unit}
                                     />
-                                    <select
+                                    <AppSelect
                                       name="weight_unit"
                                       aria-label="Weight unit"
                                       defaultValue="oz"
@@ -294,7 +295,7 @@ export default async function Inventory({
                                           {unit.name}
                                         </option>
                                       ))}
-                                    </select>
+                                    </AppSelect>
                                     <SubmitButton className="text-button">
                                       Update
                                     </SubmitButton>
@@ -325,13 +326,13 @@ export default async function Inventory({
                               />
                               <label>
                                 Weight measured in
-                                <select name="weight_unit">
+                                <AppSelect name="weight_unit">
                                   {weightUnits.map((unit) => (
                                     <option key={unit.label} value={unit.label}>
                                       {unit.name}
                                     </option>
                                   ))}
-                                </select>
+                                </AppSelect>
                               </label>
                             </div>
                             <SubmitButton>Add conversion</SubmitButton>

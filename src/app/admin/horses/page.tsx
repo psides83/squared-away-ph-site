@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import {
   HorseStatus,
   HorseQuickActions,
@@ -141,12 +142,12 @@ export default async function Horses({
               />
               <label>
                 Sex
-                <select name="sex" defaultValue={selected?.sex ?? "unknown"}>
+                <AppSelect name="sex" defaultValue={selected?.sex ?? "unknown"}>
                   <option value="unknown">Not specified</option>
                   <option value="mare">Mare</option>
                   <option value="gelding">Gelding</option>
                   <option value="stallion">Stallion</option>
-                </select>
+                </AppSelect>
               </label>
             </div>
             {[

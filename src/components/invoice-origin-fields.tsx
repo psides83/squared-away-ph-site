@@ -1,4 +1,8 @@
 "use client";
+import { TemporalInput } from "@/components/temporal-input";
+
+import { AppSelect } from "@/components/app-select";
+
 import { useState } from "react";
 import { dateLabel } from "@/lib/format";
 export function InvoiceOriginFields({
@@ -47,7 +51,7 @@ export function InvoiceOriginFields({
     <>
       <label>
         Billing customer <span className="required">*</span>
-        <select
+        <AppSelect
           name="customer_id"
           required
           value={customer}
@@ -65,11 +69,11 @@ export function InvoiceOriginFields({
               {c.name}
             </option>
           ))}
-        </select>
+        </AppSelect>
       </label>
       <label>
         Training stay (optional)
-        <select
+        <AppSelect
           name="stay_id"
           value={stay}
           onChange={(e) => {
@@ -86,11 +90,11 @@ export function InvoiceOriginFields({
                 · arrived {dateLabel(s.arrival_date)}
               </option>
             ))}
-        </select>
+        </AppSelect>
       </label>
       <label>
         Invoice date <span className="required">*</span>
-        <input
+        <TemporalInput
           name="issue_date"
           type="date"
           required
@@ -103,7 +107,7 @@ export function InvoiceOriginFields({
       </label>
       <label>
         Payment due date <span className="required">*</span>
-        <input
+        <TemporalInput
           name="due_date"
           type="date"
           required

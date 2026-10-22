@@ -1,5 +1,6 @@
 "use client";
-import { useRef, useState, type InputHTMLAttributes } from "react";
+import { useEffect, useRef, useState, type InputHTMLAttributes } from "react";
+import { TemporalInput } from "@/components/temporal-input";
 import { Minus, Plus } from "lucide-react";
 import { phoneDisplay, phoneInput } from "@/lib/input-format";
 
@@ -24,6 +25,19 @@ export function FormInput({
       : (defaultValue ?? "");
   const [local, setLocal] = useState(initial);
   const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const form = input.current?.form;
+    const reset = () => {
+      if (value === undefined)
+        setLocal(
+          type === "tel"
+            ? phoneDisplay(String(defaultValue ?? ""))
+            : (defaultValue ?? ""),
+        );
+    };
+    form?.addEventListener("reset", reset);
+    return () => form?.removeEventListener("reset", reset);
+  }, [defaultValue, value, type]);
   function adjust(direction: number) {
     const field = input.current;
     if (!field) return;
@@ -39,6 +53,16 @@ export function FormInput({
       : type === "tel"
         ? phoneDisplay(String(value))
         : value;
+  if (["date", "time", "month"].includes(type))
+    return (
+      <TemporalInput
+        {...props}
+        type={type}
+        defaultValue={defaultValue}
+        value={value}
+        onChange={onChange}
+      />
+    );
   return (
     <span
       className={`input-control ${prefix ? "has-prefix" : ""} ${suffix ? "has-suffix" : ""} ${controls ? "with-controls" : ""}`}

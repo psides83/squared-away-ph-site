@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
@@ -352,7 +353,7 @@ export default async function ExpenseRecord({
                                   <>
                                     <label>
                                       Draft invoice
-                                      <select
+                                      <AppSelect
                                         name="invoice_id"
                                         required
                                         defaultValue=""
@@ -374,7 +375,7 @@ export default async function ExpenseRecord({
                                               : " · Manual invoice"}
                                           </option>
                                         ))}
-                                      </select>
+                                      </AppSelect>
                                     </label>
                                     <Field
                                       name="markup"

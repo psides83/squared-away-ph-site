@@ -1,3 +1,4 @@
+import { AppSelect } from "@/components/app-select";
 import {
   ExpenseFollowupSummary,
   type ExpenseFollowup,
@@ -152,7 +153,7 @@ export default async function Expenses({
             />
             <label>
               Horse / barn
-              <select name="horse" defaultValue={params.horse ?? ""}>
+              <AppSelect name="horse" defaultValue={params.horse ?? ""}>
                 <option value="">All horses and shared barn</option>
                 <option value="shared">Shared barn only</option>
                 {horses.data?.map((h) => (
@@ -160,27 +161,27 @@ export default async function Expenses({
                     {h.barn_name}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
             <label>
               Category
-              <select name="category" defaultValue={params.category ?? ""}>
+              <AppSelect name="category" defaultValue={params.category ?? ""}>
                 <option value="">All categories</option>
                 {categories.data?.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
             <label>
               Status
-              <select name="status" defaultValue={params.status ?? "all"}>
+              <AppSelect name="status" defaultValue={params.status ?? "all"}>
                 <option value="all">All, including voided</option>
                 <option value="paid">Paid</option>
                 <option value="unpaid">Unpaid</option>
                 <option value="voided">Voided</option>
-              </select>
+              </AppSelect>
             </label>
           </div>
           <div className="row-actions">
@@ -273,7 +274,7 @@ export default async function Expenses({
                 />
                 <label>
                   Category <span className="required">*</span>
-                  <select
+                  <AppSelect
                     name="category_id"
                     required
                     defaultValue={selected?.category_id ?? ""}
@@ -286,11 +287,11 @@ export default async function Expenses({
                         {c.name}
                       </option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
                 <label>
                   Assign to horse
-                  <select
+                  <AppSelect
                     name="horse_id"
                     defaultValue={
                       selected?.horse_id ??
@@ -305,7 +306,7 @@ export default async function Expenses({
                         {h.barn_name}
                       </option>
                     ))}
-                  </select>
+                  </AppSelect>
                 </label>
               </div>
               <label className="inline-checkbox">

@@ -1,4 +1,6 @@
 "use client";
+import { AppSelect } from "@/components/app-select";
+
 import { weightUnits } from "@/lib/weight-units";
 import { servingStepper } from "@/lib/input-format";
 import { ReceiptPicker } from "@/components/receipt-picker";
@@ -34,7 +36,7 @@ export function ProductUnitFields({
     <>
       <label>
         Product <span className="required">*</span>
-        <select
+        <AppSelect
           name="product_id"
           required
           value={product}
@@ -57,11 +59,11 @@ export function ProductUnitFields({
               {p.archived ? " (archived)" : ""}
             </option>
           ))}
-        </select>
+        </AppSelect>
       </label>
       <label>
         Unit <span className="required">*</span>
-        <select
+        <AppSelect
           name="unit_id"
           required
           value={unit}
@@ -82,7 +84,7 @@ export function ProductUnitFields({
                   : u.label}
               </option>
             ))}
-        </select>
+        </AppSelect>
       </label>
     </>
   );
@@ -113,7 +115,7 @@ export function StockEntryForm({
       <div className="form-grid">
         <label>
           What happened?
-          <select
+          <AppSelect
             name="kind"
             value={kind}
             onChange={(e) => setKind(e.target.value)}
@@ -124,7 +126,7 @@ export function StockEntryForm({
             <option value="waste">Waste / spoilage</option>
             <option value="adjustment_in">Stock correction: add</option>
             <option value="adjustment_out">Stock correction: remove</option>
-          </select>
+          </AppSelect>
         </label>
         <Field
           name="movement_date"
@@ -180,7 +182,7 @@ export function StockEntryForm({
         {kind === "feeding" && (
           <label>
             Feeding time
-            <select name="feeding_time_id" defaultValue="">
+            <AppSelect name="feeding_time_id" defaultValue="">
               <option value="">Unscheduled extra / partial feeding</option>
               {times
                 .filter((t) => !t.archived)
@@ -189,13 +191,13 @@ export function StockEntryForm({
                     {feedingTimeLabel(t)}
                   </option>
                 ))}
-            </select>
+            </AppSelect>
           </label>
         )}
         {kind === "feeding" && (
           <label>
             Horse <span className="required">*</span>
-            <select name="horse_id" required defaultValue="">
+            <AppSelect name="horse_id" required defaultValue="">
               <option value="" disabled>
                 Select a horse
               </option>
@@ -204,7 +206,7 @@ export function StockEntryForm({
                   {h.barn_name}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
         )}
       </div>
