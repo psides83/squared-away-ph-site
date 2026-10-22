@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { choice, dateValue, identifier, text } from "@/lib/validation";
+import { weightInOunces } from "@/lib/weight-units";
 import { quantity, stockValues } from "@/lib/inventory";
 
 function message(error: { message: string; code?: string } | null) {
@@ -54,11 +55,10 @@ export async function saveUnit(form: FormData) {
   try {
     product = identifier(form, "product_id", true);
     const label = text(form, "label", true, 40)!.toLowerCase();
-    const weight = quantity(form, "weight");
-    const ounces =
-      choice(form, "weight_unit", ["oz", "lb"]) === "lb"
-        ? Number(weight) * 16
-        : Number(weight);
+    const ounces = weightInOunces(
+      text(form, "weight", true, 30)!,
+      text(form, "weight_unit", true, 10)!,
+    );
     const { id, ...rest } = {
       id: identifier(form, "id"),
       product_id: product,

@@ -4,7 +4,7 @@ import { readFile, readdir } from "node:fs/promises";
 
 export const adminId = "20000000-0000-4000-8000-000000000001";
 export const outsiderId = "20000000-0000-4000-8000-000000000002";
-export async function inventoryDatabase() {
+export async function inventoryDatabase(through?: string) {
   const db = new PGlite({ extensions: { btree_gist } });
   await db.exec(`
     create role anon nologin; create role authenticated nologin;
@@ -19,7 +19,7 @@ export async function inventoryDatabase() {
   `);
   const directory = new URL("../../supabase/migrations/", import.meta.url);
   for (const file of (await readdir(directory))
-    .filter((f) => f.endsWith(".sql"))
+    .filter((f) => f.endsWith(".sql") && (!through || f <= through))
     .sort())
     await db.exec(await readFile(new URL(file, directory), "utf8"));
   await db.query("insert into auth.users(id) values($1),($2)", [

@@ -179,7 +179,7 @@ test("expenses, weighted inventory, feeding, corrections, and private receipts",
             "update public.inventory_units set ounces_per_unit=20 where product_id=$1 and label='lb'",
             [feed],
           ),
-          /check constraint/,
+          /Standard weight units|check constraint/,
         );
       },
     );

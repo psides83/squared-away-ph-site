@@ -64,9 +64,10 @@ Features in this section are present in the application source. A feature being 
 ### Feed inventory and daily feeding
 
 - Feed, hay, and supplement products, editable metadata, and archival that retains history.
-- Fixed weight ounces and pounds (16 oz per lb), plus configurable product-specific units for bags, bales, scoops, flakes, tubs, or other named measures. Separate batch-named conversions handle differing weights; no universal scoop/flake weight is assumed.
+- Fixed milligrams, grams, kilograms, weight ounces, pounds (16 oz per lb), US tons (2,000 lb), and metric tonnes (1,000 kg), plus configurable product-specific units for bags, bales, scoops, flakes, tubs, or other named measures. Separate batch-named conversions handle differing weights; no universal scoop/flake weight is assumed.
 - Opening stock, purchases, manual feeding/extras, waste, and reasoned stock additions/reductions. Balances cannot become negative.
-- Weighted average inventory value, quantity on hand, and transaction history. Inventory uses weight ounces as its base unit, six-decimal quantity/value precision, and valuation in recording order rather than retroactively replaying backdated entries.
+- Metric purchase/feeding quantities and custom serving weights are supported. Metric ledger conversion uses the exact 28.349523125 g per weight ounce relationship before rounding. Standard weight conversions are protected. Existing custom units named like the new standards retain their IDs and weights under a legacy label; saved rations and transaction history are preserved. Cups, teaspoons, tablespoons, milliliters, and liters can be added with product-specific measured weights.
+- Weighted average inventory value, quantity on hand, and transaction history. Inventory uses weight ounces as its base unit, twelve-decimal base-weight precision, six-decimal entered quantities and inventory values, and valuation in recording order rather than retroactively replaying backdated entries.
 - Transactions snapshot their entered quantity/unit, weight conversion, and inventory cost. Later conversion or price changes do not reprice history. Purchases update cash expense records exactly once on retry.
 - Saved active/paused daily rations per horse/product, with editable quantities and units. Saving a ration never consumes stock.
 - Explicit confirmation of the entire daily ration for a horse/date, once per date. A shortage in any line rolls back the complete confirmation. Manual entries handle extras, partial feeding, and corrections.

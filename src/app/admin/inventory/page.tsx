@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { weightUnits } from "@/lib/weight-units";
 import { Package } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { money, dateLabel, today } from "@/lib/format";
@@ -199,10 +200,13 @@ export default async function Inventory({
               <div className="record-form separated">
                 <h3>Weight conversions</h3>
                 <p className="muted form-hint">
-                  Ounces and pounds are fixed. Configure the actual weight of a
-                  bag, bale, scoop, flake, tub, or custom serving. Changes apply
-                  to future transactions, never past feedings. Use a separate
-                  batch-named unit when weights differ.
+                  Metric and US weight units have fixed conversions. Configure
+                  the measured weight of a bag, bale, scoop, flake, tub, or
+                  custom serving. Changes apply to future transactions, never
+                  past feedings. Use a separate batch-named unit when weights
+                  differ. Cups, teaspoons, tablespoons, milliliters, and liters
+                  need a measured weight for each product; volume does not have
+                  a universal weight.
                 </p>
                 {units.data
                   ?.filter((u) => u.product_id === selected.id)
@@ -220,16 +224,22 @@ export default async function Inventory({
                       />
                       <input name="label" type="hidden" value={u.label} />
                       <span className="tag">1 {u.label}</span>
-                      {["lb", "oz"].includes(u.label) ? (
-                        <span>{u.ounces_per_unit} oz (fixed)</span>
+                      {weightUnits.some((unit) => unit.label === u.label) ? (
+                        <span>
+                          {
+                            weightUnits.find((unit) => unit.label === u.label)
+                              ?.reference
+                          }{" "}
+                          (fixed)
+                        </span>
                       ) : (
                         <>
                           <Field
                             name="weight"
                             label="Weight"
                             type="number"
-                            min={0.000001}
-                            step="0.000001"
+                            min={0.000000000001}
+                            step="0.000000000001"
                             required
                             defaultValue={u.ounces_per_unit}
                           />
@@ -238,8 +248,11 @@ export default async function Inventory({
                             aria-label="Weight unit"
                             defaultValue="oz"
                           >
-                            <option value="oz">oz</option>
-                            <option value="lb">lb</option>
+                            {weightUnits.map((unit) => (
+                              <option key={unit.label} value={unit.label}>
+                                {unit.name}
+                              </option>
+                            ))}
                           </select>
                           <SubmitButton className="text-button">
                             Update
@@ -268,8 +281,11 @@ export default async function Inventory({
                     <label>
                       Weight measured in
                       <select name="weight_unit">
-                        <option value="oz">Ounces (weight)</option>
-                        <option value="lb">Pounds</option>
+                        {weightUnits.map((unit) => (
+                          <option key={unit.label} value={unit.label}>
+                            {unit.name}
+                          </option>
+                        ))}
                       </select>
                     </label>
                   </div>
