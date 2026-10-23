@@ -368,15 +368,28 @@ export default async function Inventory({
                               Expense & receipts
                             </Link>
                           )}
-                          {m.kind === "purchase" && (
+                          {["purchase", "opening", "adjustment_in"].includes(
+                            m.kind,
+                          ) && (
                             <ActionPanel
                               id={`revalue-${m.id}`}
-                              label="Correct purchase cost"
+                              label={
+                                m.kind === "purchase"
+                                  ? "Correct purchase cost"
+                                  : "Correct stock value"
+                              }
                             >
                               <div className="panel-heading">
-                                <h2>Correct purchase cost</h2>
+                                <h2>
+                                  {m.kind === "purchase"
+                                    ? "Correct purchase cost"
+                                    : "Correct stock value"}
+                                </h2>
                               </div>
-                              <PurchaseCostForm movement={m} />
+                              <PurchaseCostForm
+                                movement={m}
+                                inbound={m.kind !== "purchase"}
+                              />
                             </ActionPanel>
                           )}
                           {["purchase", "opening", "adjustment_in"].includes(

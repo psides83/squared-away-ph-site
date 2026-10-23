@@ -140,20 +140,20 @@ export default async function CostReviews({
                 </div>
                 <div className="record-form">
                   {!corrections.error && !corrections.data?.length && (
-                    <p>No purchase cost recalculations recorded.</p>
+                    <p>No stock cost recalculations recorded.</p>
                   )}
                   {corrections.data?.map((c) => (
                     <article className="log-entry" key={c.id}>
                       <h3>
                         {c.inventory_movements?.inventory_products?.name ??
-                          "Feed purchase"}{" "}
+                          "Stock entry"}{" "}
                         · {money(c.old_cost_cents)} → {money(c.new_cost_cents)}
                       </h3>
                       <p>
                         {dateLabel(c.created_at.slice(0, 10))} · {c.reason}
                       </p>
                       <p className="muted">
-                        Purchase date:{" "}
+                        Stock entry date:{" "}
                         {dateLabel(c.inventory_movements?.movement_date ?? "")}
                       </p>
                       <details>

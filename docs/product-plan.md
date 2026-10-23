@@ -8,6 +8,9 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Opening-stock and inbound-addition cost recalculation after downstream activity: a deliberate stock-value editor reuses the audited replay and invoice-review workflow. Quantity and transaction date stay unchanged; costs of later feeding, waste, reductions/reversals and remaining stock recalculate. No expense or cash transaction is created or changed. A private common replay engine supports type-checked purchase and inbound entry points; prior purchase protections remain in force. The existing 2,000-entry, historical-order and balance-reconciliation limits apply. Quantity corrections and supplier returns remain planned.
+
+
 - Purchase cost-only recalculation after downstream activity: quantity/date/receipts stay unchanged; the original expense amount is corrected under existing source protections, and weighted feeding, waste, reduction/reversal and remaining-stock costs are replayed in durable recording order. Every changed ledger value retains before/after audit history. Later ordinary purchases never reprice past feeding; an explicit reasoned correction can. Source-linked feed invoices and stay invoices covering changed feeding dates receive private review flags; issued charges/payment histories are unchanged. Pending flags block draft finalization. Outdated draft actual-cost feed lines must be removed/regenerated before a reasoned review can be completed. Further corrections create new flags and preserve prior decisions. Inventory links to pending reviews, the latest 50 corrections (up to 100 changed entries each) and latest 50 completed invoice reviews. Future bulk movement timestamps use a reliable sequence; ambiguous legacy ties, unreconciled balances and histories over 2,000 movements are blocked. Cost-only scope does not implement quantity corrections or supplier returns.
 
 
@@ -331,7 +334,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Expenses, receipts, billing, and profitability
 
-- Purchase quantity and opening/inbound-adjustment corrections after downstream movements, plus actual supplier return/refund workflows. Cost-only purchase recalculation and untouched purchase/inbound replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, and manually attributed invoices without reliable feed source/period links need further correction/review workflows.
+- Purchase, opening-stock and inbound-adjustment quantity corrections after downstream movements, plus actual supplier return/refund workflows. Cost-only purchase/opening/inbound recalculation and untouched entry replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, and manually attributed invoices without reliable feed source/period links need further correction/review workflows.
 - Delivered scheduler failure alerts and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
@@ -377,6 +380,8 @@ Features in this section are present in the application source. A feature being 
 
 ## Agreed decisions (implementation remains planned unless listed above)
 
+- Supplier returns remove stock at its current weighted average cost; the actual supplier refund is recorded separately, with the difference visible. Confirmed October 23, 2026.
+
 - Customer invoice presentation may combine training, feed, and board; vet, farrier, hauling, and other charges stay separate. The full internal breakdown is retained. Confirmed October 21, 2026; implemented above.
 
 - Repository: https://github.com/psides83/squared-away-ph-site. The owner confirmed that the source code is public. Repository visibility is separate from deployed app access; no visibility change has been requested.
@@ -412,6 +417,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream quantity corrections, supplier returns and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Inbound-revaluation increment (October 23, 2026): migration `20261023004100_inbound_cost_revaluation.sql` extends audited cost replay to opening stock and inbound additions without cash entries. Local database tests cover both source types, unchanged quantities, updated consumption/stock costs, unchanged issued charges, pending/new invoice reviews, zero valuation, retry/stale guards, wrong-type rejection, private engine access and customer/anonymous denial. All 155 tests, TypeScript checks and the production build pass. Desktop and 390-pixel sample previews verify the inbound-specific copy, compact money field and collapsed help. Remote migration, authenticated production corrections and physical-device workflows remain unverified; no production records changed.
 
 - Purchase-revaluation increment (October 23, 2026): migration `20261023004000_purchase_cost_revaluation.sql` adds recording order, audited cost replay and invoice review flags. Database checks cover weighted blending across later purchases, reversal recosting, empty stock, issued-charge preservation, stale draft finalization/review guards, regeneration, repeated/stale submissions, subsequent corrections, allocation guards, bulk timestamp ties, ambiguous legacy rejection, balance mismatch, failure rollback and administrator privacy. Desktop and 390-pixel sample previews verify the correction form, collapsed help, deliberate review and cancellation. All 154 tests, TypeScript checks and the production build pass. Feed comparison restatement and invalidated actual-cost readiness are also verified locally. Remote migration, production saves/report restatements and actual-device verification remain unverified; no production records changed.
 

@@ -27,7 +27,7 @@ export function FeedCostReview({
       </div>
       <div className="record-form">
         <p className="notice">
-          A purchase correction changed feeding costs used by this invoice or
+          A stock cost correction changed feeding costs used by this invoice or
           its reporting period. Charges and payments have not changed. Review
           any difference before completing this review.
         </p>
