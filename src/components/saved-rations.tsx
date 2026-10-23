@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleCheck, Clock3 } from "lucide-react";
 import { ActionPanel } from "@/components/action-panel";
 import { Field } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
@@ -69,9 +70,38 @@ export function SavedRations({
       <div className="horse-grid file-grid ration-horse-grid">
         {horses?.map((h) => {
           const lines = rations?.filter((r) => r.horse_id === h.id) ?? [];
+          const activeGroups = groups.filter(
+            (g) =>
+              !g.archived &&
+              lines.some((r) => r.active && r.feeding_time_id === g.id),
+          );
+          const recordedCount = activeGroups.filter((g) =>
+            todayConfirmations.some(
+              (c) =>
+                c.horse_id === h.id &&
+                (c.feeding_time_id === g.id || c.feeding_time_id === null),
+            ),
+          ).length;
+          const allFed =
+            !editable &&
+            activeGroups.length > 0 &&
+            recordedCount === activeGroups.length;
           return (
-            <article className="horse-card" key={h.id}>
+            <article
+              className={`horse-card feeding-horse-card${allFed ? " is-fed" : ""}`}
+              key={h.id}
+            >
               <h3>{h.barn_name}</h3>
+              {!editable && activeGroups.length > 0 && (
+                <p
+                  className={`feeding-day-progress${allFed ? " is-complete" : ""}`}
+                >
+                  {allFed && <CircleCheck size={18} aria-hidden="true" />}
+                  {allFed
+                    ? "All feedings recorded today"
+                    : `${recordedCount} of ${activeGroups.length} feedings recorded today`}
+                </p>
+              )}
               {groups
                 .filter((g) => lines.some((r) => r.feeding_time_id === g.id))
                 .map((g) => {
@@ -93,13 +123,36 @@ export function SavedRations({
                   );
                   return (
                     <div
-                      className="feeding-time-group"
+                      className={`feeding-time-group${!editable && active && !g.archived ? (confirmed ? " is-confirmed" : " is-pending") : ""}`}
                       key={g.id ?? "unassigned"}
                     >
-                      <h4>
-                        {g.label}
-                        {g.archived ? " (archived)" : ""}
-                      </h4>
+                      <div className="feeding-time-heading">
+                        <h4>
+                          {g.label}
+                          {g.archived ? " (archived)" : ""}
+                        </h4>
+                        {!editable && active && !g.archived && (
+                          <span
+                            className={`feeding-status ${confirmed ? "confirmed" : "pending"}`}
+                          >
+                            {confirmed ? (
+                              <CircleCheck size={17} aria-hidden="true" />
+                            ) : (
+                              <Clock3 size={17} aria-hidden="true" />
+                            )}
+                            {confirmed ? "Fed today" : "Not recorded"}
+                          </span>
+                        )}
+                      </div>
+                      {!editable &&
+                        confirmed &&
+                        active &&
+                        !g.archived &&
+                        confirmed.feeding_time_id === null && (
+                          <p className="feeding-legacy-note">
+                            Recorded as a full-day feeding.
+                          </p>
+                        )}
                       {groupLines.map((r) => (
                         <div className="ration-line" key={r.id}>
                           <p>
@@ -120,13 +173,6 @@ export function SavedRations({
                       </div>
                       {!editable && active && g.id && !g.archived && (
                         <>
-                          <p className="muted">
-                            {confirmed
-                              ? confirmed.feeding_time_id
-                                ? "Confirmed today"
-                                : "Confirmed today as a full-day feeding"
-                              : "Not confirmed today"}
-                          </p>
                           {confirmed && (
                             <ActionPanel
                               id={`undo-feeding-${h.id}-${g.id}`}

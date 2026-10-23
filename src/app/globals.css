@@ -3755,3 +3755,73 @@ input[type="search"]::-webkit-search-decoration {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.feeding-horse-card.is-fed {
+  border-color: #b7cbb0;
+  background: #f7faf4;
+}
+.feeding-day-progress {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #75664f;
+  margin: 0 0 16px;
+}
+.feeding-day-progress.is-complete {
+  color: #3e5d36;
+  font-weight: 600;
+}
+.feeding-time-group.is-confirmed,
+.feeding-time-group.is-pending {
+  padding: 16px;
+  border: 1px solid #e1dfd4;
+  border-radius: 16px;
+  margin-top: 14px;
+}
+.feeding-time-group.is-confirmed {
+  background: #edf5e8;
+  border-color: #b7cbb0;
+}
+.feeding-time-group.is-pending {
+  background: #fffefa;
+}
+.feeding-time-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.feeding-time-heading h4 {
+  margin: 0;
+}
+.feeding-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.feeding-status.confirmed {
+  background: #d6e9cd;
+  color: #365b2e;
+}
+.feeding-status.pending {
+  background: #f3eddd;
+  color: #77603b;
+}
+.feeding-legacy-note {
+  color: #49603f;
+  font-size: 13px;
+}
+.feeding-time-group.is-confirmed .action-launcher > .button {
+  background: transparent;
+  border-color: #b7cbb0;
+  color: #49603f;
+}
