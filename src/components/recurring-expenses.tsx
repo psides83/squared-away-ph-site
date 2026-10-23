@@ -215,9 +215,10 @@ export function RecurringExpenses({
           generated bill does not recreate it or rewind the schedule.
         </p>
         <p>
-          This workflow is operator-started. The automatic invoice scheduler
-          does not generate expenses. Amounts are estimates to review on the
-          saved expense; no payment or stock receipt is assumed.
+          Create bills manually here, or enable daily creation in the Automatic
+          creation tab. Automatic expenses have their own setting, separate from
+          customer invoicing. Amounts are estimates to review on the saved
+          expense; no payment or stock receipt is assumed.
         </p>
       </HelpPanel>
       {!rows.length && (

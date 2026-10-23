@@ -76,3 +76,34 @@ export async function recurringExpenseAction(
     `/admin/expenses/recurring?${error ? `error=${encodeURIComponent(error)}` : `success=${operation === "skip" ? "Occurrence+skipped.+No+expense+created." : "Recurring+expense+schedule+saved."}`}`,
   );
 }
+
+export async function configureExpenseAutomation(form: FormData) {
+  const { db } = await requireAdmin();
+  const value = form.get("enabled");
+  let error: string | undefined;
+  if (value !== "true" && value !== "false")
+    error = "Choose whether automatic expenses should be enabled.";
+  else if (
+    value === "true" &&
+    !(
+      process.env.VERCEL_ENV === "production" &&
+      (process.env.CRON_SECRET?.length ?? 0) >= 32 &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)
+    )
+  )
+    error =
+      "Complete production scheduler setup before enabling automatic expenses.";
+  else {
+    const result = await db.rpc("configure_expense_automation", {
+      p_enabled: value === "true",
+    });
+    if (result.error)
+      error =
+        "Automatic expense settings could not save. Check the latest migration.";
+  }
+  revalidatePath("/admin/expenses/recurring");
+  redirect(
+    `/admin/expenses/recurring?${error ? `error=${encodeURIComponent(error)}` : "success=Automatic+expense+setting+saved."}#expenses-automation`,
+  );
+}

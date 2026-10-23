@@ -23,7 +23,7 @@ export async function GET(request: Request) {
         },
       });
       const { data, error } = await db
-        .rpc("run_scheduled_billing")
+        .rpc("run_scheduled_automations")
         .abortSignal(AbortSignal.timeout(45000));
       if (error || !data?.state) throw new Error("Billing worker failed");
       return data;

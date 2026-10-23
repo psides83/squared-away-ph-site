@@ -8,6 +8,11 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+### Automatic creation of recurring unpaid expense bills
+
+- Recurring expenses now has Schedules and Automatic creation tabs with a separate off-by-default administrator enable/disable setting. The existing production daily endpoint calls a service-only coordinator for independent invoice and expense workers. Invoice automation can remain off while expenses run, and vice versa.
+- Expense runs create at most one due occurrence per active schedule per Chicago business date, up to 50 schedules ordered by oldest dates. Existing row/version/request protections are reused so manual preparation, skips and automatic creation share one sequence. Generated bills remain unpaid; no receipts, inventory, payments or charge-backs are inferred. Paused/future/ended schedules are excluded. Per-schedule failures roll back independently; failed schedules retry on later days. Daily deduplication, removed-administrator blocking, private run history, expense/schedule links, last-check status and a 36-hour stale warning are implemented. Deployment credentials, migration application and explicit enablement remain separate setup work.
+
 ### Protected correction of the latest inventory purchase entry
 
 - Inventory ledger offers a deliberate Correct purchase entry editor for quantity/unit/total-cost mistakes. The database permits replacement only when no later product movement exists; equal timestamps conservatively block ambiguous recording order. The correction atomically voids the original expense, removes exactly its saved stock/value, adds a reversal and corrected purchase, and records an administrator-only audit with original/replacement links. Existing invoice/shared-cost protections remain enforced; failed replacements roll back completely.
@@ -62,7 +67,7 @@ Features in this section are present in the application source. A feature being 
 
 - Create/view/edit/delete stays with arrival/departure dates, one billing customer, individual monthly rates, billing day (1–31), private agreement notes, and a recorded partial-month policy.
 - Database prevention of overlapping stays for a horse and retention of historical billing assignments.
-- Stay terms support reviewed invoice drafts. Automatic scheduling remains planned.
+- Stay terms support reviewed invoice drafts. Daily automatic scheduling is implemented above; deployment setup and enablement remain separate.
 
 ### Reminders
 
@@ -265,7 +270,7 @@ Features in this section are present in the application source. A feature being 
 - Draft invoice Charges tabs show separate feed/boarding reviews for actual-cost agreements and the invoice period. Administrators explicitly confirm all relevant records and charges, including intentional zero costs, and enter a review note. They can reopen reviews; recent audit events remain visible on issued invoices.
 - Reviews retain a source/agreement/charge snapshot. New/reversed feed, changed boarding assignments/claims, stay dates/customer changes, or changed service lines make a prior review stale. Boarding review conservatively includes all assigned stay costs, including dates outside the invoice period; the UI makes this explicit.
 - Guarded database finalization requires every applicable review to match current records and rejects unbilled feed/eligible boarding costs. Review writes are administrator-only, retry-safe for unchanged state, and audited. Direct helper/table writes are denied. Explicit manual finalization retains its existing behavior.
-- The recurring preparation engine below uses the guarded path after verifying training calendars, service agreements, rates, source reservations, and billing-cycle coverage. Unattended background scheduling remains planned.
+- The recurring preparation engine below uses the guarded path after verifying training calendars, service agreements, rates, source reservations, and billing-cycle coverage. Daily unattended scheduling is implemented above; production setup and verification remain separate.
 
 ### Recurring billing preparation
 
@@ -274,7 +279,7 @@ Features in this section are present in the application source. A feature being 
 - Prepare a due cycle on demand. The saved cycle and expected-period submission prevent duplicate invoices, repeated charges, and accidental advancement on retry. Multi-month training/monthly feed/board portions use each calendar month's denominator and round once per service, with a visible proration breakdown. Training uses only classified worked/rest days; monthly feed/board uses physical boarding days, including non-billable training days.
 - Complete prepared invoices finalize through the actual-cost review guard. Missing classifications/agreements/terms, manual/no-proration policies, changed rates/terms/service charges, source conflicts, or missing actual-cost reviews retain a draft with a reason. Rechecking reuses that draft. Actual-cost source additions generate incremental unbilled lines and require a new readiness review.
 - Voided cycles require an explicit reasoned skip before continuing; they are not automatically replaced. Skipped period, actor, timestamp, original invoice, and reason remain retained. Private builders and cycle writes are denied to clients; all operations require administrator access.
-- Preparation is operator-started; no unattended job or automatic email delivery has been configured. Those remain planned.
+- Preparation can be operator-started or run through the implemented daily worker. Production scheduler setup/verification remain separate; automatic email delivery remains planned.
 
 ### Reminder follow-up and horse context
 
@@ -294,7 +299,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Expenses, receipts, billing, and profitability
 
-- Unattended generation of recurring expense bills; operator-started due occurrences are implemented above. Purchase corrections after downstream movements, opening/inbound-adjustment corrections, and actual supplier return/refund workflows remain planned. Latest untouched purchase entry replacement is implemented above.
+- Purchase corrections after downstream movements, opening/inbound-adjustment corrections, and actual supplier return/refund workflows. Latest untouched purchase entry replacement is implemented above.
 - Delivered scheduler failure alerts, run-history retention cleanup, and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
@@ -372,9 +377,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Remaining admin expense/reporting improvements (protected purchase corrections and optional unattended expense generation) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Remaining admin expense/reporting improvements (downstream purchase corrections and reimbursement breakdowns) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Automatic-expense increment (October 22, 2026): migration `20261022003400_scheduled_expenses.sql` and the updated production coordinator are implemented. All 142 tests pass, including independent opt-in, invoice-off/expense-on operation, unpaid/cash/stock separation, daily deduplication, one-occurrence backlog advancement, manual sequence integration, void retention, paused/future/end exclusion, per-schedule failure isolation, private history and removed-administrator blocking. Desktop/390-pixel sample previews verify controls, collapsed run details and expense/schedule links. TypeScript and production build pass. Remote migration, production credentials/schedule, explicit enablement and actual automatic expense creation remain unverified; no production records or automation settings changed.
 
 - Latest-purchase correction increment (October 22, 2026): migration `20261022003300_purchase_entry_corrections.sql` adds protected, audited replacement. All 141 tests pass, including exact stock/value removal, retained original records/payment dates, cash restatement without double counting, rollback of invalid replacements, shared-cost allocation guards, retry/mismatched-request behavior, replacement correction, downstream-activity rejection, and administrator privacy. Desktop/390-pixel sample previews verify compact money/quantity fields, padding and whole-button labels. TypeScript and production build pass. Remote migration, authenticated production corrections and real receipt access remain unverified; no production records were changed. Corrections after downstream activity and supplier returns remain planned.
 
