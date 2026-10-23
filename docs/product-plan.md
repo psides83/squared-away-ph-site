@@ -8,6 +8,9 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Automatic scheduler-log retention: daily coordination removes up to 500 expired logs per worker per invocation, including when both automations are off. Completed runs are retained for 90 days; errors, blocked runs and billing review results for 365 days. The latest run, current/future business dates and unfinished runs are preserved. Cleanup is service-only and isolated from each worker; its failure marks the coordinator result as an error. Financial records, occurrence cursors and source/audit histories are untouched.
+
+
 ### Private horse videos
 
 - Horse files include a deliberate Upload video editor for MP4, MOV and WebM clips up to 50 MiB. Browser-side container-header/size checks precede a metadata-only administrator preparation action. Direct TUS uploads use six-MiB chunks, scoped signed upload tokens, progress, automatic network retries and retry/resume within the open editor. The app server never receives the video bytes. A failed attachment can retry without resending an already uploaded clip; closing/reloading the editor does not preserve local retry state.
@@ -323,7 +326,7 @@ Features in this section are present in the application source. A feature being 
 ### Expenses, receipts, billing, and profitability
 
 - Purchase corrections after downstream movements, opening/inbound-adjustment corrections, and actual supplier return/refund workflows. Latest untouched purchase entry replacement is implemented above.
-- Delivered scheduler failure alerts, run-history retention cleanup, and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
+- Delivered scheduler failure alerts and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
 #### Feed, boarding, and profitability details
@@ -403,6 +406,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream purchase corrections and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Scheduler-retention increment (October 23, 2026): migration `20261023003800_automation_retention.sql` adds bounded service-only cleanup to the existing daily coordinator. Local database tests verify retention windows, preserved latest/unfinished runs, repeated cleanup, batching and denied administrator/anonymous invocation. All 151 tests, TypeScript checks and the production build pass; an injected cleanup failure also confirms isolated error reporting. Remote migration and production scheduling remain unverified; no production records changed.
 
 - Private-video increment (October 23, 2026): migration `20261023003700_horse_videos.sql` adds the separate private bucket, prepared intents, metadata-verified idempotent attachment and video routing. All 150 tests pass, including MP4/MOV/WebM header checks, bounds, endpoint derivation, preparation retries, missing/mismatched stored metadata, single attachment/audit, private defaults, storage write denial, publication and manual-access revocation. TypeScript and production build pass. Desktop/390-pixel previews verify compact fields, file-picker styling and inline required errors. No real media was uploaded. Remote migration/global Storage limits, actual TUS transfers/retries, signed-link playback/expiry, codec/device compatibility and production sharing remain unverified. Cross-refresh resume, orphan cleanup and transcoding remain planned.
 
