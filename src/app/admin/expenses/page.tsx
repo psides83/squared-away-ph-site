@@ -124,6 +124,11 @@ export default async function Expenses({
         }
         success={params.success}
       />
+      <div className="row-actions">
+        <Link className="button secondary" href="/admin/expenses/recurring">
+          Recurring expenses
+        </Link>
+      </div>
       <p className="notice">
         Buying feed, hay, or supplements for stock?{" "}
         <Link className="inline-link" href="/admin/inventory">

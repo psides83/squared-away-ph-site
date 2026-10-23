@@ -3530,3 +3530,9 @@ input[type="search"]::-webkit-search-decoration {
   gap: 8px;
   align-items: center;
 }
+
+.row-actions > .action-launcher {
+  margin: 0;
+  display: inline-flex;
+  flex-shrink: 0;
+}

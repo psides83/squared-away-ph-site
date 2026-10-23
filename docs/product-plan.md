@@ -8,6 +8,11 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+### Recurring expense schedules and unpaid bills
+
+- Expenses links to recurring schedules with weekly, monthly, quarterly and yearly frequencies, first/last dates, pause/resume, editable expected amounts/categories/vendors, optional horse and customer charge-back eligibility. Month-end/leap-day schedules retain their original anchor. After the first occurrence, frequency/start changes use a new schedule to preserve the existing sequence.
+- Deliberate Create due bill records one unpaid expense for review, receipt attachment, payment and existing charge-back workflows. No cash or inventory change is assumed. Version checks, row locks and occurrence request IDs prevent stale/duplicate submissions. Skip requires a saved reason; voiding a bill retains its occurrence without recreating it. Latest five outcomes appear on each schedule; generated expense records link back to their source. Changing schedule terms affects future bills only.
+
 ### Daily automatic recurring billing
 
 - Production-only authenticated Vercel daily endpoint and service-only database worker process enabled recurring agreements, at most one cycle per agreement per business date (25 agreements per run), oldest billing dates first. Existing preparation, source reservations and readiness-guarded finalization remain authoritative. Review drafts retry later; voided cycles require administrator decisions. Transaction locks and daily run records prevent duplicate invocations; per-stay failures roll back independently.
@@ -284,7 +289,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Expenses, receipts, billing, and profitability
 
-- Recurring expense scheduling and purchase-cost/inbound-stock correction workflows beyond the current protected purchase records.
+- Unattended generation of recurring expense bills; operator-started due occurrences are implemented above. Purchase-cost/inbound-stock correction workflows beyond the current protected purchase records remain planned.
 - Delivered scheduler failure alerts, run-history retention cleanup, and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
@@ -362,9 +367,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Remaining admin expense/reporting improvements (recurring expenses and protected purchase corrections) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Remaining admin expense/reporting improvements (protected purchase corrections and optional unattended expense generation) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Recurring-expense increment (October 22, 2026): migration `20261022003200_recurring_expenses.sql` implements operator-started unpaid bills, schedules and occurrence history. All 140 tests pass, including calendar anchors, retry/stale protections, pause/resume, reasoned skips, future/end bounds, retained old amounts, void history, unpaid cash exclusion, unchanged inventory and administrator privacy. Local desktop/390-pixel previews verify deliberate editing, compact fields, collapsed history and whole-button wrapping; action-launcher margins are removed inside shared action rows to align controls. TypeScript and production build pass. Remote migration, authenticated production saves/receipt follow-up and physical-device behavior remain unverified. No production records changed. Unattended expense generation remains planned.
 
 - Daily billing scheduler increment (October 22, 2026): migration `20261022003100_scheduled_billing.sql`, daily Vercel configuration and production-only endpoint are implemented, default off. All 138 tests pass, including authorization/configuration rejection, default-off behavior, calendar/actual-cost draft blockers, later completion, daily deduplication, private run history, removed-admin blocking, per-stay rollback and restored authorization context. Desktop/390-pixel previews verify controls, collapsed run history, confirmation cancellation and review links with sample data. TypeScript and production build pass. Production server credentials, migration application, registered schedule, administrator enablement, and an actual daily run remain unverified. No production invoices or settings were changed.
 

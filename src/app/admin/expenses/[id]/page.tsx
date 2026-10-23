@@ -27,21 +27,27 @@ export default async function ExpenseRecord({
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
     notFound();
-  const [expense, categories, horses, receipts, followup] = await Promise.all([
-    db
-      .from("expenses")
-      .select("*,inventory_movements(id,product_id)")
-      .eq("id", id)
-      .maybeSingle(),
-    db.from("expense_categories").select("id,name"),
-    db.from("horses").select("id,barn_name"),
-    db
-      .from("expense_receipts")
-      .select("id,file_name,size_bytes")
-      .eq("expense_id", id)
-      .order("created_at"),
-    db.rpc("expense_followup", { p_expenses: [id] }),
-  ]);
+  const [expense, categories, horses, receipts, followup, recurring] =
+    await Promise.all([
+      db
+        .from("expenses")
+        .select("*,inventory_movements(id,product_id)")
+        .eq("id", id)
+        .maybeSingle(),
+      db.from("expense_categories").select("id,name"),
+      db.from("horses").select("id,barn_name"),
+      db
+        .from("expense_receipts")
+        .select("id,file_name,size_bytes")
+        .eq("expense_id", id)
+        .order("created_at"),
+      db.rpc("expense_followup", { p_expenses: [id] }),
+      db
+        .from("recurring_expense_occurrences")
+        .select("template_id,snapshot")
+        .eq("expense_id", id)
+        .maybeSingle(),
+    ]);
   if (!expense.data && !expense.error) notFound();
   const e = expense.data;
   const owners = e?.horse_id
@@ -104,6 +110,24 @@ export default async function ExpenseRecord({
             : "Expense details, receipts, and billing follow-up."
         }
       />
+      {recurring.data && (
+        <p className="notice">
+          Created from recurring schedule:{" "}
+          <Link
+            className="inline-link"
+            href={`/admin/expenses/recurring#recurring-${recurring.data.template_id}`}
+          >
+            {recurring.data.snapshot?.name || "View schedule"}
+          </Link>
+          . Changes to this bill do not change future scheduled amounts.
+        </p>
+      )}
+      {recurring.error && (
+        <p className="notice">
+          Recurring schedule source could not be checked. Confirm the latest
+          migration.
+        </p>
+      )}
       <Notice
         error={
           expense.error

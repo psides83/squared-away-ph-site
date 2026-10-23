@@ -221,3 +221,7 @@ Monthly amounts follow saved source days and calendar-month weights; actual-cost
 ## Daily automatic billing
 
 See [automatic-billing.md](docs/automatic-billing.md) for migration 031, required production-only server credentials, Vercel's daily schedule, explicit administrator enablement, run history, and verification. The feature defaults off. Existing calendar/actual-cost readiness checks remain mandatory; production scheduling has not been verified merely by deploying this code.
+
+## Recurring expense bills
+
+Apply migration `20261022003200_recurring_expenses.sql`. **Expenses → Recurring expenses** holds regular bill schedules. Create a due bill to save an unpaid expense, then review its actual amount, attach the receipt and mark it paid normally. Weekly/monthly/quarterly/yearly schedules support pause/resume and reasoned skips. Monthly anchors return to their original day after short months. Editing the schedule affects future bills; generated bills keep their saved values and can be reviewed through their expense records. Voiding one does not recreate it. No inventory receipt or payment is inferred. Automatic invoice scheduling does not generate expenses; unattended expense generation remains planned.
