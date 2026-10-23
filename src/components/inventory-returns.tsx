@@ -97,8 +97,7 @@ export async function InventoryReturns({
           The difference between refunds and stock value is an inventory
           comparison, not an additional cash profit entry. This records physical
           returns and received money; supplier credits on account, expected
-          refunds, exchange purchases and return-document uploads are not
-          tracked here.
+          refunds and exchange purchases are not tracked here.
         </p>
         <p>
           Use correction actions only for mistaken records. Refund reversals

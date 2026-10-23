@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Paperclip } from "lucide-react";
 import { money, dateLabel } from "@/lib/format";
 import { ActionPanel } from "@/components/action-panel";
 import { ConfirmButton } from "@/components/confirm-button";
@@ -60,6 +61,15 @@ export function SupplierReturnList({
             {r.cancelled_at && <span className="tag">Entry cancelled</span>}
           </div>
           <div className="record-form">
+            <div className="row-actions">
+              <Link
+                className="button secondary"
+                href={`/admin/inventory/returns/${r.id}/documents`}
+              >
+                <Paperclip size={17} aria-hidden="true" />
+                Documents
+              </Link>
+            </div>
             <p>
               {Number(r.quantity).toLocaleString("en-US", {
                 maximumFractionDigits: 6,

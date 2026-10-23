@@ -299,3 +299,7 @@ Apply `20261023004600_weekly_riding_schedules.sql` for administrator-only recurr
 ### Daily feeding history (migration 047)
 
 Apply `20261023004700_daily_feeding_history.sql` before using the redesigned Feeding → History tab. It pages through seven complete recorded days, each grouped by feeding time and confirmed horse. Undone records remain in collapsed Corrections and are excluded from active counts. Recorded/undo times use Central Time. Extras and manual stock corrections remain in stock movement history. Remote migration and production verification remain unverified.
+
+### Supplier return documents (migration 048)
+
+Apply `20261023004800_supplier_return_documents.sql` to create the private `supplier-return-documents` bucket, metadata, correction history and administrator-only operations. Open Inventory → Returns & refunds → Documents on a return. Supported JPEG/PNG/WebP/PDF files are limited to 3 MB; content hashes prevent duplicate attachments on the same return. Documents can be archived/restored with reasons, and remain available on cancelled returns. Downloads require admin authentication and use 60-second links. Failed metadata attachment leaves the unregistered object available for a content-verified retry rather than risking deletion during another concurrent attachment. Automatic orphan cleanup, actual uploads/signed links and remote migration remain unverified.

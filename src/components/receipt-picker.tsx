@@ -3,7 +3,13 @@ import { useId, useRef, useState } from "react";
 import { Camera, Paperclip, X } from "lucide-react";
 import { receiptLimit } from "@/lib/inventory";
 
-export function ReceiptPicker({ required = false }: { required?: boolean }) {
+export function ReceiptPicker({
+  required = false,
+  label = "Receipt",
+}: {
+  required?: boolean;
+  label?: string;
+}) {
   const input = useRef<HTMLInputElement>(null);
   const help = useId();
   const [name, setName] = useState("");
@@ -93,14 +99,16 @@ export function ReceiptPicker({ required = false }: { required?: boolean }) {
   }
   return (
     <fieldset className="receipt-picker">
-      <legend>Receipt {required ? "" : "(optional)"}</legend>
+      <legend>
+        {label} {required ? "" : "(optional)"}
+      </legend>
       <input
         ref={input}
         className="receipt-file-input"
         data-app-trigger={help + "-choose"}
         type="file"
         name="receipt"
-        aria-label="Receipt file"
+        aria-label={`${label} file`}
         aria-describedby={help}
         required={required}
         accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -130,7 +138,7 @@ export function ReceiptPicker({ required = false }: { required?: boolean }) {
           <button
             className="text-button"
             type="button"
-            aria-label="Remove selected receipt"
+            aria-label={`Remove selected ${label.toLowerCase()}`}
             onClick={() => {
               if (input.current) input.current.value = "";
               setName("");
@@ -144,7 +152,7 @@ export function ReceiptPicker({ required = false }: { required?: boolean }) {
         {busy
           ? "Preparing photo…"
           : name ||
-            "Use your camera or choose a JPEG, PNG, WebP, or PDF. Receipt stays private. Up to 3 MB after photo preparation."}
+            `Use your camera or choose a JPEG, PNG, WebP, or PDF. ${label} stays private. Up to 3 MB after photo preparation.`}
       </p>
       {error && (
         <p className="notice error" role="alert">
