@@ -2,7 +2,11 @@ import Link from "next/link";
 import { ActionPanel } from "@/components/action-panel";
 import { Field } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
-import { confirmFeeding } from "@/app/admin/inventory/actions";
+import { ConfirmButton } from "@/components/confirm-button";
+import {
+  confirmFeeding,
+  undoFeedingConfirmation,
+} from "@/app/admin/inventory/actions";
 import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
 import { today } from "@/lib/format";
 
@@ -31,7 +35,11 @@ export function SavedRations({
   times: FeedingTime[];
   products: { id: string; name: string }[];
   units: { id: string; label: string }[];
-  todayConfirmations: { horse_id: string; feeding_time_id: string | null }[];
+  todayConfirmations: {
+    id: string;
+    horse_id: string;
+    feeding_time_id: string | null;
+  }[];
 }) {
   const summary = (r: Ration) =>
     `${Number(r.quantity)} ${units.find((u) => u.id === r.unit_id)?.label ?? ""} · ${products.find((p) => p.id === r.product_id)?.name ?? "Unknown product"}`;
@@ -75,7 +83,7 @@ export function SavedRations({
                       ),
                     );
                   const active = groupLines.some((r) => r.active);
-                  const confirmed = todayConfirmations?.some(
+                  const confirmed = todayConfirmations?.find(
                     (c) =>
                       c.horse_id === h.id &&
                       (c.feeding_time_id === g.id ||
@@ -112,10 +120,49 @@ export function SavedRations({
                         <>
                           <p className="muted">
                             {confirmed
-                              ? "Already recorded today (this feeding or a full-day total)"
+                              ? confirmed.feeding_time_id
+                                ? "Confirmed today"
+                                : "Confirmed today as a full-day feeding"
                               : "Not confirmed today"}
                           </p>
-                          {!legacyActive.has(h.id) && (
+                          {confirmed && (
+                            <ActionPanel
+                              id={`undo-feeding-${h.id}-${g.id}`}
+                              label="Undo confirmation"
+                            >
+                              <form
+                                action={undoFeedingConfirmation}
+                                className="record-form"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="confirmation_id"
+                                  value={confirmed.id}
+                                />
+                                <p>
+                                  Undo {h.barn_name} ·{" "}
+                                  {confirmed.feeding_time_id
+                                    ? g.label
+                                    : "full-day feeding"}
+                                  . This restores all stock deducted by this
+                                  confirmation and retains its history.
+                                </p>
+                                <Field
+                                  name="reason"
+                                  label="Correction reason"
+                                  required
+                                  maxLength={5000}
+                                />
+                                <ConfirmButton
+                                  destructive
+                                  message="Undo this feeding confirmation and restore its stock? Only use this if the feeding was recorded by mistake."
+                                >
+                                  Undo confirmation
+                                </ConfirmButton>
+                              </form>
+                            </ActionPanel>
+                          )}
+                          {!confirmed && !legacyActive.has(h.id) && (
                             <ActionPanel
                               id={`feeding-${h.id}-${g.id}`}
                               label={`Confirm ${g.label}`}

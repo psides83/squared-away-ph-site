@@ -200,6 +200,23 @@ export async function confirmFeeding(form: FormData) {
     `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Feeding+confirmed.+Repeated+confirmation+does+not+deduct+stock+again."}`,
   );
 }
+export async function undoFeedingConfirmation(form: FormData) {
+  const { db } = await requireAdmin();
+  let issue: string | undefined;
+  try {
+    const { error } = await db.rpc("undo_feeding_confirmation", {
+      p_confirmation: identifier(form, "confirmation_id", true),
+      p_reason: text(form, "reason", true, 5000),
+    });
+    issue = message(error);
+  } catch (e) {
+    issue = e instanceof Error ? e.message : "Could not undo feeding.";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(
+    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Confirmation+undone.+Stock+restored."}`,
+  );
+}
 export async function reverseConsumption(form: FormData) {
   const { db } = await requireAdmin();
   let issue: string | undefined;

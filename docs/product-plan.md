@@ -8,6 +8,8 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Confirmed feeding slots hide Confirm and offer a deliberate Undo confirmation editor with a required reason and styled confirmation. Undo restores all stock movements atomically, retains the original confirmation and correction history, respects invoice reversal protections, and permits a fresh confirmation. Retries of an old undo never undo a newer feeding. Full-day legacy undo clearly applies to the whole confirmation.
+
 - Inventory navigation cleanup: supplier returns and refunds are an inventory tab; existing return links, pagination and action redirects open that tab. Product editing stays on its card, removing the duplicate selected-product launcher below the grid. Add product appears above the list, and card actions wrap as whole buttons without wrapping their text. No database migration required.
 
 - Inventory Record stock navigation fix: shared tab navigation reveals a mounted target panel for same-page client links before anchor scrolling, follows route/query changes and restores matching tabs on Back/Forward. The page-level stock button and per-product stock links now reveal the transaction form, including when selecting another product or repeating an action. Modified/new-tab clicks and external links retain normal browser behavior; switching sections keeps mounted form values.
@@ -428,6 +430,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream quantity corrections, supplier credit/document refinements and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Feeding undo increment (October 23, 2026): migration `20261023004400_undo_feeding.sql` is required for retained cancellation history, active-slot uniqueness and the administrator-only undo operation. Local migration/regression tests, all 159 tests and the production build pass. Remote migration, live UI and physical-device verification remain unverified; no production feeding records were changed.
 
 - Inventory tab/action cleanup: production build and all 158 automated tests passed. No schema changes. Visual verification on physical devices and production deployment verification remain outstanding.
 

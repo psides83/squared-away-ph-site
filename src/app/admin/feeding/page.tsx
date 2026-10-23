@@ -46,7 +46,8 @@ export default async function Feeding({
       .limit(50),
     db
       .from("feeding_confirmations")
-      .select("horse_id,feeding_time_id")
+      .select("id,horse_id,feeding_time_id")
+      .is("cancelled_at", null)
       .eq("feeding_date", today()),
     db.from("feeding_times").select("*").order("sort_order").order("name"),
   ]);
@@ -220,9 +221,13 @@ export default async function Feeding({
                             }
                           </strong>
                           <span>
+                            {c.cancelled_at ? "Undone · " : ""}
                             {dateLabel(c.feeding_date)} ·{" "}
                             {c.feeding_time_label ?? "Full-day ration (legacy)"}
                           </span>
+                          {c.cancelled_at && (
+                            <p className="muted">{c.cancellation_reason}</p>
+                          )}
                         </div>
                       ))}
                       {!confirmations.data?.length && (
