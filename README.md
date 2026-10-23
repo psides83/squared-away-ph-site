@@ -61,7 +61,7 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Video uploads, scheduled invoice generation, refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, recurring expenses, purchase-cost/inbound-stock corrections, structured customer care sharing, in-app invitation emails/password recovery, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, purchase corrections after downstream stock activity, other inbound-stock corrections, video transcoding/cross-refresh resume, in-app invitation emails/account creation, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
 
 ## Horse photos and documents
 
@@ -249,3 +249,11 @@ Apply migration `20261022003500_expense_recovery_report.sql`. In an issued invoi
 Apply migration `20261022003600_horse_care.sql`. A horse record’s **Care** tab logs completed care, with private-by-default date/type/summary/provider/details and separate trainer-only notes. Use **Share with customers** deliberately after reviewing its preview; manual horse portal grants still determine access. The customer horses page has separate Progress updates and Care records tabs. Private notes and audit fields are excluded by the customer RPC, and direct tables remain administrator-only.
 
 Unshare before editing. Archive removes a record from the customer view; restore returns it to private. Revisions, retry-safe requests and private before-state events retain history. Visible-from filters use the publication date, consistently with existing progress updates. Lists paginate 25 records at a time. Future tasks belong in Reminders; care entries do not generate invoices, expenses or inventory entries. Remote migration and authenticated production sharing require separate verification.
+
+## Private horse videos
+
+Apply `20261023003700_horse_videos.sql`. **Horse files → Upload video** accepts MP4/MOV/WebM clips up to 50 MiB, directly to a separate private video bucket with TUS resumable uploads. Keep the editor open for retry/resume; attachment retries reuse the completed object. Production Storage’s global limit must permit the bucket’s 50-MiB limit. The app server only handles metadata. The bucket and table checks preserve the existing 3-MiB photo/document limits.
+
+Videos begin private. Review and publish them through existing horse-file controls; active manual horse portal grants determine customer access. Metadata size/type is checked at attachment, and retrying does not duplicate file/audit records. Inline playback uses the browser/device’s media capabilities; no transcoding is performed. Signed video access lasts up to five minutes, so revocation cannot invalidate a previously issued link immediately; reload requests fresh authorization. Unsupported codecs can be downloaded for viewing elsewhere.
+
+Incomplete/abandoned uploads and prepared intents may remain private after closing an editor; automated cleanup and cross-refresh resume are not implemented. Use a designated non-production project for actual upload tests. No real media is uploaded by local build/test checks. Provider reference: [Supabase resumable uploads](https://supabase.com/docs/guides/storage/uploads/resumable-uploads).

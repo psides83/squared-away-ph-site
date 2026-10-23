@@ -11,17 +11,17 @@ export async function GET(
     return new NextResponse("File not found", { status: 404, headers });
   const file = await db
     .from("horse_files")
-    .select("object_path,file_name")
+    .select("object_path,file_name,kind")
     .eq("id", id)
     .maybeSingle();
   if (file.error || !file.data)
     return new NextResponse("File not found", { status: 404, headers });
   const download = new URL(request.url).searchParams.get("download") === "1";
   const link = await db.storage
-    .from("horse-files")
+    .from(file.data.kind === "video" ? "horse-videos" : "horse-files")
     .createSignedUrl(
       file.data.object_path,
-      60,
+      file.data.kind === "video" ? 300 : 60,
       download ? { download: file.data.file_name } : undefined,
     );
   if (link.error || !link.data)

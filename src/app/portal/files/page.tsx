@@ -1,3 +1,4 @@
+import { HorseVideoPlayer } from "@/components/horse-video-player";
 import { AppSelect } from "@/components/app-select";
 import Link from "next/link";
 import { requireCustomer } from "@/lib/auth";
@@ -21,7 +22,7 @@ export default async function CustomerFiles({
     <>
       <PageHeading
         eyebrow="A CLOSER LOOK"
-        title="Photos & documents"
+        title="Photos, videos & documents"
         description="Files your trainer has deliberately shared with you for your horses."
       />
       {files.error || horses.error ? (
@@ -65,6 +66,12 @@ export default async function CustomerFiles({
                       src={`/portal/files/${f.id}`}
                       alt={f.title}
                       loading="lazy"
+                    />
+                  )}
+                  {f.kind === "video" && (
+                    <HorseVideoPlayer
+                      src={`/portal/files/${f.id}`}
+                      title={f.title}
                     />
                   )}
                   <p className="eyebrow">

@@ -5,7 +5,7 @@ import { LayoutDashboard, Fence, Images, ReceiptText } from "lucide-react";
 const links = [
   { href: "/portal", label: "Overview", icon: LayoutDashboard },
   { href: "/portal/horses", label: "Your horses", icon: Fence },
-  { href: "/portal/files", label: "Photos & docs", icon: Images },
+  { href: "/portal/files", label: "Files", icon: Images },
   { href: "/portal/billing", label: "Billing", icon: ReceiptText },
 ];
 export function CustomerNavigation() {

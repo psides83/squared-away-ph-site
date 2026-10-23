@@ -1,3 +1,5 @@
+import { HorseVideoPlayer } from "@/components/horse-video-player";
+import { HorseVideoUpload } from "@/components/horse-video-upload";
 import { FilePicker } from "@/components/file-picker";
 import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
@@ -53,7 +55,7 @@ export default async function HorseFiles({
     <>
       <PageHeading
         eyebrow="THE RECORD BEHIND THE HORSE"
-        title="Horse photos & documents"
+        title="Horse photos, videos & documents"
         description="Keep files private, then deliberately share selected files with customers."
       />
       <Notice
@@ -70,6 +72,12 @@ export default async function HorseFiles({
         invoices, payment records, and sensitive financial receipts in their
         billing records, rather than sharing them with co-owners here.
       </p>
+      <ActionPanel id="upload-horse-video" label="Upload video">
+        <div className="panel-heading">
+          <h2>Upload a private video</h2>
+        </div>
+        <HorseVideoUpload horses={horses.data ?? []} horse={horse} />
+      </ActionPanel>
       <ActionPanel id="upload-file" label="Upload a private file">
         <div className="panel-heading">
           <h2>Upload a private file</h2>
@@ -113,8 +121,8 @@ export default async function HorseFiles({
           </label>
           <SubmitButton>Upload privately</SubmitButton>
           <p className="muted">
-            Choose Document for PDFs. Video uploads are not available yet.
-            Archived files are retained for owner review.
+            Choose Document for PDFs. Use Upload video for MP4, MOV or WebM
+            clips. Archived files are retained for owner review.
           </p>
         </form>
       </ActionPanel>
@@ -145,6 +153,12 @@ export default async function HorseFiles({
                 src={`/admin/files/${file.id}`}
                 alt={file.title}
                 loading="lazy"
+              />
+            )}
+            {file.kind === "video" && (
+              <HorseVideoPlayer
+                src={`/admin/files/${file.id}`}
+                title={file.title}
               />
             )}
             <div className="row-actions">

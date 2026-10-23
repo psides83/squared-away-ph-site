@@ -8,6 +8,12 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+### Private horse videos
+
+- Horse files include a deliberate Upload video editor for MP4, MOV and WebM clips up to 50 MiB. Browser-side container-header/size checks precede a metadata-only administrator preparation action. Direct TUS uploads use six-MiB chunks, scoped signed upload tokens, progress, automatic network retries and retry/resume within the open editor. The app server never receives the video bytes. A failed attachment can retry without resending an already uploaded clip; closing/reloading the editor does not preserve local retry state.
+- A separate private `horse-videos` bucket preserves existing photo/document limits. Attachment verifies stored object size/type against a private prepared intent, is idempotent and creates one file/audit record only after upload. New videos stay private and use existing deliberate publication/archive and manual customer horse access rules. No customer upload permission is added.
+- Admin file review and customer file cards offer inline device playback and download, with a styled reload action for expired access/unsupported media. Video download links last up to five minutes; existing photo/document links remain one minute. Already issued signed links retain access until expiry. Playback depends on device codecs; no transcoding or thumbnails are generated. Production bucket/global limits, upload behavior and real-device playback require separate verification.
+
 ### Structured horse care and deliberate customer sharing
 
 - Horse records have a Care tab for completed farrier, veterinary, vaccination, deworming, dental and other care. Entries include date, summary, optional provider, customer-shareable details and a separate trainer-only notes field. New entries start private; editors open deliberately. Future care stays in Reminders rather than being recorded as completed care. Records do not create billing, stock changes or treatment recommendations.
@@ -330,7 +336,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Horse records and customer portal
 
-- Video uploads. Recorded ownership/customer-link history is implemented; historical legal sale dates are not inferred.
+- Video transcoding, generated thumbnails, recovery/cleanup of abandoned upload intents and objects, and resume after closing/reloading the editor. Private video upload/playback and recorded ownership/customer-link history are implemented; historical legal sale dates are not inferred.
 - In-app email invitations/account creation, including invite-type links. Structured customer-shared care, existing-account password setting/recovery, photo/document sharing and published updates are implemented above.
 
 ### Marketing website
@@ -397,6 +403,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream purchase corrections and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Private-video increment (October 23, 2026): migration `20261023003700_horse_videos.sql` adds the separate private bucket, prepared intents, metadata-verified idempotent attachment and video routing. All 150 tests pass, including MP4/MOV/WebM header checks, bounds, endpoint derivation, preparation retries, missing/mismatched stored metadata, single attachment/audit, private defaults, storage write denial, publication and manual-access revocation. TypeScript and production build pass. Desktop/390-pixel previews verify compact fields, file-picker styling and inline required errors. No real media was uploaded. Remote migration/global Storage limits, actual TUS transfers/retries, signed-link playback/expiry, codec/device compatibility and production sharing remain unverified. Cross-refresh resume, orphan cleanup and transcoding remain planned.
 
 - Horse-care increment (October 22, 2026): migration `20261022003600_horse_care.sql` adds care and private audit records plus controlled sharing. All 148 tests pass, including private defaults, idempotent requests, stale revisions, published-edit restrictions, horse immutability, future-date rejection, archive/private restore, explicit co-owner grants, ownership-only denial, publication cutoff, access/account revocation, safe field projection, protected audit tables and 25-row pagination. Desktop/390-pixel sample previews verify action layout, collapsed trainer notes, sharing preview/cancellation and safe customer display. TypeScript and production build pass. Remote migration, authenticated production saves/sharing, and physical-device workflows remain unverified; no production records or grants changed.
 
