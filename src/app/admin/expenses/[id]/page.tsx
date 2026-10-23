@@ -27,27 +27,38 @@ export default async function ExpenseRecord({
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
     notFound();
-  const [expense, categories, horses, receipts, followup, recurring] =
-    await Promise.all([
-      db
-        .from("expenses")
-        .select("*,inventory_movements(id,product_id)")
-        .eq("id", id)
-        .maybeSingle(),
-      db.from("expense_categories").select("id,name"),
-      db.from("horses").select("id,barn_name"),
-      db
-        .from("expense_receipts")
-        .select("id,file_name,size_bytes")
-        .eq("expense_id", id)
-        .order("created_at"),
-      db.rpc("expense_followup", { p_expenses: [id] }),
-      db
-        .from("recurring_expense_occurrences")
-        .select("template_id,snapshot")
-        .eq("expense_id", id)
-        .maybeSingle(),
-    ]);
+  const [
+    expense,
+    categories,
+    horses,
+    receipts,
+    followup,
+    recurring,
+    corrections,
+  ] = await Promise.all([
+    db
+      .from("expenses")
+      .select("*,inventory_movements(id,product_id)")
+      .eq("id", id)
+      .maybeSingle(),
+    db.from("expense_categories").select("id,name"),
+    db.from("horses").select("id,barn_name"),
+    db
+      .from("expense_receipts")
+      .select("id,file_name,size_bytes")
+      .eq("expense_id", id)
+      .order("created_at"),
+    db.rpc("expense_followup", { p_expenses: [id] }),
+    db
+      .from("recurring_expense_occurrences")
+      .select("template_id,snapshot")
+      .eq("expense_id", id)
+      .maybeSingle(),
+    db
+      .from("inventory_purchase_corrections")
+      .select("id,original_expense_id,replacement_expense_id,reason")
+      .or(`original_expense_id.eq.${id},replacement_expense_id.eq.${id}`),
+  ]);
   if (!expense.data && !expense.error) notFound();
   const e = expense.data;
   const owners = e?.horse_id
@@ -110,6 +121,19 @@ export default async function ExpenseRecord({
             : "Expense details, receipts, and billing follow-up."
         }
       />
+      {corrections.data?.map((c) => (
+        <p className="notice" key={c.id}>
+          Purchase entry correction: {c.reason}.{" "}
+          <Link
+            className="inline-link"
+            href={`/admin/expenses/${c.original_expense_id === id ? c.replacement_expense_id : c.original_expense_id}`}
+          >
+            {c.original_expense_id === id
+              ? "View corrected purchase"
+              : "Original purchase & receipts"}
+          </Link>
+        </p>
+      ))}
       {recurring.data && (
         <p className="notice">
           Created from recurring schedule:{" "}
@@ -224,7 +248,8 @@ export default async function ExpenseRecord({
                         <p className="notice">
                           Stock purchase. Quantity and purchase cost are
                           retained with inventory history; purchase-cost
-                          corrections are not available yet.
+                          corrections are available in Inventory only for the
+                          latest purchase before further stock activity.
                         </p>
                       )}
                       <p className="log-notes">

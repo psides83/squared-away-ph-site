@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { preparedReceipt, attachReceipt } from "@/lib/receipt-storage";
 import { requireAdmin } from "@/lib/auth";
-import { choice, dateValue, identifier, text } from "@/lib/validation";
+import { cents, choice, dateValue, identifier, text } from "@/lib/validation";
 import { weightInOunces } from "@/lib/weight-units";
 import { quantity, stockValues } from "@/lib/inventory";
 
@@ -298,5 +298,31 @@ export async function recordBulkFeeding(form: FormData) {
   revalidatePath("/admin", "layout");
   redirect(
     `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=All+feeding+entries+recorded+together."}`,
+  );
+}
+
+export async function correctPurchase(form: FormData) {
+  const { db } = await requireAdmin();
+  let issue: string | undefined;
+  let expense: string | undefined;
+  try {
+    const result = await db.rpc("correct_inventory_purchase", {
+      p_request: identifier(form, "request_id", true),
+      p_original: identifier(form, "original_id", true),
+      p_unit: identifier(form, "unit_id", true),
+      p_quantity: quantity(form),
+      p_cost_cents: cents(form, "cost"),
+      p_reason: text(form, "reason", true, 2000),
+    });
+    if (result.error) throw Error(message(result.error));
+    expense = result.data;
+  } catch (e) {
+    issue = e instanceof Error ? e.message : "Purchase could not be corrected.";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(
+    issue
+      ? `/admin/inventory?error=${encodeURIComponent(issue)}#inventory-ledger`
+      : `/admin/expenses/${expense}?success=Purchase+entry+corrected.+Original+receipts+remain+with+the+voided+expense.`,
   );
 }

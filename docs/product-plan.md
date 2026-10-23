@@ -8,6 +8,11 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+### Protected correction of the latest inventory purchase entry
+
+- Inventory ledger offers a deliberate Correct purchase entry editor for quantity/unit/total-cost mistakes. The database permits replacement only when no later product movement exists; equal timestamps conservatively block ambiguous recording order. The correction atomically voids the original expense, removes exactly its saved stock/value, adds a reversal and corrected purchase, and records an administrator-only audit with original/replacement links. Existing invoice/shared-cost protections remain enforced; failed replacements roll back completely.
+- Original receipts remain on the retained voided expense, linked from the corrected expense record. The replacement keeps the original purchase date/vendor/payment date; its selected unit uses current conversion values. Duplicate requests return the same replacement. A replacement can itself be corrected before subsequent stock activity. This corrects an entry mistake, not an actual supplier return/refund; saved downstream feeding costs cannot be silently changed.
+
 ### Recurring expense schedules and unpaid bills
 
 - Expenses links to recurring schedules with weekly, monthly, quarterly and yearly frequencies, first/last dates, pause/resume, editable expected amounts/categories/vendors, optional horse and customer charge-back eligibility. Month-end/leap-day schedules retain their original anchor. After the first occurrence, frequency/start changes use a new schedule to preserve the existing sequence.
@@ -289,7 +294,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Expenses, receipts, billing, and profitability
 
-- Unattended generation of recurring expense bills; operator-started due occurrences are implemented above. Purchase-cost/inbound-stock correction workflows beyond the current protected purchase records remain planned.
+- Unattended generation of recurring expense bills; operator-started due occurrences are implemented above. Purchase corrections after downstream movements, opening/inbound-adjustment corrections, and actual supplier return/refund workflows remain planned. Latest untouched purchase entry replacement is implemented above.
 - Delivered scheduler failure alerts, run-history retention cleanup, and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
@@ -370,6 +375,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (protected purchase corrections and optional unattended expense generation) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Latest-purchase correction increment (October 22, 2026): migration `20261022003300_purchase_entry_corrections.sql` adds protected, audited replacement. All 141 tests pass, including exact stock/value removal, retained original records/payment dates, cash restatement without double counting, rollback of invalid replacements, shared-cost allocation guards, retry/mismatched-request behavior, replacement correction, downstream-activity rejection, and administrator privacy. Desktop/390-pixel sample previews verify compact money/quantity fields, padding and whole-button labels. TypeScript and production build pass. Remote migration, authenticated production corrections and real receipt access remain unverified; no production records were changed. Corrections after downstream activity and supplier returns remain planned.
 
 - Recurring-expense increment (October 22, 2026): migration `20261022003200_recurring_expenses.sql` implements operator-started unpaid bills, schedules and occurrence history. All 140 tests pass, including calendar anchors, retry/stale protections, pause/resume, reasoned skips, future/end bounds, retained old amounts, void history, unpaid cash exclusion, unchanged inventory and administrator privacy. Local desktop/390-pixel previews verify deliberate editing, compact fields, collapsed history and whole-button wrapping; action-launcher margins are removed inside shared action rows to align controls. TypeScript and production build pass. Remote migration, authenticated production saves/receipt follow-up and physical-device behavior remain unverified. No production records changed. Unattended expense generation remains planned.
 

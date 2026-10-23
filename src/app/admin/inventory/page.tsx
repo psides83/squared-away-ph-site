@@ -10,6 +10,7 @@ import { money, dateLabel, today } from "@/lib/format";
 import { PageHeading, Notice, Field, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { StockEntryForm } from "@/components/stock-forms";
+import { PurchaseCorrectionForm } from "@/components/purchase-correction-form";
 import { saveProduct, reverseConsumption } from "./actions";
 
 export default async function Inventory({
@@ -300,10 +301,12 @@ export default async function Inventory({
                       </div>
                       <p className="record-form muted form-hint">
                         Weighted average costs are applied in recording order.
-                        Purchase corrections and inbound reversals are not
-                        available yet. To correct feeding or waste, reverse it
-                        below, then record the correct amount manually. A daily
-                        confirmation remains confirmed after a correction.
+                        The most recent purchase can be corrected only before
+                        any later stock activity. Earlier purchase corrections
+                        and vendor returns need a separate workflow. To correct
+                        feeding or waste, reverse it below, then record the
+                        correct amount manually. A daily confirmation remains
+                        confirmed after a correction.
                       </p>
                       {movements.data?.map((m) => (
                         <article className="log-entry" key={m.id}>
@@ -349,10 +352,28 @@ export default async function Inventory({
                           {m.expense_id && (
                             <Link
                               className="text-link"
-                              href={`/admin/expenses?edit=${m.expense_id}#receipts`}
+                              href={`/admin/expenses/${m.expense_id}`}
                             >
                               Expense & receipts
                             </Link>
+                          )}
+                          {m.kind === "purchase" && (
+                            <ActionPanel
+                              id={`correct-purchase-${m.id}`}
+                              label="Correct purchase entry"
+                            >
+                              <div className="panel-heading">
+                                <h2>Correct purchase entry</h2>
+                              </div>
+                              <PurchaseCorrectionForm
+                                m={m}
+                                units={
+                                  units.data?.filter(
+                                    (u) => u.product_id === m.product_id,
+                                  ) ?? []
+                                }
+                              />
+                            </ActionPanel>
                           )}
                           {["feeding", "waste", "adjustment_out"].includes(
                             m.kind,
