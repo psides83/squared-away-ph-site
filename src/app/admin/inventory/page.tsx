@@ -56,7 +56,19 @@ export default async function Inventory({
     db.from("horses").select("id,barn_name").order("barn_name"),
     db.from("feeding_times").select("*").order("sort_order").order("name"),
   ]);
+  const returnLinks = movements.data?.length
+    ? await db
+        .from("supplier_returns")
+        .select("id,movement_id,cancelled_at")
+        .in(
+          "movement_id",
+          movements.data.map((m) => m.id),
+        )
+    : { data: [], error: null };
+  const supplierReturnFor = (id: string) =>
+    returnLinks.data?.find((r) => r.movement_id === id);
   const failed = [
+    returnLinks,
     products,
     units,
     balances,
@@ -86,6 +98,11 @@ export default async function Inventory({
         }
         success={params.success}
       />
+      <div className="row-actions">
+        <Link className="text-link" href="/admin/inventory/returns">
+          Supplier returns & refunds
+        </Link>
+      </div>
       {!failed && (
         <>
           <SectionTabs
@@ -332,8 +349,10 @@ export default async function Inventory({
                                 }
                               </p>
                               <h3>
-                                {m.kind.replaceAll("_", " ")} ·{" "}
-                                {Number(m.entered_quantity)} {m.unit_label}
+                                {supplierReturnFor(m.id)
+                                  ? "Supplier return"
+                                  : m.kind.replaceAll("_", " ")}{" "}
+                                · {Number(m.entered_quantity)} {m.unit_label}
                               </h3>
                             </div>
                             <span className="tag">
@@ -360,6 +379,16 @@ export default async function Inventory({
                             {m.ounces_per_unit} oz
                           </p>
                           {m.notes && <p className="log-notes">{m.notes}</p>}
+                          {supplierReturnFor(m.id) && (
+                            <p>
+                              <Link
+                                className="text-link"
+                                href={`/admin/inventory/returns?return=${supplierReturnFor(m.id)?.id}`}
+                              >
+                                Supplier returns & refunds
+                              </Link>
+                            </p>
+                          )}
                           {m.expense_id && (
                             <Link
                               className="text-link"
@@ -415,26 +444,27 @@ export default async function Inventory({
                           )}
                           {["feeding", "waste", "adjustment_out"].includes(
                             m.kind,
-                          ) && (
-                            <details>
-                              <summary>Correct this entry</summary>
-                              <form
-                                action={reverseConsumption}
-                                className="conversion-row"
-                              >
-                                <input name="id" type="hidden" value={m.id} />
-                                <Field
-                                  label="Correction reason"
-                                  name="reason"
-                                  required
-                                  maxLength={5000}
-                                />
-                                <SubmitButton className="text-button">
-                                  Return stock at original cost
-                                </SubmitButton>
-                              </form>
-                            </details>
-                          )}
+                          ) &&
+                            !supplierReturnFor(m.id) && (
+                              <details>
+                                <summary>Correct this entry</summary>
+                                <form
+                                  action={reverseConsumption}
+                                  className="conversion-row"
+                                >
+                                  <input name="id" type="hidden" value={m.id} />
+                                  <Field
+                                    label="Correction reason"
+                                    name="reason"
+                                    required
+                                    maxLength={5000}
+                                  />
+                                  <SubmitButton className="text-button">
+                                    Return stock at original cost
+                                  </SubmitButton>
+                                </form>
+                              </details>
+                            )}
                         </article>
                       ))}
                       {!movements.data?.length && (

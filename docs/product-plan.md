@@ -8,6 +8,9 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Supplier stock returns and cash refunds: returns remove actual quantities at current weighted average cost without changing the original purchase expense or assuming a refund. Partial supplier refunds are recorded independently with received dates/reference/notes; their running difference from the current recorded return stock value is visible, without treating the difference as another cash entry. Business/monthly cash and dashboard net results include active refunds separately from customer payments and gross expense spending; horse/stay reconciliation adds them as unassigned business credits. Original refund/return records are retained when corrected: mistaken refunds can be reversed with a reason; mistaken returns restore stock through a retained reversal only after active refund records are corrected. Ordinary stock reversal cannot bypass this lifecycle. Returns have 25-row pagination; refund entries have 20-row pagination and complete aggregate totals, with direct return-record links. Stock history labels supplier returns and links to their workflow. Administrator-only access, server validation and retry protections apply. Later explicit cost corrections recost the stock return while leaving actual refunded cash unchanged. Supplier credits/expected refunds/exchanges and return-specific documents remain planned.
+
+
 - Opening-stock and inbound-addition cost recalculation after downstream activity: a deliberate stock-value editor reuses the audited replay and invoice-review workflow. Quantity and transaction date stay unchanged; costs of later feeding, waste, reductions/reversals and remaining stock recalculate. No expense or cash transaction is created or changed. A private common replay engine supports type-checked purchase and inbound entry points; prior purchase protections remain in force. The existing 2,000-entry, historical-order and balance-reconciliation limits apply. Quantity corrections and supplier returns remain planned.
 
 
@@ -334,9 +337,9 @@ Features in this section are present in the application source. A feature being 
 
 ### Expenses, receipts, billing, and profitability
 
-- Purchase, opening-stock and inbound-adjustment quantity corrections after downstream movements, plus actual supplier return/refund workflows. Cost-only purchase/opening/inbound recalculation and untouched entry replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, and manually attributed invoices without reliable feed source/period links need further correction/review workflows.
+- Purchase, opening-stock and inbound-adjustment quantity corrections after downstream movements. Supplier credits on account, expected-refund tracking, exchange matching and supplier return/refund document attachments remain planned; physical stock returns and received-cash refund recording are implemented above. Cost-only purchase/opening/inbound recalculation and untouched entry replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, and manually attributed invoices without reliable feed source/period links need further correction/review workflows.
 - Delivered scheduler failure alerts and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
-- Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
+- Public-page contact/payment details from business settings, invoice delivery/email, customer refunds, and customer credits on account.
 
 #### Feed, boarding, and profitability details
 
@@ -414,9 +417,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Remaining admin expense/reporting improvements (downstream quantity corrections, supplier returns and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Remaining admin expense/reporting improvements (downstream quantity corrections, supplier credit/document refinements and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Supplier-return increment (October 23, 2026): migration `20261023004200_supplier_returns.sql` adds retained returns/refunds and cash reporting integration. Local database tests cover shortages/rollback, retry/mismatched entries, date/amount bounds, partial refunds, separate receipt dates, no duplicate expenses, later cost revaluation, refund reversals/cancellation, ordinary-reversal bypass prevention, private access, return/refund pagination, bounded history/full totals and horse/stay/business reconciliation. Desktop/390-pixel sample previews verify readable cards, whole-button wrapping, deliberate return/refund editors, product/unit choices, measurement and currency fields. All 156 tests, TypeScript checks and the production build pass. Remote migration, authenticated production saves and physical-device workflows remain unverified; no production records changed.
 
 - Inbound-revaluation increment (October 23, 2026): migration `20261023004100_inbound_cost_revaluation.sql` extends audited cost replay to opening stock and inbound additions without cash entries. Local database tests cover both source types, unchanged quantities, updated consumption/stock costs, unchanged issued charges, pending/new invoice reviews, zero valuation, retry/stale guards, wrong-type rejection, private engine access and customer/anonymous denial. All 155 tests, TypeScript checks and the production build pass. Desktop and 390-pixel sample previews verify the inbound-specific copy, compact money field and collapsed help. Remote migration, authenticated production corrections and physical-device workflows remain unverified; no production records changed.
 

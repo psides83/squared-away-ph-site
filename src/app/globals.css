@@ -3607,3 +3607,23 @@ input[type="search"]::-webkit-search-decoration {
   background: #1e241d;
   margin-block: 16px;
 }
+
+.supplier-return-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+  margin-block: 1rem;
+}
+.supplier-return-values p {
+  margin-block: 0.35rem 0;
+}
+.supplier-refund-history {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.supplier-refund-history summary {
+  cursor: pointer;
+  font-weight: 650;
+  padding-block: 0.4rem;
+}

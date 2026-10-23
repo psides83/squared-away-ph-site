@@ -13,6 +13,7 @@ export type FinancialOverviewData = {
   received_cents: number;
   spent_cents: number;
   net_cents: number;
+  supplier_refunds_cents?: number;
   outstanding_cents: number;
   overdue_cents: number;
   outstanding_count: number;
@@ -62,7 +63,7 @@ export function FinancialOverview({ data }: { data: FinancialOverviewData }) {
             {
               label: "NET CASH THIS MONTH",
               value: data.net_cents,
-              caption: `After ${money(data.spent_cents)} in expenses paid`,
+              caption: `After ${money(data.spent_cents)} in expenses paid${data.supplier_refunds_cents ? `; plus ${money(data.supplier_refunds_cents)} supplier refunds` : ""}`,
               href: `/admin/reports?from=${data.month_from}&to=${data.as_of}`,
             },
           ].map((c) => (

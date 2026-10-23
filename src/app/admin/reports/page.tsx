@@ -53,10 +53,16 @@ type Report = {
   received_cents: number;
   spent_cents: number;
   net_cents: number;
+  supplier_refunds_cents?: number;
   outstanding_cents: number;
   overdue_cents: number;
   categories: { name: string; amount_cents: number; expense_count: number }[];
-  months: { month: string; received_cents: number; spent_cents: number }[];
+  months: {
+    month: string;
+    received_cents: number;
+    spent_cents: number;
+    supplier_refunds_cents?: number;
+  }[];
 };
 function validDate(value: string) {
   return (
@@ -134,6 +140,7 @@ export default async function Reports({
             {[
               ["PAYMENTS RECEIVED", report.received_cents],
               ["EXPENSES PAID", report.spent_cents],
+              ["SUPPLIER REFUNDS", report.supplier_refunds_cents ?? 0],
               ["NET CASH PROFIT", report.net_cents],
             ].map(([label, value]) => (
               <div className="stat-card" key={label}>
@@ -149,7 +156,10 @@ export default async function Reports({
               exclude unpaid bills, drafts, voided expenses, and reversed
               payments. Corrections update past periods. Feed purchases count
               once as expenses; consuming that feed does not subtract its cost
-              again. This report covers recorded activity only.
+              again. Actual supplier refunds increase net cash separately from
+              customer payments and gross expenses paid. They remain unassigned
+              business credits in horse/visit reconciliation. This report covers
+              recorded activity only.
             </p>
           </HelpPanel>
           <SectionTabs
@@ -186,6 +196,7 @@ export default async function Reports({
                               <th>Month</th>
                               <th>Received</th>
                               <th>Paid out</th>
+                              <th>Supplier refunds</th>
                               <th>Net cash profit</th>
                             </tr>
                           </thead>
@@ -195,8 +206,13 @@ export default async function Reports({
                                 <td>{m.month}</td>
                                 <td>{money(m.received_cents)}</td>
                                 <td>{money(m.spent_cents)}</td>
+                                <td>{money(m.supplier_refunds_cents ?? 0)}</td>
                                 <td>
-                                  {money(m.received_cents - m.spent_cents)}
+                                  {money(
+                                    m.received_cents -
+                                      m.spent_cents +
+                                      (m.supplier_refunds_cents ?? 0),
+                                  )}
                                 </td>
                               </tr>
                             ))}
@@ -360,7 +376,9 @@ export default async function Reports({
                         + unassigned receipts{" "}
                         {money(horseReport.unassigned_received_cents)} −
                         unallocated shared costs{" "}
-                        {money(horseReport.unallocated_paid_cents)} = business
+                        {money(horseReport.unallocated_paid_cents)} + unassigned
+                        supplier refunds{" "}
+                        {money(report.supplier_refunds_cents ?? 0)} = business
                         net cash profit {money(report.net_cents)}.
                       </p>
                     </section>
@@ -452,7 +470,9 @@ export default async function Reports({
                         {money(stayReport.unassigned_direct_cents)} − unassigned
                         horse shares {money(stayReport.unassigned_shared_cents)}{" "}
                         − unallocated barn costs{" "}
-                        {money(stayReport.unallocated_shared_cents)} = business
+                        {money(stayReport.unallocated_shared_cents)} +
+                        unassigned supplier refunds{" "}
+                        {money(report.supplier_refunds_cents ?? 0)} = business
                         net cash profit {money(report.net_cents)}.
                       </p>
                     </section>

@@ -269,3 +269,11 @@ The correction supports at most 2,000 stock entries per product. Durable recordi
 ### Opening stock and stock-addition values (migration 041)
 
 **Correct stock value** is available on opening stock and inbound additions, including after consumption. It uses the same audited replay and invoice-review protections as purchase cost corrections while retaining quantities and dates. It never creates or changes a cash expense. Both source types support reviewed zero-value corrections. The common replay engine is private; administrator-only entry points enforce the selected stock type. The same history-size, ambiguous-legacy-order and reconciliation limits apply. Quantity changes after consumption and supplier returns are separate planned workflows.
+
+### Supplier returns and received refunds (migration 042)
+
+**Inventory → Supplier returns & refunds** records stock physically returned to a supplier at the current weighted average cost. It does not change the original expense or assume money was received. Record each actual refund separately, with its received date and optional reference/notes; partial refunds are supported. The running refund-minus-stock-value comparison is not a second cash profit entry or a declaration of final settlement. Explicit stock cost recalculation updates the return's stock value while actual refund records stay unchanged.
+
+Cash reports show supplier refunds separately from customer payments and gross expenses paid, including monthly values. Net cash adds received supplier refunds once. They remain unassigned business credits in horse/stay reconciliation. Refund reversals restate their original cash periods. Correcting a mistaken return restores stock at its recorded cost, retains history, and requires active refund entries to be corrected first. These are record corrections, not money transfers or supplier requests. Use them for mistaken entries only.
+
+History pages show 25 returns, with direct return-record links and 20-row refund pagination; aggregate refund totals include all entries. Supplier credits on account, expected-refund balances, exchange matching and return/refund document uploads remain planned. Production migration and authenticated live flows remain unverified.
