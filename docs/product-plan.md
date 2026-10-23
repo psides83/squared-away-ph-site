@@ -8,6 +8,9 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Supplier follow-up workspace: Returns & refunds opens a global queue with Outstanding, Overdue, Unset targets and All active filters. Cash-refund and store-credit totals cover all active returns independently of filtering or the 25-row page limit; unknown targets are not treated as zero. Only outstanding targets with a due date before today in Central Time count as overdue. Active refunds and issued linked credits reduce the matching target; spending credit does not reopen it, but reversing refunds/cancelling credits does. Cancelled returns are excluded without deleting their original records. Cards provide deliberate links to the return, refund entry, credit entry and expectation editor; outstanding items sort by urgency and pending due date. Global counts include partial unknown targets and avoid receipt/credit join duplication. Administrator-only RPC access and database validation apply. Delivered notifications remain planned separately.
+
+
 - Supplier exchanges: replacement inventory purchases are recorded separately at full value, then explicitly linked to same-supplier returns. Return cards open a focused Replacement purchases workspace; purchase records include an Exchanges tab with links back to related returns. Multiple purchases and returns may be related without allocating their amounts. Linking never changes stock, expense values, payment status, expectations or credit applications; credits actually used and settlement dates remain separate actions on the purchase. Deliberate add/remove editors retain validation drafts, require a removal reason and preserve removed links in 25-row paginated history. Exact late retries cannot resurrect removed matches; duplicate active pairs and cross-supplier/non-inventory/void/cancelled sources are blocked. Active links must be removed before cancelling the return, voiding the purchase or changing its supplier. Choices show the latest 100 eligible same-supplier inventory purchases, with the limit disclosed. Administrator-only access and server validation apply.
 
 
@@ -371,7 +374,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Expenses, receipts, billing, and profitability
 
-- Global supplier-return overdue filtering/notifications remain planned; physical stock returns and received-cash refund recording are implemented above. Cost-only purchase/opening/inbound recalculation and untouched entry replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, and manually attributed invoices without reliable feed source/period links need further correction/review workflows.
+- Delivered supplier-return follow-up notifications remain planned; physical stock returns and received-cash refund recording are implemented above. Cost-only purchase/opening/inbound recalculation and untouched entry replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, and manually attributed invoices without reliable feed source/period links need further correction/review workflows.
 - Delivered scheduler failure alerts and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
 - Public-page contact/payment details from business settings, invoice delivery/email, customer refunds, and customer credits on account.
 
@@ -456,7 +459,7 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Remaining admin expense/reporting improvements (supplier-return overdue filtering and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Remaining admin expense/reporting improvements (delivered supplier follow-up notifications and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
 
@@ -592,3 +595,7 @@ Remaining admin expense/reporting improvements (supplier-return overdue filterin
 ### Supplier exchange verification (2026-10-23)
 
 - All 172 tests and the production build passed. Database integration checks cover matching, duplicates and late retries, retained removals, source guards, transactional rollback on blocked return cancellation, unchanged stock/cash/credit records, pagination and administrator isolation. A 390-pixel sample-data preview verified card actions, selected-purchase details, custom choices and the styled removal confirmation; no live records were created. Migration `20261023005200_supplier_exchanges.sql` requires deployment; production application and authenticated live workflows have not been confirmed.
+
+### Supplier follow-up verification (2026-10-23)
+
+- All 174 tests and the production build passed. Database integration checks cover complete global totals beyond the first page, overdue/today/no-date boundaries, partial and unknown targets, excess receipts, cancelled returns, credit use and reversal, empty results, stable pagination and administrator isolation. A 390-pixel sample-data preview verified summary/card spacing and non-wrapping filter/action labels; no live records were created. Migration `20261023005300_supplier_recovery_queue.sql` requires deployment; production application and authenticated live workflows have not been confirmed.

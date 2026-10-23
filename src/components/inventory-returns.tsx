@@ -68,6 +68,9 @@ export async function InventoryReturns({
             All returns
           </Link>
         )}
+        <Link className="button secondary" href="/admin/inventory/recovery">
+          Supplier follow-up
+        </Link>
         <Link className="text-link" href="/admin/reports#reports-cash">
           Cash reports
         </Link>
