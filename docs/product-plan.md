@@ -8,6 +8,8 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Feeding confirmation history now uses daily cards with feeding-time sections and alphabetical confirmed-horse rows, per-day active confirmation/unique-horse totals, and Central Time recorded timestamps. Undone confirmations are retained under collapsed Corrections with reasons and undo dates; they never count as confirmed. History pages contain seven complete recorded days with Older/Latest navigation instead of truncating at fifty entries, so a day’s horse list stays complete. Saved feeding-time names are preserved and time groups follow clock order, with legacy daily totals labeled separately. Requires administrator-only history RPC migration `20261023004700_daily_feeding_history.sql`.
+
 - Feeding-time editing now uses a bordered pencil icon at the trailing end of the feeding-time card header, replacing the separate text edit button below the ration list. The action keeps the same whole-slot editor destination, a descriptive accessible name/tooltip and a 44-pixel touch target; status badges wrap independently while the edit icon stays at the right.
 
 - Feeding confirmation states: each active feeding-time card shows an icon/text badge, green confirmation surface and border for Fed today, or a neutral Not recorded state. Horse cards show today’s recorded/total feeding count and turn green only when every active, non-archived feeding time is recorded. Full-day legacy confirmations are labeled explicitly; Undo stays secondary. Schedule-only editing views do not show daily completion. No schema change.
@@ -440,6 +442,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream quantity corrections, supplier credit/document refinements and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Daily feeding-history increment (October 23, 2026): all 164 tests and the production build pass. Database tests verify a complete 60-entry day, seven-day pagination, older/empty pages and non-admin denial. Grouping checks cover chronological time slots, alphabetical horses, legacy totals and corrections excluded from active entries. A 390-pixel sample browser preview verifies daily headers, feeding-time sections, horse rows, responsive timestamps and expanding/collapsing correction reasons. Migration `20261023004700_daily_feeding_history.sql`, authenticated production history and physical-device verification remain unverified; no live feeding records changed.
 
 - Feeding-time header edit icon: production build and TypeScript checks pass. No schema changes. Production deployment and visual/device verification remain unverified for this placement change.
 

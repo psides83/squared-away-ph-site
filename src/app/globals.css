@@ -3861,3 +3861,160 @@ input[type="search"]::-webkit-search-decoration {
   outline: 2px solid #766042;
   outline-offset: 3px;
 }
+
+.feeding-history-days {
+  display: grid;
+  gap: 20px;
+  margin: 20px 0;
+}
+.feeding-history-day-heading {
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  border-bottom: 1px solid #dedfd7;
+  background: #f6f6f0;
+}
+.feeding-history-date {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #59654d;
+}
+.feeding-history-date h3 {
+  margin: 0;
+  color: #35372e;
+  font-size: 21px;
+}
+.feeding-history-date p {
+  margin: 3px 0 0;
+  font-size: 13px;
+}
+.feeding-history-total {
+  font-size: 13px;
+  font-weight: 600;
+  color: #54614a;
+}
+.feeding-history-times {
+  padding: 0 24px;
+}
+.feeding-history-time {
+  padding: 22px 0;
+}
+.feeding-history-time + .feeding-history-time {
+  border-top: 1px solid #dedfd7;
+}
+.feeding-history-time-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.feeding-history-time-heading h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+}
+.feeding-history-time-heading > span {
+  font-size: 12px;
+}
+.feeding-history-horses {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.feeding-history-horses li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f1f6ed;
+  color: #49653e;
+}
+.feeding-history-horses .inline-link {
+  font-weight: 600;
+}
+.feeding-history-recorded {
+  margin-left: auto;
+  font-size: 12px;
+  color: #68735e;
+}
+.feeding-history-corrections {
+  margin-top: 16px;
+  border: 1px solid #e1dfd5;
+  border-radius: 12px;
+}
+.feeding-history-corrections summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  padding: 13px 14px;
+  font-size: 13px;
+  color: #796548;
+  min-height: 44px;
+}
+.feeding-history-corrections summary::before {
+  display: none;
+}
+.feeding-history-corrections summary::-webkit-details-marker {
+  display: none;
+}
+.feeding-history-corrections[open] summary > svg {
+  transform: rotate(180deg);
+}
+.feeding-history-corrections ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 14px 14px;
+}
+.feeding-history-corrections li {
+  padding: 12px 0;
+  overflow-wrap: anywhere;
+}
+.feeding-history-corrections li + li {
+  border-top: 1px solid #e1dfd5;
+}
+.feeding-history-corrections li p {
+  margin: 6px 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+}
+.feeding-history-corrections li > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.feeding-history-undone {
+  font-size: 12px;
+  color: #896b49;
+}
+.feeding-history-help {
+  font-size: 13px;
+  max-width: 65ch;
+  margin-top: 20px;
+}
+@media (max-width: 600px) {
+  .feeding-history-day-heading {
+    padding: 18px;
+  }
+  .feeding-history-times {
+    padding: 0 18px;
+  }
+  .feeding-history-recorded {
+    width: 100%;
+    margin-left: 29px;
+  }
+}

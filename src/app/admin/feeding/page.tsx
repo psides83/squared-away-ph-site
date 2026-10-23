@@ -1,3 +1,5 @@
+import { FeedingHistory } from "@/components/feeding-history";
+import { type FeedingHistoryData } from "@/lib/feeding-history";
 import { redirect } from "next/navigation";
 import { FeedingTimeManager } from "@/components/feeding-time-manager";
 import { SectionTabs } from "@/components/section-tabs";
@@ -8,13 +10,14 @@ import {
   ExtraFeedingBatch,
 } from "@/components/bulk-feeding";
 import { requireAdmin } from "@/lib/auth";
-import { today, dateLabel } from "@/lib/format";
+import { today } from "@/lib/format";
 import { PageHeading, Notice } from "@/components/ui";
 
 export default async function Feeding({
   searchParams,
 }: {
   searchParams: Promise<{
+    history_before?: string;
     edit?: string;
     new?: string;
     horse?: string;
@@ -25,6 +28,14 @@ export default async function Feeding({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
+  const historyBefore =
+    params.history_before &&
+    /^\d{4}-\d{2}-\d{2}$/.test(params.history_before) &&
+    !Number.isNaN(Date.parse(params.history_before)) &&
+    new Date(params.history_before).toISOString().slice(0, 10) ===
+      params.history_before
+      ? params.history_before
+      : undefined;
   const [
     rations,
     horses,
@@ -38,12 +49,7 @@ export default async function Feeding({
     db.from("horses").select("id,barn_name").order("barn_name"),
     db.from("inventory_products").select("*").order("name"),
     db.from("inventory_units").select("*"),
-    db
-      .from("feeding_confirmations")
-      .select("*")
-      .order("feeding_date", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(50),
+    db.rpc("feeding_confirmation_history", { p_before: historyBefore ?? null }),
     db
       .from("feeding_confirmations")
       .select("id,horse_id,feeding_time_id")
@@ -124,6 +130,7 @@ export default async function Feeding({
           <SectionTabs
             id="feeding"
             label="Feeding sections"
+            defaultTab={params.history_before ? "history" : "rations"}
             sections={[
               {
                 id: "rations",
@@ -212,44 +219,16 @@ export default async function Feeding({
                 content: (
                   <>
                     {" "}
-                    <section className="panel management-details">
-                      <div className="panel-heading">
-                        <h2>Latest 50 feeding confirmations</h2>
-                      </div>
-                      {confirmations.data?.map((c) => (
-                        <div className="record-row record-form" key={c.id}>
-                          <strong>
-                            {
-                              horses.data?.find((h) => h.id === c.horse_id)
-                                ?.barn_name
-                            }
-                          </strong>
-                          <span>
-                            {c.cancelled_at ? "Undone · " : ""}
-                            {dateLabel(c.feeding_date)} ·{" "}
-                            {c.feeding_time_label ?? "Full-day ration (legacy)"}
-                          </span>
-                          {c.cancelled_at && (
-                            <p className="muted">{c.cancellation_reason}</p>
-                          )}
-                        </div>
-                      ))}
-                      {!confirmations.data?.length && (
-                        <p className="record-form muted">
-                          No confirmed feedings yet.
-                        </p>
-                      )}
-                      <p className="record-form muted">
-                        For extras or corrections, open{" "}
-                        <Link
-                          className="text-link"
-                          href="/admin/inventory#stock-entry"
-                        >
-                          inventory and feeding history
-                        </Link>
-                        .
-                      </p>
-                    </section>
+                    <FeedingHistory
+                      data={
+                        (confirmations.data ?? {
+                          days: [],
+                          next_before: null,
+                        }) as FeedingHistoryData
+                      }
+                      times={times.data ?? []}
+                      before={historyBefore}
+                    />
                   </>
                 ),
               },

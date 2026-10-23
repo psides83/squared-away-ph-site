@@ -295,3 +295,7 @@ Admin Home now opens daily feeding/training actions; the previous dashboard rema
 ### Weekly riding plans (migration 046)
 
 Apply `20261023004600_weekly_riding_schedules.sql` for administrator-only recurring horse riding plans. Open a horse’s Riding schedule tab to choose training/off for all seven days and optionally add notes. Home’s Riding week shows current training horses; training cards show today’s planned status. Plans do not create training logs, confirmations or billable days. Saving/clearing checks the version loaded by the editor to prevent stale overwrites. Remote migration and authenticated production changes remain unverified.
+
+### Daily feeding history (migration 047)
+
+Apply `20261023004700_daily_feeding_history.sql` before using the redesigned Feeding → History tab. It pages through seven complete recorded days, each grouped by feeding time and confirmed horse. Undone records remain in collapsed Corrections and are excluded from active counts. Recorded/undo times use Central Time. Extras and manual stock corrections remain in stock movement history. Remote migration and production verification remain unverified.
