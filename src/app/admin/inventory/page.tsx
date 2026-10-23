@@ -301,12 +301,13 @@ export default async function Inventory({
                       </div>
                       <p className="record-form muted form-hint">
                         Weighted average costs are applied in recording order.
-                        The most recent purchase can be corrected only before
-                        any later stock activity. Earlier purchase corrections
-                        and vendor returns need a separate workflow. To correct
-                        feeding or waste, reverse it below, then record the
-                        correct amount manually. A daily confirmation remains
-                        confirmed after a correction.
+                        The most recent purchase, opening stock or stock
+                        addition can be corrected only before any later stock
+                        activity. Earlier purchase corrections and vendor
+                        returns need a separate workflow. To correct feeding or
+                        waste, reverse it below, then record the correct amount
+                        manually. A daily confirmation remains confirmed after a
+                        correction.
                       </p>
                       {movements.data?.map((m) => (
                         <article className="log-entry" key={m.id}>
@@ -357,15 +358,18 @@ export default async function Inventory({
                               Expense & receipts
                             </Link>
                           )}
-                          {m.kind === "purchase" && (
+                          {["purchase", "opening", "adjustment_in"].includes(
+                            m.kind,
+                          ) && (
                             <ActionPanel
                               id={`correct-purchase-${m.id}`}
-                              label="Correct purchase entry"
+                              label="Correct stock entry"
                             >
                               <div className="panel-heading">
-                                <h2>Correct purchase entry</h2>
+                                <h2>Correct stock entry</h2>
                               </div>
                               <PurchaseCorrectionForm
+                                inbound={m.kind !== "purchase"}
                                 m={m}
                                 units={
                                   units.data?.filter(

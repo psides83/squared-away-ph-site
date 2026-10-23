@@ -326,3 +326,26 @@ export async function correctPurchase(form: FormData) {
       : `/admin/expenses/${expense}?success=Purchase+entry+corrected.+Original+receipts+remain+with+the+voided+expense.`,
   );
 }
+
+export async function correctInbound(form: FormData) {
+  const { db } = await requireAdmin();
+  let issue: string | undefined;
+  try {
+    const result = await db.rpc("correct_inventory_inbound", {
+      p_request: identifier(form, "request_id", true),
+      p_original: identifier(form, "original_id", true),
+      p_unit: identifier(form, "unit_id", true),
+      p_quantity: quantity(form),
+      p_cost_cents: cents(form, "cost"),
+      p_reason: text(form, "reason", true, 2000),
+    });
+    if (result.error) throw Error(message(result.error));
+  } catch (e) {
+    issue =
+      e instanceof Error ? e.message : "Stock entry could not be corrected.";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(
+    `/admin/inventory?${issue ? `error=${encodeURIComponent(issue)}` : "success=Stock+entry+corrected.+Original+history+retained."}#inventory-ledger`,
+  );
+}

@@ -8,6 +8,9 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Opening-stock and inbound-adjustment entry corrections before later stock activity: explicit reasoned editor, atomic original reversal and replacement stock addition, retained history and retry protection. Original dates carry forward; current unit conversions apply. No expense or cash entry is generated. Replacement entries can be corrected again until later activity occurs. Corrections after consumption remain planned.
+
+
 - Automatic scheduler-log retention: daily coordination removes up to 500 expired logs per worker per invocation, including when both automations are off. Completed runs are retained for 90 days; errors, blocked runs and billing review results for 365 days. The latest run, current/future business dates and unfinished runs are preserved. Cleanup is service-only and isolated from each worker; its failure marks the coordinator result as an error. Financial records, occurrence cursors and source/audit histories are untouched.
 
 
@@ -325,7 +328,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Expenses, receipts, billing, and profitability
 
-- Purchase corrections after downstream movements, opening/inbound-adjustment corrections, and actual supplier return/refund workflows. Latest untouched purchase entry replacement is implemented above.
+- Purchase and opening/inbound-adjustment corrections after downstream movements, plus actual supplier return/refund workflows. Untouched purchase and inbound entry replacement are implemented above.
 - Delivered scheduler failure alerts and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
@@ -406,6 +409,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream purchase corrections and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Inbound-correction increment (October 23, 2026): migration `20261023003900_inbound_entry_corrections.sql` implements protected replacement of untouched opening/inbound stock. Database checks cover invalid replacement rollback, exact balance/ledger reconciliation, cash separation, repeated/mismatched requests, replacement correction, downstream guards, private history and denied customer/anonymous writes. All 152 tests and the production build (including TypeScript) pass. The existing shared correction editor is reused; the new editor variant has not been browser-verified. Remote migration, production saves and physical-device verification remain unverified; no production records changed.
 
 - Scheduler-retention increment (October 23, 2026): migration `20261023003800_automation_retention.sql` adds bounded service-only cleanup to the existing daily coordinator. Local database tests verify retention windows, preserved latest/unfinished runs, repeated cleanup, batching and denied administrator/anonymous invocation. All 151 tests, TypeScript checks and the production build pass; an injected cleanup failure also confirms isolated error reporting. Remote migration and production scheduling remain unverified; no production records changed.
 

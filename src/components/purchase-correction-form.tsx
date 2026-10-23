@@ -1,11 +1,13 @@
 import { AppSelect } from "@/components/app-select";
 import { Field } from "@/components/ui";
 import { ConfirmButton } from "@/components/confirm-button";
-import { correctPurchase } from "@/app/admin/inventory/actions";
+import { correctPurchase, correctInbound } from "@/app/admin/inventory/actions";
 export function PurchaseCorrectionForm({
   m,
   units,
+  inbound = false,
 }: {
+  inbound?: boolean;
   m: {
     id: string;
     entered_quantity: string | number;
@@ -15,17 +17,28 @@ export function PurchaseCorrectionForm({
   units: { id: string; label: string; ounces_per_unit: string | number }[];
 }) {
   return (
-    <form action={correctPurchase} className="record-form">
+    <form
+      action={inbound ? correctInbound : correctPurchase}
+      className="record-form"
+    >
       <input type="hidden" name="request_id" value={crypto.randomUUID()} />
       <input type="hidden" name="original_id" value={m.id} />
-      <p>
-        Replace an incorrectly entered quantity or total cost. The original
-        expense is voided and retained, including its receipts. Its date, vendor
-        and payment date carry to the replacement. This is not a vendor return
-        or refund.
-      </p>
+      {inbound ? (
+        <p>
+          Correct opening stock or a stock addition before any later activity.
+          The original entry stays in history with a reversal and corrected
+          stock addition. No expense or cash transaction is created.
+        </p>
+      ) : (
+        <p>
+          Replace an incorrectly entered quantity or total cost. The original
+          expense is voided and retained, including its receipts. Its date,
+          vendor and payment date carry to the replacement. This is not a vendor
+          return or refund.
+        </p>
+      )}
       <p className="notice">
-        Only the latest purchase with no subsequent stock activity can be
+        Only the latest stock entry with no subsequent stock activity can be
         replaced. Saved feeding costs and invoice/shared-cost protections remain
         in force. Updated unit conversions apply to the replacement.
       </p>
@@ -72,8 +85,14 @@ export function PurchaseCorrectionForm({
         />
       </div>
       <div className="form-actions">
-        <ConfirmButton message="Replace this mistaken purchase entry? The original expense will be voided, its receipts retained, and corrected stock and expense records saved together.">
-          Save corrected purchase
+        <ConfirmButton
+          message={
+            inbound
+              ? "Correct this stock entry? Its history will be retained and the stock quantity and value updated together."
+              : "Replace this mistaken purchase entry? The original expense will be voided, its receipts retained, and corrected stock and expense records saved together."
+          }
+        >
+          Save corrected entry
         </ConfirmButton>
       </div>
     </form>
