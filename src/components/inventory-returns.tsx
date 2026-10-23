@@ -96,13 +96,15 @@ export async function InventoryReturns({
         <p>
           The difference between refunds and stock value is an inventory
           comparison, not an additional cash profit entry. This records physical
-          returns and received money; supplier credits on account, expected
-          refunds and exchange purchases are not tracked here.
+          returns and received money. Supplier credits are recorded in the
+          Supplier credits tab. Expected refunds and exchange purchases are not
+          tracked here.
         </p>
         <p>
           Use correction actions only for mistaken records. Refund reversals
           restate the original cash period; cancelling a mistaken return
           restores stock at the return’s recorded cost and retains its history.
+          Active refunds and linked supplier credits must be corrected first.
         </p>
       </HelpPanel>
       {!failed && (

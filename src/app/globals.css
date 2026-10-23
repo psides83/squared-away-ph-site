@@ -4051,3 +4051,8 @@ input[type="search"]::-webkit-search-decoration {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.field.supplier-credit-choice {
+  width: 100%;
+  max-width: 30rem;
+}

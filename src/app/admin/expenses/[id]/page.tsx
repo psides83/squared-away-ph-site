@@ -1,3 +1,4 @@
+import { ExpenseSupplierCredits } from "@/components/expense-supplier-credits";
 import { AppSelect } from "@/components/app-select";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,7 +19,11 @@ export default async function ExpenseRecord({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; success?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    success?: string;
+    credit_application_page?: string;
+  }>;
 }) {
   const { id } = await params,
     query = await searchParams;
@@ -225,6 +230,9 @@ export default async function ExpenseRecord({
           <SectionTabs
             id="expense"
             label="Expense record sections"
+            defaultTab={
+              query.credit_application_page ? "supplier-credits" : "details"
+            }
             sections={[
               {
                 id: "details",
@@ -351,6 +359,28 @@ export default async function ExpenseRecord({
                   </section>
                 ),
               },
+              ...(e.inventory_movements?.length
+                ? [
+                    {
+                      id: "supplier-credits",
+                      label: "Supplier credits",
+                      content: (
+                        <ExpenseSupplierCredits
+                          expense={id}
+                          page={Math.max(
+                            1,
+                            Math.min(
+                              10000,
+                              Math.floor(
+                                Number(query.credit_application_page) || 1,
+                              ),
+                            ),
+                          )}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
               {
                 id: "billing",
                 label: "Customer billing",

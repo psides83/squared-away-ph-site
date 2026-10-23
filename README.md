@@ -61,7 +61,7 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, video transcoding/cross-refresh resume, in-app invitation emails/account creation, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Customer refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, video transcoding/cross-refresh resume, in-app invitation emails/account creation, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
 
 ## Horse photos and documents
 
@@ -276,7 +276,7 @@ The correction supports at most 2,000 stock entries per product. Durable recordi
 
 Cash reports show supplier refunds separately from customer payments and gross expenses paid, including monthly values. Net cash adds received supplier refunds once. They remain unassigned business credits in horse/stay reconciliation. Refund reversals restate their original cash periods. Correcting a mistaken return restores stock at its recorded cost, retains history, and requires active refund entries to be corrected first. These are record corrections, not money transfers or supplier requests. Use them for mistaken entries only.
 
-History pages show 25 returns, with direct return-record links and 20-row refund pagination; aggregate refund totals include all entries. Supplier credits on account, expected-refund balances, exchange matching and return/refund document uploads remain planned. Production migration and authenticated live flows remain unverified.
+History pages show 25 returns, with direct return-record links and 20-row refund pagination; aggregate refund totals include all entries. Expected-refund balances and exchange matching remain planned. Supplier credits and return/refund documents are implemented in later increments below. Production migration and authenticated live flows remain unverified.
 
 ### Horse feeding schedules (migration 043)
 
@@ -307,3 +307,7 @@ Apply `20261023004800_supplier_return_documents.sql` to create the private `supp
 ### Stock-source quantity corrections (migration 049)
 
 Apply `20261023004900_source_quantity_corrections.sql` before using Inventory → History → Correct quantity / cost. Purchases, opening stock and inbound additions may be corrected after downstream activity using their original unit/conversion snapshots. Weighted-cost replay retains quantity/cost audit records and flags affected feed invoices without changing issued charges or recorded feeding quantities. Any historical shortage rejects the entire correction; a new backdated addition still follows its actual recording order and cannot silently repair an earlier shortage. Earlier stock records must support the corrected history. Existing total-cost billing/allocation guards and 2,000-entry/ambiguous-history limits remain. Remote migration and production correction/review flows remain unverified.
+
+### Supplier credits (migration 050)
+
+Apply `20261023005000_supplier_credits.sql`. Inventory → Supplier credits records actual credit notes and their available balances. A credit may link to an active return. Supplier names match ignoring case and repeated spaces; aliases are not inferred. On an inventory purchase expense, use Supplier credits to apply an amount actually used. Credits do not mark expenses paid: record the paid/settled date separately, including zero-cash purchases. The full expense and inventory value stay unchanged; cash reports subtract active applications only for settled purchases. Horse/stay gross-cost reports reconcile the non-cash offset separately. Reversal restates the original settlement period and restores credit availability without recording a new payment. Cancel/reissue mistaken notes after reversing their active applications. Issuing/retrying cancelled notes or reversed applications never resurrects them. Choices show up to 100 oldest available matching notes; note/history pages are paginated. Expected refunds, supplier-credit cash-out/conversion and exchange matching remain future work. Remote migration and authenticated production flows remain unverified.

@@ -1,3 +1,4 @@
+import { InventoryCredits } from "@/components/inventory-credits";
 import { InventoryReturns } from "@/components/inventory-returns";
 import { InventoryProductCard } from "@/components/inventory-product-card";
 import { ConversionManager } from "@/components/conversion-manager";
@@ -19,6 +20,11 @@ export default async function Inventory({
   searchParams,
 }: {
   searchParams: Promise<{
+    credit?: string;
+    credit_page?: string;
+    credit_history_page?: string;
+    credit_return?: string;
+    credit_new?: string;
     product?: string;
     section?: string;
     page?: string;
@@ -112,11 +118,13 @@ export default async function Inventory({
             id="inventory"
             label="Inventory sections"
             defaultTab={
-              params.section === "returns"
-                ? "returns"
-                : params.page
-                  ? "history"
-                  : "products"
+              params.section === "credits"
+                ? "credits"
+                : params.section === "returns"
+                  ? "returns"
+                  : params.page
+                    ? "history"
+                    : "products"
             }
             sections={[
               {
@@ -317,6 +325,11 @@ export default async function Inventory({
                     )}
                   </>
                 ),
+              },
+              {
+                id: "credits",
+                label: "Supplier credits",
+                content: <InventoryCredits params={params} />,
               },
               {
                 id: "returns",

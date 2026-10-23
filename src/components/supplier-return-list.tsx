@@ -17,6 +17,8 @@ export type SupplierReturn = {
   reason: string;
   stock_cost_cents: number | string;
   refunded_cents: number;
+  supplier_credit_cents?: number;
+  supplier_credit_count?: number;
   cancelled_at: string | null;
   cancel_reason: string | null;
   refund_count: number;
@@ -62,6 +64,14 @@ export function SupplierReturnList({
           </div>
           <div className="record-form">
             <div className="row-actions">
+              {!r.cancelled_at && (
+                <Link
+                  className="button secondary"
+                  href={`/admin/inventory?section=credits&credit_return=${r.id}&credit_new=1#new-supplier-credit`}
+                >
+                  Record store credit
+                </Link>
+              )}
               <Link
                 className="button secondary"
                 href={`/admin/inventory/returns/${r.id}/documents`}
@@ -84,15 +94,29 @@ export function SupplierReturnList({
                 </p>
               </div>
               <div>
-                <span className="muted">Refunds received</span>
+                <span className="muted">Cash refunds received</span>
                 <p>
                   <strong>{money(r.refunded_cents)}</strong>
                 </p>
               </div>
+              {(r.supplier_credit_cents ?? 0) > 0 && (
+                <div>
+                  <span className="muted">Store credit issued (not cash)</span>
+                  <p>
+                    <strong>{money(r.supplier_credit_cents ?? 0)}</strong>
+                  </p>
+                  <Link
+                    className="text-link"
+                    href="/admin/inventory?section=credits#inventory-credits"
+                  >
+                    View supplier credits
+                  </Link>
+                </div>
+              )}
               {!r.cancelled_at && r.refunded_cents > 0 && (
                 <div>
                   <span className="muted">
-                    Refunds minus stock value, to date
+                    Cash refunds minus stock value, to date
                   </span>
                   <p>
                     <strong>

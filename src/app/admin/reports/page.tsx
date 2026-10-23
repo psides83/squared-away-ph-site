@@ -53,12 +53,14 @@ type Report = {
   received_cents: number;
   spent_cents: number;
   net_cents: number;
+  supplier_credit_used_cents?: number;
   supplier_refunds_cents?: number;
   outstanding_cents: number;
   overdue_cents: number;
   categories: { name: string; amount_cents: number; expense_count: number }[];
   months: {
     month: string;
+    supplier_credit_used_cents?: number;
     received_cents: number;
     spent_cents: number;
     supplier_refunds_cents?: number;
@@ -141,6 +143,7 @@ export default async function Reports({
               ["PAYMENTS RECEIVED", report.received_cents],
               ["EXPENSES PAID", report.spent_cents],
               ["SUPPLIER REFUNDS", report.supplier_refunds_cents ?? 0],
+              ["STORE CREDIT USED", report.supplier_credit_used_cents ?? 0],
               ["NET CASH PROFIT", report.net_cents],
             ].map(([label, value]) => (
               <div className="stat-card" key={label}>
@@ -152,14 +155,18 @@ export default async function Reports({
           <HelpPanel title="How these financial reports are calculated">
             {" "}
             <p>
-              These figures use payment dates and expense paid dates. They
-              exclude unpaid bills, drafts, voided expenses, and reversed
-              payments. Corrections update past periods. Feed purchases count
-              once as expenses; consuming that feed does not subtract its cost
-              again. Actual supplier refunds increase net cash separately from
-              customer payments and gross expenses paid. They remain unassigned
-              business credits in horse/visit reconciliation. This report covers
-              recorded activity only.
+              Store credits reduce the cash portion of settled purchases; they
+              do not reduce feed value or count as cash income. Horse and visit
+              costs retain their full recorded amounts and reconcile through the
+              separately shown non-cash credit offset. These figures use payment
+              dates and expense paid dates. They exclude unpaid bills, drafts,
+              voided expenses, and reversed payments. Corrections update past
+              periods. Feed purchases count once as expenses; consuming that
+              feed does not subtract its cost again. Actual supplier refunds
+              increase net cash separately from customer payments and gross
+              expenses paid. They remain unassigned business credits in
+              horse/visit reconciliation. This report covers recorded activity
+              only.
             </p>
           </HelpPanel>
           <SectionTabs
@@ -197,6 +204,7 @@ export default async function Reports({
                               <th>Received</th>
                               <th>Paid out</th>
                               <th>Supplier refunds</th>
+                              <th>Store credit used</th>
                               <th>Net cash profit</th>
                             </tr>
                           </thead>
@@ -207,6 +215,9 @@ export default async function Reports({
                                 <td>{money(m.received_cents)}</td>
                                 <td>{money(m.spent_cents)}</td>
                                 <td>{money(m.supplier_refunds_cents ?? 0)}</td>
+                                <td>
+                                  {money(m.supplier_credit_used_cents ?? 0)}
+                                </td>
                                 <td>
                                   {money(
                                     m.received_cents -
@@ -378,8 +389,10 @@ export default async function Reports({
                         unallocated shared costs{" "}
                         {money(horseReport.unallocated_paid_cents)} + unassigned
                         supplier refunds{" "}
-                        {money(report.supplier_refunds_cents ?? 0)} = business
-                        net cash profit {money(report.net_cents)}.
+                        {money(report.supplier_refunds_cents ?? 0)} + non-cash
+                        supplier credit used{" "}
+                        {money(report.supplier_credit_used_cents ?? 0)} =
+                        business net cash profit {money(report.net_cents)}.
                       </p>
                     </section>
                   </>
@@ -472,8 +485,10 @@ export default async function Reports({
                         − unallocated barn costs{" "}
                         {money(stayReport.unallocated_shared_cents)} +
                         unassigned supplier refunds{" "}
-                        {money(report.supplier_refunds_cents ?? 0)} = business
-                        net cash profit {money(report.net_cents)}.
+                        {money(report.supplier_refunds_cents ?? 0)} + non-cash
+                        supplier credit used{" "}
+                        {money(report.supplier_credit_used_cents ?? 0)} =
+                        business net cash profit {money(report.net_cents)}.
                       </p>
                     </section>
                   </>
