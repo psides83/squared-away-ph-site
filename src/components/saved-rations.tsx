@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleCheck, Clock3 } from "lucide-react";
+import { CircleCheck, Clock3, Pencil } from "lucide-react";
 import { ActionPanel } from "@/components/action-panel";
 import { Field } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
@@ -127,22 +127,36 @@ export function SavedRations({
                       key={g.id ?? "unassigned"}
                     >
                       <div className="feeding-time-heading">
-                        <h4>
-                          {g.label}
-                          {g.archived ? " (archived)" : ""}
-                        </h4>
-                        {!editable && active && !g.archived && (
-                          <span
-                            className={`feeding-status ${confirmed ? "confirmed" : "pending"}`}
-                          >
-                            {confirmed ? (
-                              <CircleCheck size={17} aria-hidden="true" />
-                            ) : (
-                              <Clock3 size={17} aria-hidden="true" />
-                            )}
-                            {confirmed ? "Fed today" : "Not recorded"}
-                          </span>
-                        )}
+                        <div className="feeding-time-title">
+                          <h4>
+                            {g.label}
+                            {g.archived ? " (archived)" : ""}
+                          </h4>
+                          {!editable && active && !g.archived && (
+                            <span
+                              className={`feeding-status ${confirmed ? "confirmed" : "pending"}`}
+                            >
+                              {confirmed ? (
+                                <CircleCheck size={17} aria-hidden="true" />
+                              ) : (
+                                <Clock3 size={17} aria-hidden="true" />
+                              )}
+                              {confirmed ? "Fed today" : "Not recorded"}
+                            </span>
+                          )}
+                        </div>
+                        <Link
+                          className="feeding-time-edit"
+                          href={`/admin/horses/${h.id}?feed_time=${g.id ?? "unassigned"}#ration-form`}
+                          aria-label={`${g.id ? "Edit" : "Assign"} ${g.label} feed schedule for ${h.barn_name}`}
+                          title={
+                            g.id
+                              ? "Edit feeding schedule"
+                              : "Assign feeding time"
+                          }
+                        >
+                          <Pencil size={18} aria-hidden="true" />
+                        </Link>
                       </div>
                       {!editable &&
                         confirmed &&
@@ -162,15 +176,6 @@ export function SavedRations({
                           {r.notes && <p className="muted">{r.notes}</p>}
                         </div>
                       ))}
-                      <div className="row-actions">
-                        <Link
-                          className="text-link"
-                          href={`/admin/horses/${h.id}?feed_time=${g.id ?? "unassigned"}#ration-form`}
-                          aria-label={`Edit ${g.label} feed schedule for ${h.barn_name}`}
-                        >
-                          {g.id ? "Edit feeding time" : "Assign feeding time"}
-                        </Link>
-                      </div>
                       {!editable && active && g.id && !g.archived && (
                         <>
                           {confirmed && (

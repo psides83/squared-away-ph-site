@@ -3825,3 +3825,39 @@ input[type="search"]::-webkit-search-decoration {
   border-color: #b7cbb0;
   color: #49603f;
 }
+
+.feeding-time-heading {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+.feeding-time-title {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.feeding-time-edit {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #d0d6c8;
+  border-radius: 12px;
+  background: #ffffffb3;
+  color: #53634a;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.feeding-time-edit:hover {
+  background: #e4ecdd;
+  border-color: #a7b59b;
+}
+.feeding-time-edit:focus-visible {
+  outline: 2px solid #766042;
+  outline-offset: 3px;
+}

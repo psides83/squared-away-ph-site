@@ -8,6 +8,8 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Feeding-time editing now uses a bordered pencil icon at the trailing end of the feeding-time card header, replacing the separate text edit button below the ration list. The action keeps the same whole-slot editor destination, a descriptive accessible name/tooltip and a 44-pixel touch target; status badges wrap independently while the edit icon stays at the right.
+
 - Feeding confirmation states: each active feeding-time card shows an icon/text badge, green confirmation surface and border for Fed today, or a neutral Not recorded state. Horse cards show today’s recorded/total feeding count and turn green only when every active, non-archived feeding time is recorded. Full-day legacy confirmations are labeled explicitly; Undo stays secondary. Schedule-only editing views do not show daily completion. No schema change.
 
 - Weekly riding schedules: each horse has a recurring Monday–Sunday plan with explicit training/off selections and optional notes, edited deliberately from its Riding schedule tab. Home includes a Riding week overview for horses currently in training; Home training cards and the training worklist show today’s plan without preventing off-plan work from being logged. New horses remain unplanned until all seven days are chosen. Weekdays-training/all-off shortcuts, mobile day buttons and deliberate plan clearing are available. Plans are private to administrators, save atomically with stale-edit protection and remain separate from actual sessions, feed, and billable training/rest-day records. Requires migration `20261023004600_weekly_riding_schedules.sql`.
@@ -438,6 +440,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream quantity corrections, supplier credit/document refinements and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Feeding-time header edit icon: production build and TypeScript checks pass. No schema changes. Production deployment and visual/device verification remain unverified for this placement change.
 
 - Feeding-card visual states (October 23, 2026): production build and TypeScript checks pass. Desktop and 390-pixel sample previews verify the green confirmed card, checkmarked Fed today badge, neutral pending card, daily progress text, responsive badge placement and secondary undo control. No database migration required. Live deployment and physical-device verification remain unverified.
 
