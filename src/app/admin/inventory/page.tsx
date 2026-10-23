@@ -10,6 +10,7 @@ import { money, dateLabel, today } from "@/lib/format";
 import { PageHeading, Notice, Field, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { StockEntryForm } from "@/components/stock-forms";
+import { PurchaseCostForm } from "@/components/purchase-cost-form";
 import { PurchaseCorrectionForm } from "@/components/purchase-correction-form";
 import { saveProduct, reverseConsumption } from "./actions";
 
@@ -303,11 +304,20 @@ export default async function Inventory({
                         Weighted average costs are applied in recording order.
                         The most recent purchase, opening stock or stock
                         addition can be corrected only before any later stock
-                        activity. Earlier purchase corrections and vendor
-                        returns need a separate workflow. To correct feeding or
-                        waste, reverse it below, then record the correct amount
-                        manually. A daily confirmation remains confirmed after a
-                        correction.
+                        activity. Cost-only purchase corrections can recalculate
+                        later costs using the separate action. Earlier quantity
+                        corrections and vendor returns need a separate workflow.
+                        To correct feeding or waste, reverse it below, then
+                        record the correct amount manually. A daily confirmation
+                        remains confirmed after a correction.
+                      </p>
+                      <p className="record-form">
+                        <Link
+                          className="text-link"
+                          href="/admin/inventory/cost-reviews"
+                        >
+                          Cost corrections & invoice reviews
+                        </Link>
                       </p>
                       {movements.data?.map((m) => (
                         <article className="log-entry" key={m.id}>
@@ -357,6 +367,17 @@ export default async function Inventory({
                             >
                               Expense & receipts
                             </Link>
+                          )}
+                          {m.kind === "purchase" && (
+                            <ActionPanel
+                              id={`revalue-${m.id}`}
+                              label="Correct purchase cost"
+                            >
+                              <div className="panel-heading">
+                                <h2>Correct purchase cost</h2>
+                              </div>
+                              <PurchaseCostForm movement={m} />
+                            </ActionPanel>
                           )}
                           {["purchase", "opening", "adjustment_in"].includes(
                             m.kind,

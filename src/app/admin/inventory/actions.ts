@@ -349,3 +349,26 @@ export async function correctInbound(form: FormData) {
     `/admin/inventory?${issue ? `error=${encodeURIComponent(issue)}` : "success=Stock+entry+corrected.+Original+history+retained."}#inventory-ledger`,
   );
 }
+
+export async function revaluePurchase(form: FormData) {
+  const { db } = await requireAdmin();
+  let issue: string | undefined;
+  try {
+    const result = await db.rpc("revalue_purchase_cost", {
+      p_request: identifier(form, "request_id", true),
+      p_movement: identifier(form, "original_id", true),
+      p_expected: cents(form, "expected_cost"),
+      p_cost: cents(form, "cost"),
+      p_reason: text(form, "reason", true, 2000),
+    });
+    if (result.error) throw Error(message(result.error));
+  } catch (e) {
+    issue = e instanceof Error ? e.message : "Costs could not be recalculated.";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(
+    issue
+      ? `/admin/inventory?error=${encodeURIComponent(issue)}#inventory-ledger`
+      : "/admin/inventory/cost-reviews?success=Costs+recalculated.+Review+affected+invoices.",
+  );
+}

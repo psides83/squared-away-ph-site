@@ -1,3 +1,4 @@
+import { FeedCostReview } from "@/components/feed-cost-review";
 import {
   ExpensePaymentAssignments,
   type ExpenseRecovery,
@@ -164,6 +165,24 @@ export default async function Invoice({
         : links.data?.some((link) => link.horse_id === e.horse_id)),
   );
   const invoiceId = <input name="invoice_id" type="hidden" value={id} />;
+  const costFlags = await db
+    .from("invoice_feed_cost_flags")
+    .select(
+      "correction_id,inventory_cost_corrections(old_cost_cents,new_cost_cents,reason,created_at)",
+    )
+    .eq("invoice_id", id)
+    .is("resolved_at", null)
+    .returns<
+      {
+        correction_id: string;
+        inventory_cost_corrections: {
+          old_cost_cents: number;
+          new_cost_cents: number;
+          reason: string;
+          created_at: string;
+        };
+      }[]
+    >();
   const recovery = await db.rpc("invoice_expense_recovery", { p_invoice: id });
   return (
     <>
@@ -181,6 +200,13 @@ export default async function Invoice({
           }
           success={query.success}
         />
+        {costFlags.error ? (
+          <p className="notice error">
+            Feed-cost review status could not load. Refresh before finalizing.
+          </p>
+        ) : (
+          <FeedCostReview invoice={id} corrections={costFlags.data ?? []} />
+        )}
         <div className="row-actions invoice-toolbar">
           <Link className="text-link" href="/admin/invoices">
             All invoices

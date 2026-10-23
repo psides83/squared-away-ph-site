@@ -8,6 +8,9 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Purchase cost-only recalculation after downstream activity: quantity/date/receipts stay unchanged; the original expense amount is corrected under existing source protections, and weighted feeding, waste, reduction/reversal and remaining-stock costs are replayed in durable recording order. Every changed ledger value retains before/after audit history. Later ordinary purchases never reprice past feeding; an explicit reasoned correction can. Source-linked feed invoices and stay invoices covering changed feeding dates receive private review flags; issued charges/payment histories are unchanged. Pending flags block draft finalization. Outdated draft actual-cost feed lines must be removed/regenerated before a reasoned review can be completed. Further corrections create new flags and preserve prior decisions. Inventory links to pending reviews, the latest 50 corrections (up to 100 changed entries each) and latest 50 completed invoice reviews. Future bulk movement timestamps use a reliable sequence; ambiguous legacy ties, unreconciled balances and histories over 2,000 movements are blocked. Cost-only scope does not implement quantity corrections or supplier returns.
+
+
 - Opening-stock and inbound-adjustment entry corrections before later stock activity: explicit reasoned editor, atomic original reversal and replacement stock addition, retained history and retry protection. Original dates carry forward; current unit conversions apply. No expense or cash entry is generated. Replacement entries can be corrected again until later activity occurs. Corrections after consumption remain planned.
 
 
@@ -328,7 +331,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Expenses, receipts, billing, and profitability
 
-- Purchase and opening/inbound-adjustment corrections after downstream movements, plus actual supplier return/refund workflows. Untouched purchase and inbound entry replacement are implemented above.
+- Purchase quantity and opening/inbound-adjustment corrections after downstream movements, plus actual supplier return/refund workflows. Cost-only purchase recalculation and untouched purchase/inbound replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, and manually attributed invoices without reliable feed source/period links need further correction/review workflows.
 - Delivered scheduler failure alerts and additional automation policies. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
 - Public-page contact/payment details from business settings, invoice delivery/email, refunds, and customer credits on account.
 
@@ -391,7 +394,7 @@ Features in this section are present in the application source. A feature being 
 - Feed inventory includes hay and all supplement types from the start, alongside purchases, receipts, and consumption tracking.
 - Support all discussed purchase/feeding units with product-specific relationships between pounds/weight ounces and scoops, flakes, bags, bales, tubs, and other measures. Conversion values are configurable rather than universal assumptions, and historical transactions retain their conversion snapshots.
 - Feeding workflow: saved daily rations per horse, quick confirmation of actual feeding, and manual entries for extras or changes. Only confirmed consumption affects inventory; ration changes apply prospectively.
-- Inventory valuation uses weighted average cost per product in its base stock unit. New receipts update the average from the existing stock value plus the received stock cost, divided by total stock quantity. Confirmed consumption retains the applicable unit-cost snapshot; later purchases do not reprice previous feedings. Cash reporting continues to track actual purchases paid and does not deduct consumption cost again.
+- Inventory valuation uses weighted average cost per product in its base stock unit. New receipts update the average from the existing stock value plus the received stock cost, divided by total stock quantity. Confirmed consumption retains the applicable unit-cost snapshot; later purchases do not reprice previous feedings. An explicit audited purchase-cost correction recalculates historical costs and flags affected bills for review, as confirmed October 23, 2026. Cash reporting continues to track actual purchases paid and does not deduct consumption cost again.
 - Include the owner's own horses when allocating shared barn costs. Default shared-cost allocation is by boarding days during the expense period, with the allocation basis visible and no double counting.
 - Initial profit reporting uses cash received minus expenses paid. Inventory consumption and valuation are separate operational cost views.
 - Default rates, payment terms, business phone/email, and payment instructions belong in master admin settings, with applicable horse/stay overrides and historical snapshots. Do not hard-code a business rate or contact value.
@@ -406,9 +409,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Remaining admin expense/reporting improvements (downstream purchase corrections and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Remaining admin expense/reporting improvements (downstream quantity corrections, supplier returns and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Purchase-revaluation increment (October 23, 2026): migration `20261023004000_purchase_cost_revaluation.sql` adds recording order, audited cost replay and invoice review flags. Database checks cover weighted blending across later purchases, reversal recosting, empty stock, issued-charge preservation, stale draft finalization/review guards, regeneration, repeated/stale submissions, subsequent corrections, allocation guards, bulk timestamp ties, ambiguous legacy rejection, balance mismatch, failure rollback and administrator privacy. Desktop and 390-pixel sample previews verify the correction form, collapsed help, deliberate review and cancellation. All 154 tests, TypeScript checks and the production build pass. Feed comparison restatement and invalidated actual-cost readiness are also verified locally. Remote migration, production saves/report restatements and actual-device verification remain unverified; no production records changed.
 
 - Inbound-correction increment (October 23, 2026): migration `20261023003900_inbound_entry_corrections.sql` implements protected replacement of untouched opening/inbound stock. Database checks cover invalid replacement rollback, exact balance/ledger reconciliation, cash separation, repeated/mismatched requests, replacement correction, downstream guards, private history and denied customer/anonymous writes. All 152 tests and the production build (including TypeScript) pass. The existing shared correction editor is reused; the new editor variant has not been browser-verified. Remote migration, production saves and physical-device verification remain unverified; no production records changed.
 

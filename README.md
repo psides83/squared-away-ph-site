@@ -136,7 +136,7 @@ For **Separate monthly rate**, generate feed or boarding using every physical da
 
 For **Charge actual cost**, feed uses saved weighted costs of actual unreversed feeding movements. Purchases and waste are excluded. The sum is rounded once and source documentation is retained. Boarding uses a selected, reviewed cost portion assigned to the stay through Match income & expenses. Review its purpose and invoice period; do not select feed purchases already recovered through consumed feed or unrelated costs. Expense dates are displayed, but are not used to guess the boarding period.
 
-Included/not-provided agreements generate no separate charges. Source claims prevent duplicate billing and monthly/actual-cost overlap. Billed feed corrections and boarding allocation revisions require releasing the source by removing a draft line or voiding an unpaid invoice. This preserves the original bill and source snapshots. Manual lines require your own duplicate review; they do not automatically reserve source records.
+Included/not-provided agreements generate no separate charges. Source claims prevent duplicate billing and monthly/actual-cost overlap. Reversing billed feeding entries and revising boarding allocations require releasing the source by removing a draft line or voiding an unpaid invoice. This preserves the original bill and source snapshots. Manual lines require your own duplicate review; they do not automatically reserve source records.
 
 ## Expense and inventory workflow
 
@@ -257,3 +257,11 @@ Apply `20261023003700_horse_videos.sql`. **Horse files → Upload video** accept
 Videos begin private. Review and publish them through existing horse-file controls; active manual horse portal grants determine customer access. Metadata size/type is checked at attachment, and retrying does not duplicate file/audit records. Inline playback uses the browser/device’s media capabilities; no transcoding is performed. Signed video access lasts up to five minutes, so revocation cannot invalidate a previously issued link immediately; reload requests fresh authorization. Unsupported codecs can be downloaded for viewing elsewhere.
 
 Incomplete/abandoned uploads and prepared intents may remain private after closing an editor; automated cleanup and cross-refresh resume are not implemented. Use a designated non-production project for actual upload tests. No real media is uploaded by local build/test checks. Provider reference: [Supabase resumable uploads](https://supabase.com/docs/guides/storage/uploads/resumable-uploads).
+
+### Purchase cost recalculation (migration 040)
+
+From stock history, **Correct purchase cost** recalculates this product's historical weighted costs after a mistaken receipt total, including later consumption, waste and reversals. Quantities and receipt attachments stay unchanged; the expense amount changes at its original transaction/payment dates. This explicitly restates operational cost reports, unlike an ordinary later purchase. All before/after values are audited. Billed/shared-allocated purchase expenses retain their existing guards and must be released first.
+
+**Cost corrections & invoice reviews** lists pending reviews and retained correction decisions. Source-linked actual-feed invoices and stay invoices covering changed feeding dates are flagged. Issued charges/payments never change automatically; review and record any appropriate invoice adjustment. For drafts, remove/regenerate outdated actual-feed lines, record your review, and mark actual-cost periods ready again where needed. Pending flags block finalization. Further corrections create new reviews. Manually attributed invoices without reliable feed source or stay-period links require manual review.
+
+The correction supports at most 2,000 stock entries per product. Durable recording order supports new bulk entries. Ambiguous legacy timestamp ties and unreconciled stock are blocked for review. Purchase quantity corrections after consumption, supplier returns and opening/inbound recosting remain planned. Production migration and authenticated live operation are not established by local verification.

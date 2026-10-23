@@ -42,6 +42,14 @@ export async function invoiceAction(operation: string, form: FormData) {
     let rpc: string;
     let args: Record<string, unknown>;
     switch (operation) {
+      case "feed-cost-review":
+        rpc = "resolve_feed_cost_flag";
+        args = {
+          p_correction: identifier(form, "correction_id", true),
+          p_invoice: invoice,
+          p_reason: text(form, "reason", true, 2000),
+        };
+        break;
       case "cost-ready":
         if (form.get("ready") === "yes" && form.get("confirmed") !== "on")
           throw new Error(
