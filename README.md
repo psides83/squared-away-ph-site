@@ -61,7 +61,7 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, purchase corrections after downstream stock activity, other inbound-stock corrections, video transcoding/cross-refresh resume, in-app invitation emails/account creation, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, video transcoding/cross-refresh resume, in-app invitation emails/account creation, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
 
 ## Horse photos and documents
 
@@ -260,15 +260,15 @@ Incomplete/abandoned uploads and prepared intents may remain private after closi
 
 ### Purchase cost recalculation (migration 040)
 
-From stock history, **Correct purchase cost** recalculates this product's historical weighted costs after a mistaken receipt total, including later consumption, waste and reversals. Quantities and receipt attachments stay unchanged; the expense amount changes at its original transaction/payment dates. This explicitly restates operational cost reports, unlike an ordinary later purchase. All before/after values are audited. Billed/shared-allocated purchase expenses retain their existing guards and must be released first.
+From stock history, **Correct quantity / cost** can recalculate this product's historical weighted costs after a mistaken receipt total, including later consumption, waste and reversals. Quantities and receipt attachments stay unchanged; the expense amount changes at its original transaction/payment dates. This explicitly restates operational cost reports, unlike an ordinary later purchase. All before/after values are audited. Billed/shared-allocated purchase expenses retain their existing guards and must be released first.
 
 **Cost corrections & invoice reviews** lists pending reviews and retained correction decisions. Source-linked actual-feed invoices and stay invoices covering changed feeding dates are flagged. Issued charges/payments never change automatically; review and record any appropriate invoice adjustment. For drafts, remove/regenerate outdated actual-feed lines, record your review, and mark actual-cost periods ready again where needed. Pending flags block finalization. Further corrections create new reviews. Manually attributed invoices without reliable feed source or stay-period links require manual review.
 
-The correction supports at most 2,000 stock entries per product. Durable recording order supports new bulk entries. Ambiguous legacy timestamp ties and unreconciled stock are blocked for review. Purchase/opening/inbound quantity corrections after consumption and supplier returns remain planned. Production migration and authenticated live operation are not established by local verification.
+The correction supports at most 2,000 stock entries per product. Durable recording order supports new bulk entries. Ambiguous legacy timestamp ties and unreconciled stock are blocked for review. Quantity corrections after consumption and supplier returns are implemented in migrations 049 and 042. Production migration and authenticated live operation are not established by local verification.
 
 ### Opening stock and stock-addition values (migration 041)
 
-**Correct stock value** is available on opening stock and inbound additions, including after consumption. It uses the same audited replay and invoice-review protections as purchase cost corrections while retaining quantities and dates. It never creates or changes a cash expense. Both source types support reviewed zero-value corrections. The common replay engine is private; administrator-only entry points enforce the selected stock type. The same history-size, ambiguous-legacy-order and reconciliation limits apply. Quantity changes after consumption and supplier returns are separate planned workflows.
+**Correct quantity / cost** is available on opening stock and inbound additions, including after consumption. It uses the same audited replay and invoice-review protections as purchase cost corrections while retaining quantities and dates. It never creates or changes a cash expense. Both source types support reviewed zero-value corrections. The common replay engine is private; administrator-only entry points enforce the selected stock type. The same history-size, ambiguous-legacy-order and reconciliation limits apply. Quantity changes after consumption and supplier returns are available through the later workflows described below.
 
 ### Supplier returns and received refunds (migration 042)
 
@@ -303,3 +303,7 @@ Apply `20261023004700_daily_feeding_history.sql` before using the redesigned Fee
 ### Supplier return documents (migration 048)
 
 Apply `20261023004800_supplier_return_documents.sql` to create the private `supplier-return-documents` bucket, metadata, correction history and administrator-only operations. Open Inventory → Returns & refunds → Documents on a return. Supported JPEG/PNG/WebP/PDF files are limited to 3 MB; content hashes prevent duplicate attachments on the same return. Documents can be archived/restored with reasons, and remain available on cancelled returns. Downloads require admin authentication and use 60-second links. Failed metadata attachment leaves the unregistered object available for a content-verified retry rather than risking deletion during another concurrent attachment. Automatic orphan cleanup, actual uploads/signed links and remote migration remain unverified.
+
+### Stock-source quantity corrections (migration 049)
+
+Apply `20261023004900_source_quantity_corrections.sql` before using Inventory → History → Correct quantity / cost. Purchases, opening stock and inbound additions may be corrected after downstream activity using their original unit/conversion snapshots. Weighted-cost replay retains quantity/cost audit records and flags affected feed invoices without changing issued charges or recorded feeding quantities. Any historical shortage rejects the entire correction; a new backdated addition still follows its actual recording order and cannot silently repair an earlier shortage. Earlier stock records must support the corrected history. Existing total-cost billing/allocation guards and 2,000-entry/ambiguous-history limits remain. Remote migration and production correction/review flows remain unverified.

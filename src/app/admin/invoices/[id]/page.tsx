@@ -168,7 +168,7 @@ export default async function Invoice({
   const costFlags = await db
     .from("invoice_feed_cost_flags")
     .select(
-      "correction_id,inventory_cost_corrections(old_cost_cents,new_cost_cents,reason,created_at)",
+      "correction_id,inventory_cost_corrections(old_quantity,new_quantity,unit_label,old_cost_cents,new_cost_cents,reason,created_at)",
     )
     .eq("invoice_id", id)
     .is("resolved_at", null)
@@ -176,6 +176,9 @@ export default async function Invoice({
       {
         correction_id: string;
         inventory_cost_corrections: {
+          old_quantity: number | string;
+          new_quantity: number | string;
+          unit_label: string;
           old_cost_cents: number;
           new_cost_cents: number;
           reason: string;

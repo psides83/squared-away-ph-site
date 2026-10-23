@@ -38,8 +38,8 @@ export function PurchaseCostForm({
         <p>
           Recalculation requires reconciled history of at most 2,000 entries.
           Historical entries with an unknown recording order are blocked. Stock
-          quantities stay unchanged; earlier quantity corrections and supplier
-          returns remain separate work.
+          quantities stay unchanged here. Use Correct quantity / cost for
+          quantity corrections; supplier returns are recorded separately.
         </p>
       </HelpPanel>
       <div className="form-grid">

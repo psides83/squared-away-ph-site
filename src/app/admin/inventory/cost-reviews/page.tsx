@@ -6,6 +6,9 @@ import { PageHeading, Notice } from "@/components/ui";
 type Correction = {
   id: string;
   movement_id: string;
+  old_quantity: number | string;
+  new_quantity: number | string;
+  unit_label: string;
   old_cost_cents: number;
   new_cost_cents: number;
   reason: string;
@@ -47,7 +50,7 @@ export default async function CostReviews({
     db
       .from("inventory_cost_corrections")
       .select(
-        "id,movement_id,old_cost_cents,new_cost_cents,reason,created_at,inventory_movements(movement_date,inventory_products(name)),inventory_cost_changes(movement_id,old_cost,new_cost,inventory_movements(kind,movement_date,horses(barn_name)))",
+        "id,movement_id,old_quantity,new_quantity,unit_label,old_cost_cents,new_cost_cents,reason,created_at,inventory_movements(movement_date,inventory_products(name)),inventory_cost_changes(movement_id,old_cost,new_cost,inventory_movements(kind,movement_date,horses(barn_name)))",
       )
       .order("created_at", { ascending: false })
       .limit(50)
@@ -75,7 +78,7 @@ export default async function CostReviews({
     <>
       <PageHeading
         eyebrow="FEED INVENTORY"
-        title="Cost corrections & reviews"
+        title="Stock corrections & reviews"
         description="Recalculated stock history and invoices needing a decision."
       />
       <Notice
@@ -132,23 +135,41 @@ export default async function CostReviews({
           },
           {
             id: "corrections",
-            label: "Cost history",
+            label: "Correction history",
             content: (
               <section className="panel">
                 <div className="panel-heading">
-                  <h2>Latest 50 cost corrections</h2>
+                  <h2>Latest 50 stock corrections</h2>
                 </div>
                 <div className="record-form">
                   {!corrections.error && !corrections.data?.length && (
-                    <p>No stock cost recalculations recorded.</p>
+                    <p>No stock recalculations recorded.</p>
                   )}
                   {corrections.data?.map((c) => (
                     <article className="log-entry" key={c.id}>
                       <h3>
                         {c.inventory_movements?.inventory_products?.name ??
                           "Stock entry"}{" "}
-                        · {money(c.old_cost_cents)} → {money(c.new_cost_cents)}
                       </h3>
+                      {Number(c.old_quantity) !== Number(c.new_quantity) && (
+                        <p>
+                          <strong>Quantity:</strong>{" "}
+                          {Number(c.old_quantity).toLocaleString("en-US", {
+                            maximumFractionDigits: 6,
+                          })}{" "}
+                          {c.unit_label} →{" "}
+                          {Number(c.new_quantity).toLocaleString("en-US", {
+                            maximumFractionDigits: 6,
+                          })}{" "}
+                          {c.unit_label}
+                        </p>
+                      )}
+                      <p>
+                        <strong>Total cost:</strong> {money(c.old_cost_cents)}
+                        {c.old_cost_cents === c.new_cost_cents
+                          ? " (unchanged)"
+                          : ` → ${money(c.new_cost_cents)}`}
+                      </p>
                       <p>
                         {dateLabel(c.created_at.slice(0, 10))} · {c.reason}
                       </p>

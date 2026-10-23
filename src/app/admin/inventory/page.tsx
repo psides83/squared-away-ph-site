@@ -11,7 +11,7 @@ import { money, dateLabel, today } from "@/lib/format";
 import { PageHeading, Notice, Field, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { StockEntryForm } from "@/components/stock-forms";
-import { PurchaseCostForm } from "@/components/purchase-cost-form";
+import { SourceQuantityCorrection } from "@/components/source-quantity-correction";
 import { PurchaseCorrectionForm } from "@/components/purchase-correction-form";
 import { saveProduct, reverseConsumption } from "./actions";
 
@@ -358,7 +358,7 @@ export default async function Inventory({
                           className="text-link"
                           href="/admin/inventory/cost-reviews"
                         >
-                          Cost corrections & invoice reviews
+                          Stock corrections & invoice reviews
                         </Link>
                       </p>
                       {movements.data?.map((m) => (
@@ -427,22 +427,11 @@ export default async function Inventory({
                           ) && (
                             <ActionPanel
                               id={`revalue-${m.id}`}
-                              label={
-                                m.kind === "purchase"
-                                  ? "Correct purchase cost"
-                                  : "Correct stock value"
-                              }
+                              label="Correct quantity / cost"
                             >
-                              <div className="panel-heading">
-                                <h2>
-                                  {m.kind === "purchase"
-                                    ? "Correct purchase cost"
-                                    : "Correct stock value"}
-                                </h2>
-                              </div>
-                              <PurchaseCostForm
+                              <SourceQuantityCorrection
                                 movement={m}
-                                inbound={m.kind !== "purchase"}
+                                request={crypto.randomUUID()}
                               />
                             </ActionPanel>
                           )}
@@ -451,10 +440,10 @@ export default async function Inventory({
                           ) && (
                             <ActionPanel
                               id={`correct-purchase-${m.id}`}
-                              label="Correct stock entry"
+                              label="Replace latest entry"
                             >
                               <div className="panel-heading">
-                                <h2>Correct stock entry</h2>
+                                <h2>Replace latest stock entry</h2>
                               </div>
                               <PurchaseCorrectionForm
                                 inbound={m.kind !== "purchase"}

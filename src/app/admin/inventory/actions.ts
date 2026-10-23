@@ -371,3 +371,35 @@ export async function revaluePurchase(form: FormData) {
       : "/admin/inventory/cost-reviews?success=Costs+recalculated.+Review+affected+invoices.",
   );
 }
+
+export type SourceCorrectionState = { error?: string; success?: string };
+export async function correctSourceQuantity(
+  previous: SourceCorrectionState,
+  form: FormData,
+): Promise<SourceCorrectionState> {
+  const { db } = await requireAdmin();
+  try {
+    const { error } = await db.rpc("correct_inventory_source_quantity", {
+      p_request: identifier(form, "request_id", true),
+      p_movement: identifier(form, "original_id", true),
+      p_expected_cost: cents(form, "expected_cost"),
+      p_cost: cents(form, "cost"),
+      p_expected_quantity: quantity(form, "expected_quantity"),
+      p_quantity: quantity(form),
+      p_reason: text(form, "reason", true, 2000),
+    });
+    if (error) throw new Error(message(error));
+    revalidatePath("/admin", "layout");
+    return {
+      success:
+        "Stock entry corrected and later costs recalculated. Saved invoice charges are unchanged; review any flagged invoices.",
+    };
+  } catch (e) {
+    return {
+      error:
+        e instanceof Error
+          ? e.message
+          : "The stock entry could not be corrected. Your entries have been kept.",
+    };
+  }
+}
