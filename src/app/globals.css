@@ -3540,3 +3540,39 @@ input[type="search"]::-webkit-search-decoration {
 .expense-payment-panel {
   margin-block: 24px;
 }
+
+.account-page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+}
+.account-card {
+  width: min(100%, 480px);
+  display: grid;
+  gap: 24px;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fffefa;
+}
+.account-card h1 {
+  font-size: 30px;
+}
+.account-card .button,
+.account-card .text-link {
+  justify-self: start;
+}
+.account-card .notice {
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .account-page {
+    align-items: start;
+    padding-top: 28px;
+  }
+  .account-card {
+    padding: 24px 20px;
+    gap: 20px;
+  }
+}

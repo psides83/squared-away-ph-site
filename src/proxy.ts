@@ -5,6 +5,9 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  response.headers.set("Cache-Control", "private, no-store");
+  response.headers.set("Referrer-Policy", "no-referrer");
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
   if (!url || !key) return response;
   const db = createServerClient(url, key, {
     cookies: {
@@ -20,9 +23,19 @@ export async function proxy(request: NextRequest) {
   });
   await db.auth.getUser();
   response.headers.set("Cache-Control", "private, no-store");
+  response.headers.set("Referrer-Policy", "no-referrer");
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
   return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/portal/:path*", "/login", "/access"],
+  matcher: [
+    "/admin/:path*",
+    "/portal/:path*",
+    "/login",
+    "/access",
+    "/forgot-password",
+    "/reset-password",
+    "/auth/recovery",
+  ],
 };

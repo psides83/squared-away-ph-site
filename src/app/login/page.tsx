@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { InstallApp } from "@/components/install-app";
 import { Brand } from "@/components/brand";
 import { SubmitButton } from "@/components/submit-button";
@@ -8,9 +9,9 @@ import { ArrowUpRight, LockKeyhole } from "lucide-react";
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; success?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, success } = await searchParams;
   const configured = hasSupabaseConfig();
   return (
     <main className="login-page">
@@ -47,6 +48,11 @@ export default async function Login({
             <br />
             Sign in to get the day started.
           </p>
+          {success && (
+            <p className="notice success" role="status">
+              {success}
+            </p>
+          )}
           {error && (
             <p className="notice error" role="alert">
               {error}
@@ -84,6 +90,9 @@ export default async function Login({
               Sign in <ArrowUpRight size={17} />
             </SubmitButton>
           </form>
+          <Link className="text-link" href="/forgot-password">
+            Forgot password?
+          </Link>
           <InstallApp />
           <p className="login-note">
             Private access for Squared Away Performance Horses.

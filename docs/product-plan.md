@@ -8,6 +8,12 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+### Existing-account password recovery
+
+- Sign-in links to Forgot password with a generic request result, provider-controlled delivery and no account-existence disclosure in the UI. Configured canonical HTTPS origin is validated; incoming host/redirect values are not trusted. Included branded Supabase reset template targets the server-side recovery confirmation flow.
+- Recovery links render a deliberate Continue step; GET does not consume the token. Explicit submission verifies recovery-type tokens through Supabase and redirects to a fixed password screen. Password update requires provider-verified identity, matching 12–128 character passwords and preserves password whitespace. Successful changes attempt global sign-out and return to sign-in. Existing authenticated users can set their own password; no target-user selection or new access grants are introduced.
+- Responsive shared-brand account screens, private/no-store and no-referrer route headers, invalid/expired/session-missing states, and production setup instructions are implemented. This also lets owner-provisioned existing email accounts choose a password; in-app invitations/account creation remain planned. Real email delivery/template configuration, provider policies and production recovery still require setup/verification.
+
 ### Expense recovery and explicit payment assignments
 
 - Invoice Payments tab has deliberate original-cost reimbursement assignments from active recorded payments to expenses linked to that invoice. Supports splitting one payment among expenses, repaying one cost through multiple payments, versioned edits and reasoned removal. Payment availability, per-invoice linked original cost and global expense cost cap assignments; stale/reused forms fail safely. Removed/replaced assignments and reversed-payment history remain visible, while only active assignments count. Invoice balances and cash payments are not changed by assignments. Expense billing follow-up links directly to this workflow, including settled invoices.
@@ -319,7 +325,7 @@ Features in this section are present in the application source. A feature being 
 ### Horse records and customer portal
 
 - Video uploads. Recorded ownership/customer-link history is implemented; historical legal sale dates are not inferred.
-- Add structured customer-shared care records, in-app email invitations, and password setup/recovery beyond owner-provisioned Supabase accounts. Photo/document sharing and published updates are implemented above.
+- Add structured customer-shared care records and in-app email invitations/account creation, including invite-type links. Existing-account password setting/recovery, photo/document sharing and published updates are implemented above.
 
 ### Marketing website
 
@@ -385,6 +391,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream purchase corrections and remaining financial refinements) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Password-recovery increment (October 22, 2026): no application migration required. All 147 tests pass, covering canonical-origin rejection, recovery-only token validation, password matching/length/whitespace preservation, generic request results, provider-verified identity before updates, update-failure behavior and post-update sign-out ordering. Desktop/390-pixel browser checks verify the request screen, missing-session state and explicit confirmation screen with a dummy token. TypeScript and production build pass. No emails were sent and no credentials changed. Production Site URL/redirect/template/SMTP setup, actual email links, password saves, provider session revocation and physical-device flows remain unverified; see `docs/password-recovery.md`.
 
 - Expense-recovery increment (October 22, 2026): migration `20261022003500_expense_recovery_report.sql` adds private payment assignments and the paid-expense cohort report. All 144 tests pass, including payment/source caps, retry/stale edits, replacement/removal history, reversed payments, unchanged cash revenue, unpaid expense exclusion, later customer-payment dates, boarding portions, voided invoice claims, draft/finalized separation, bounded detail with full totals and administrator privacy. Desktop/390-pixel previews verify report layout, collapsed guidance, deliberate assignment editors and cancellation. TypeScript and production build pass. Remote migration, authenticated production assignments, and physical-device workflows remain unverified; no production data was changed.
 
