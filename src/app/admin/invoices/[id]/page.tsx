@@ -1,3 +1,7 @@
+import {
+  ExpensePaymentAssignments,
+  type ExpenseRecovery,
+} from "@/components/expense-payment-assignments";
 import { AppSelect } from "@/components/app-select";
 import {
   InvoiceCostReadiness,
@@ -160,6 +164,7 @@ export default async function Invoice({
         : links.data?.some((link) => link.horse_id === e.horse_id)),
   );
   const invoiceId = <input name="invoice_id" type="hidden" value={id} />;
+  const recovery = await db.rpc("invoice_expense_recovery", { p_invoice: id });
   return (
     <>
       <div className="no-print">
@@ -766,6 +771,12 @@ export default async function Invoice({
             label: "Payments",
             content: (
               <>
+                <ExpensePaymentAssignments
+                  invoice={id}
+                  data={
+                    recovery.error ? null : (recovery.data as ExpenseRecovery)
+                  }
+                />
                 {!payments.data?.length && (
                   <p className="notice">No payments recorded yet.</p>
                 )}

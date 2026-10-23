@@ -111,15 +111,24 @@ export function ExpenseInvoiceLinks({ data }: { data?: ExpenseFollowup }) {
                 </Link>
               </p>
             )}
+            {i.status === "issued" && (
+              <Link
+                className="text-link"
+                href={`/admin/invoices/${i.id}#invoice-payments`}
+              >
+                Review payment assignments
+              </Link>
+            )}
           </article>
         ))
       ) : (
         <p>No draft or issued invoice is linked to this expense.</p>
       )}
       <p className="muted">
-        Payment status and balance apply to the whole invoice. Payments are not
-        allocated to individual expense lines. Original costs exclude handling
-        fees and are shown separately from the amount charged.
+        Payment status and balance apply to the whole invoice. Expense recovery
+        requires explicit payment assignments; a settled balance alone does not
+        assign recovery. Original costs exclude handling fees and are shown
+        separately from the amount charged.
       </p>
     </div>
   );

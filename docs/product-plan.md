@@ -8,6 +8,11 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+### Expense recovery and explicit payment assignments
+
+- Invoice Payments tab has deliberate original-cost reimbursement assignments from active recorded payments to expenses linked to that invoice. Supports splitting one payment among expenses, repaying one cost through multiple payments, versioned edits and reasoned removal. Payment availability, per-invoice linked original cost and global expense cost cap assignments; stale/reused forms fail safely. Removed/replaced assignments and reversed-payment history remain visible, while only active assignments count. Invoice balances and cash payments are not changed by assignments. Expense billing follow-up links directly to this workflow, including settled invoices.
+- Reports → Expense recovery selects non-voided expenses by vendor-payment date and shows current cumulative recovered cost (including customer payments received later), finalized/draft original-cost coverage, fees separately, and costs not separately billed. Full charge-backs and actual-cost boarding portions are included without counting payments twice. Not-billed costs are not presumed intentionally absorbed; missing assignments can understate recovery. Current paid-expense cohort totals cover all results; detail is capped at the latest 100 with an explicit count/limitation. Optional methodology remains collapsed.
+
 ### Automatic creation of recurring unpaid expense bills
 
 - Recurring expenses now has Schedules and Automatic creation tabs with a separate off-by-default administrator enable/disable setting. The existing production daily endpoint calls a service-only coordinator for independent invoice and expense workers. Invoice automation can remain off while expenses run, and vice versa.
@@ -292,7 +297,7 @@ Features in this section are present in the application source. A feature being 
 
 - Expense list links to record pages and shows receipt counts, original costs reserved on draft/issued invoices, and overdue linked-invoice status. Missing follow-up data is explicitly unavailable rather than shown as unbilled.
 - Expense records separate Details, Receipts, and Customer billing. Read costs/status/notes first; payment changes, receipt attachment, and charge-back forms open deliberately. Receipt operations return to the record. Saving an expense opens its record rather than an always-open editor. Voids retain documentation, and stock-purchase cost protections remain intact.
-- Billing links include full expense charge-backs and assigned actual-cost boarding portions, grouped per invoice without counting the same cost twice. Original cost is separate from fees and invoice-wide payment balances; payments/credits are not presumed allocated to expense lines. Actual collected reimbursement/absorbed-cost reporting remains planned.
+- Billing links include full expense charge-backs and assigned actual-cost boarding portions, grouped per invoice without counting the same cost twice. Original cost is separate from fees and invoice-wide payment balances; payments/credits are not presumed allocated to expense lines. Explicit collected-cost assignments and expense recovery reporting are implemented above; intent to absorb a cost is not inferred.
 - Reimbursable horse expenses can be added to eligible drafts with an explicit fee (zero by default), retaining database duplicate/source protections. Choices consider current customer links and historical stays matching the expense date. New drafts can preselect the chosen customer and matching historical stay/terms; responsibility stays an explicit administrator choice. Eligible choices are limited to matches within the latest 100 candidate drafts, with this limitation shown.
 
 ## Planned (not implemented)
@@ -308,7 +313,7 @@ Features in this section are present in the application source. A feature being 
 - Source-date allocation for unsupported/manual feed charges and attribution of invoice-wide adjustments to feed; bundled training revenue has no feed allocation. The implemented comparison flags these limitations rather than inferring feed margins.
 
 - Split receipts from a single manual invoice among multiple horses/stays if needed. Current reporting links assign the entire invoice to one horse and optionally one matching stay.
-- Add reimbursement-versus-absorbed-cost breakdowns using the implemented expense-to-invoice links. Cash reports already count received invoice payments once; do not add reimbursements a second time as separate revenue.
+- Optional explicit absorbed-cost designation or allocation of bundled training revenue to expenses. Expense recovery, finalized/draft billing coverage and not-separately-billed costs are implemented above; intent to absorb costs is not inferred.
 - Add persistent boarding occupancy records for horses outside training stays if useful; their actual boarding days can currently be entered in each shared-cost allocation.
 
 ### Horse records and customer portal
@@ -377,9 +382,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Remaining admin expense/reporting improvements (downstream purchase corrections and reimbursement breakdowns) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Remaining admin expense/reporting improvements (downstream purchase corrections and remaining financial refinements) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Expense-recovery increment (October 22, 2026): migration `20261022003500_expense_recovery_report.sql` adds private payment assignments and the paid-expense cohort report. All 144 tests pass, including payment/source caps, retry/stale edits, replacement/removal history, reversed payments, unchanged cash revenue, unpaid expense exclusion, later customer-payment dates, boarding portions, voided invoice claims, draft/finalized separation, bounded detail with full totals and administrator privacy. Desktop/390-pixel previews verify report layout, collapsed guidance, deliberate assignment editors and cancellation. TypeScript and production build pass. Remote migration, authenticated production assignments, and physical-device workflows remain unverified; no production data was changed.
 
 - Automatic-expense increment (October 22, 2026): migration `20261022003400_scheduled_expenses.sql` and the updated production coordinator are implemented. All 142 tests pass, including independent opt-in, invoice-off/expense-on operation, unpaid/cash/stock separation, daily deduplication, one-occurrence backlog advancement, manual sequence integration, void retention, paused/future/end exclusion, per-schedule failure isolation, private history and removed-administrator blocking. Desktop/390-pixel sample previews verify controls, collapsed run details and expense/schedule links. TypeScript and production build pass. Remote migration, production credentials/schedule, explicit enablement and actual automatic expense creation remain unverified; no production records or automation settings changed.
 

@@ -3536,3 +3536,7 @@ input[type="search"]::-webkit-search-decoration {
   display: inline-flex;
   flex-shrink: 0;
 }
+
+.expense-payment-panel {
+  margin-block: 24px;
+}

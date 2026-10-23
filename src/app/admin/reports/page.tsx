@@ -1,4 +1,8 @@
 import {
+  ExpenseRecoveryReport,
+  type ExpenseRecoveryReportData,
+} from "@/components/expense-recovery-report";
+import {
   FeedComparisonReport,
   type FeedComparison,
 } from "@/components/feed-comparison-report";
@@ -76,13 +80,14 @@ export default async function Reports({
     validDate(to) &&
     from <= to &&
     Date.parse(to) - Date.parse(from) <= 3660 * 86400000;
-  const [result, usage, comparison] = valid
+  const [result, usage, comparison, recovery] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
         db.rpc("inventory_usage_report", { p_from: from, p_to: to }),
         db.rpc("feed_charge_comparison", { p_from: from, p_to: to }),
+        db.rpc("expense_recovery_report", { p_from: from, p_to: to }),
       ])
-    : [null, null, null];
+    : [null, null, null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -152,6 +157,19 @@ export default async function Reports({
             label="Financial report sections"
             defaultTab="cash"
             sections={[
+              {
+                id: "expense-recovery",
+                label: "Expense recovery",
+                content: (
+                  <ExpenseRecoveryReport
+                    data={
+                      recovery?.error
+                        ? null
+                        : (recovery?.data as ExpenseRecoveryReportData | null)
+                    }
+                  />
+                ),
+              },
               {
                 id: "cash",
                 label: "Monthly cash",
