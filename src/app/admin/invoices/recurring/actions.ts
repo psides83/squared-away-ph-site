@@ -54,3 +54,34 @@ export async function skipVoidedCycle(form: FormData) {
     `/admin/invoices/recurring?${error ? `error=${encodeURIComponent(error)}` : "success=Voided+cycle+skipped.+No+replacement+bill+was+created."}`,
   );
 }
+
+export async function configureAutomation(form: FormData) {
+  const { db } = await requireAdmin();
+  const value = form.get("enabled");
+  let error: string | undefined;
+  if (value !== "true" && value !== "false")
+    error = "Choose whether automatic billing should be enabled.";
+  else if (
+    value === "true" &&
+    !(
+      process.env.VERCEL_ENV === "production" &&
+      (process.env.CRON_SECRET?.length ?? 0) >= 32 &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)
+    )
+  )
+    error =
+      "Complete the production scheduler setup before enabling automatic billing.";
+  else {
+    const result = await db.rpc("configure_billing_automation", {
+      p_enabled: value === "true",
+    });
+    if (result.error)
+      error =
+        "Automatic billing settings could not save. Check the latest migration.";
+  }
+  revalidatePath("/admin/invoices/recurring");
+  redirect(
+    `/admin/invoices/recurring?${error ? `error=${encodeURIComponent(error)}` : "success=Automatic+billing+setting+saved."}#recurring-automation`,
+  );
+}

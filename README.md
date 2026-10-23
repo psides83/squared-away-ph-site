@@ -217,3 +217,7 @@ Long optional instructions use a collapsed HelpPanel. Shared workspaces use mode
 Apply `20261022003000_feed_charge_comparison.sql` in migration order. In **Reports → Feed cost vs charges**, select service dates to compare each horse’s recorded feed/hay/supplement cost with generated finalized feed charges. Draft charges and actual-cost feeding not on invoices are separate. Expand agreement/invoice detail to review sources. Payments do not change this comparison.
 
 Monthly amounts follow saved source days and calendar-month weights; actual-cost amounts follow claimed consumption. Saved invoice cents reconcile across date slices. Corrections restate original feeding dates in this report, while Feed usage follows ledger dates. Bundled feed, invoice-wide adjustments, unsupported manual charges, and missing feeding records limit comparability and are flagged. This is recorded feed margin, not cash or whole-business profit; it does not establish that every feeding was logged.
+
+## Daily automatic billing
+
+See [automatic-billing.md](docs/automatic-billing.md) for migration 031, required production-only server credentials, Vercel's daily schedule, explicit administrator enablement, run history, and verification. The feature defaults off. Existing calendar/actual-cost readiness checks remain mandatory; production scheduling has not been verified merely by deploying this code.

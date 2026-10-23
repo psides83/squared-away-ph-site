@@ -1,0 +1,23 @@
+# Automatic recurring billing deployment
+
+The scheduler is implemented but defaults **off**. Deploying code does not enable billing or prove the schedule runs.
+
+1. Apply migrations in order through `20261022003100_scheduled_billing.sql` to the intended production Supabase project. The migration grants worker execution only to `service_role`; customer and anonymous sessions cannot invoke it. Administrator sessions can configure automation and read its history, but cannot directly invoke the worker.
+2. In Vercel **Production** environment variables, configure `CRON_SECRET` with a cryptographically random value at least 32 characters long, plus `SUPABASE_SECRET_KEY` (current server secret) or `SUPABASE_SERVICE_ROLE_KEY` (legacy server key). The normal Supabase project URL is also required. Never prefix these secrets with `NEXT_PUBLIC_`, commit them, or paste them in chat. Ensure the server key belongs to that same project.
+3. Redeploy the production branch. `vercel.json` registers `/api/cron/billing` at `0 14 * * *`: daily during the 14:00 UTC hour, approximately 8 AM CST / 9 AM CDT. Vercel Hobby may invoke anywhere within that hour. Review the registered cron in Vercel. Preview deployments are rejected by the endpoint. A valid configured secret is required even when automation is off.
+4. Review each intended training agreement's recurring toggle, start date, billing schedule, payment terms, service terms and calendar. In **Invoices → Recurring billing → Automatic billing**, explicitly enable daily billing. Enabling delegates existing billing operations to the enabling administrator; a private run audit distinguishes them from operator-started preparation. If that user loses administrator access, the worker blocks until an administrator re-enables it. This does not grant broader administrator status to service sessions or customers.
+5. After the next scheduled invocation, check **Last scheduler check**, **Recent daily runs**, and Vercel function logs. The UI warns when enabled but no check has occurred within 36 hours. Review resulting drafts and invoice totals. Do not invoke the endpoint against real data merely to test connectivity: an authorized invocation while enabled can finalize invoices.
+
+## Behavior and limits
+
+- America/Chicago defines the business date; invoice periods retain existing completed-cycle and departure closeout rules.
+- One run per business date; a transaction lock prevents simultaneous workers. A duplicate invocation returns without another run. A rolled-back/timed-out transaction may safely retry. A returned per-stay failure is recorded and is retried on a later business day, or can be prepared manually after repair.
+- At most one cycle per stay per day, up to 25 due/review agreements ordered by oldest billing date. Backlogs advance on subsequent runs; no promise is made to catch up every overdue month in one run.
+- Review drafts are retried. Missing calendar classifications, manual proration, source conflicts and missing/changed actual-cost approval remain review blockers. Voided cycles are never silently skipped. Existing generated-source reservations and guarded finalization prevent duplicate charges.
+- Only recurring-enabled agreements participate. Complete prepared cycles finalize automatically; no email, payment collection, refund or expense scheduling is added.
+- Each stay failure rolls back independently. An unexpected outer worker failure rolls back all billing changes in that run and retains the error audit. A failure before/after the RPC transaction may only appear in deployment logs; the stale-check notice is an additional signal, not external alert delivery.
+- Scheduled operations execute within a restricted, service-only function using the administrator's saved authorization, restoring request identity before return. Runs record the authorizing administrator, business date, start/end times, per-stay outcomes, invoice links and errors. History is administrator-only. Keep server credentials in Vercel's secret environment settings.
+- The app displays the latest 20 runs. History retention cleanup and delivered failure alerts remain future work.
+- Turning automation off preserves existing invoices and drafts. To stop a run already in progress, use deployment/provider controls; the toggle takes effect after the current database transaction releases its settings lock.
+
+Provider references: [Vercel cron setup](https://vercel.com/docs/cron-jobs/quickstart), [securing and managing cron jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs), [Supabase server API keys](https://supabase.com/docs/guides/api/api-keys).

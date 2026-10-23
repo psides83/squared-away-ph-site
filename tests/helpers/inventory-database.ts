@@ -7,7 +7,7 @@ export const outsiderId = "20000000-0000-4000-8000-000000000002";
 export async function inventoryDatabase(through?: string) {
   const db = new PGlite({ extensions: { btree_gist } });
   await db.exec(`
-    create role anon nologin; create role authenticated nologin;
+    create role anon nologin; create role authenticated nologin; create role service_role nologin;
     create schema auth; create table auth.users(id uuid primary key,email text);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     create schema storage;
