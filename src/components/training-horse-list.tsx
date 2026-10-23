@@ -25,7 +25,12 @@ export function TrainingHorseList({ horses }: { horses: TrainingHorse[] }) {
           {horses.map((h) => (
             <article className="horse-card training-work-card" key={h.horse_id}>
               <h3>
-                <Link href={`/admin/horses/${h.horse_id}`}>{h.barn_name}</Link>
+                <Link
+                  className="inline-link"
+                  href={`/admin/horses/${h.horse_id}`}
+                >
+                  {h.barn_name}
+                </Link>
               </h3>
               <p className="muted">
                 In training since {dateLabel(h.arrival_date)}

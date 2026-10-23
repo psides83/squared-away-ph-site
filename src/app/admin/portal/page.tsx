@@ -1,3 +1,4 @@
+import { HelpPanel } from "@/components/help-panel";
 import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
@@ -56,13 +57,15 @@ export default async function CustomerAccess({
         }
         success={query.success}
       />
-      <p className="notice">
-        Create the customer’s sign-in account in Supabase Authentication first,
-        then link its exact email here. This screen does not send email
-        invitations. A customer sees only their own billing. Horse updates
-        require a separate manual grant; ownership changes do not grant or
-        revoke it. Review these grants whenever a horse is sold.
-      </p>
+      <HelpPanel title="How customer access works">
+        <p>
+          Create the customer’s sign-in account in Supabase Authentication
+          first, then link its exact email here. This screen does not send email
+          invitations. A customer sees only their own billing. Horse updates
+          require a separate manual grant; ownership changes do not grant or
+          revoke it. Review these grants whenever a horse is sold.
+        </p>
+      </HelpPanel>
       <section className="panel">
         <form method="get" className="record-form">
           <label>

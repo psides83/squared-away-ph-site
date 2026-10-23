@@ -30,7 +30,7 @@ export function RecurringBillingCards({ rows }: { rows: RecurringStay[] }) {
       {rows.map((r) => (
         <article className="horse-card recurring-billing-card" key={r.stay_id}>
           <h3>
-            <Link href={`/admin/horses/${r.horse_id}`}>{r.horse_name}</Link>
+            <Link className="inline-link" href={`/admin/horses/${r.horse_id}`}>{r.horse_name}</Link>
           </h3>
           <p className="muted">
             Billed to {r.customer_name} · {billingScheduleLabels[r.schedule]}

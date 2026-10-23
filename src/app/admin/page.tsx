@@ -142,7 +142,7 @@ export default async function Dashboard() {
                   {horses.data.map((horse) => (
                     <Link
                       className="record-row"
-                      href={`/admin/horses?edit=${horse.id}`}
+                      href={`/admin/horses/${horse.id}`}
                       key={horse.id}
                     >
                       <span className="horse-initial">

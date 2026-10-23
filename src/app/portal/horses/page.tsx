@@ -100,10 +100,18 @@ export default async function CustomerHorses({
           </p>
         )}
         <nav className="log-pagination" aria-label="Horse update pages">
-          {page > 1 ? <Link href={href(page - 1)}>Previous</Link> : <span />}
+          {page > 1 ? (
+            <Link className="button secondary" href={href(page - 1)}>
+              Previous
+            </Link>
+          ) : (
+            <span />
+          )}
           <span>Page {page}</span>
           {page * 25 < Number(updates.data?.total ?? 0) ? (
-            <Link href={href(page + 1)}>Next</Link>
+            <Link className="button secondary" href={href(page + 1)}>
+              Next
+            </Link>
           ) : (
             <span />
           )}

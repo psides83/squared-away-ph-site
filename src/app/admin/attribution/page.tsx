@@ -1,3 +1,4 @@
+import { HelpPanel } from "@/components/help-panel";
 import { ActionPanel } from "@/components/action-panel";
 import { Receipt } from "lucide-react";
 import Link from "next/link";
@@ -153,51 +154,45 @@ export default async function Attribution({
         }
         success={params.success}
       />
-      <section className="panel">
-        <div className="panel-heading">
-          <h2>When do I use this page?</h2>
-        </div>
-        <div className="record-form">
-          <p>
-            A <strong>training visit</strong> is one arrival-to-departure period
-            recorded in Training stays. A horse may have several visits if it
-            leaves and comes back.
-          </p>
-          <p>
-            <strong>For income:</strong> invoices created for a training stay
-            already belong to that horse and visit. If you created an invoice
-            without a stay, choose the horse here so its payments appear in the
-            right report.
-          </p>
-          <p>
-            <strong>For expenses:</strong> first record the bill in{" "}
-            <Link className="text-link" href="/admin/expenses">
-              Expenses
-            </Link>{" "}
-            and choose the horse. That already includes the cost in the horse’s
-            report. Use this page to put some or all of that cost against a
-            particular training visit.
-          </p>
-          <p>
-            <strong>Example:</strong> a $150 farrier bill for a horse’s June
-            visit can go entirely against that visit. If a cost covers two
-            visits, divide the amount between them.
-          </p>
-          <p>
-            For a bill shared by several horses, divide it between horses in{" "}
-            <Link className="text-link" href="/admin/allocations">
-              Shared costs
-            </Link>{" "}
-            first. Each horse’s share will then appear below.
-          </p>
-          <p className="muted">
-            These choices organize reports and identify costs available for
-            actual-cost boarding invoices. To charge a customer, add the cost to
-            an invoice in Invoices. Changing a match also updates earlier
-            reports.
-          </p>
-        </div>
-      </section>
+      <HelpPanel title="When do I use this page?">
+        <p>
+          A <strong>training visit</strong> is one arrival-to-departure period
+          recorded in Training stays. A horse may have several visits if it
+          leaves and comes back.
+        </p>
+        <p>
+          <strong>For income:</strong> invoices created for a training stay
+          already belong to that horse and visit. If you created an invoice
+          without a stay, choose the horse here so its payments appear in the
+          right report.
+        </p>
+        <p>
+          <strong>For expenses:</strong> first record the bill in{" "}
+          <Link className="text-link" href="/admin/expenses">
+            Expenses
+          </Link>{" "}
+          and choose the horse. That already includes the cost in the horse’s
+          report. Use this page to put some or all of that cost against a
+          particular training visit.
+        </p>
+        <p>
+          <strong>Example:</strong> a $150 farrier bill for a horse’s June visit
+          can go entirely against that visit. If a cost covers two visits,
+          divide the amount between them.
+        </p>
+        <p>
+          For a bill shared by several horses, divide it between horses in{" "}
+          <Link className="text-link" href="/admin/allocations">
+            Shared costs
+          </Link>{" "}
+          first. Each horse’s share will then appear below.
+        </p>
+        <p className="muted">
+          These choices organize reports and identify costs available for
+          actual-cost boarding invoices. To charge a customer, add the cost to
+          an invoice in Invoices. Changing a match also updates earlier reports.
+        </p>
+      </HelpPanel>
       {!failed && data && invoice.data && (
         <ActionPanel
           id="match-income"
@@ -469,13 +464,23 @@ export default async function Attribution({
         )}
         <nav className="log-pagination" aria-label="Manual invoice pages">
           {ipage > 1 ? (
-            <Link href={`/admin/attribution?ipage=${ipage - 1}`}>Previous</Link>
+            <Link
+              className="button secondary"
+              href={`/admin/attribution?ipage=${ipage - 1}`}
+            >
+              Previous
+            </Link>
           ) : (
             <span />
           )}
           <span>Page {ipage}</span>
           {ipage * 25 < (invoices.count ?? 0) ? (
-            <Link href={`/admin/attribution?ipage=${ipage + 1}`}>Next</Link>
+            <Link
+              className="button secondary"
+              href={`/admin/attribution?ipage=${ipage + 1}`}
+            >
+              Next
+            </Link>
           ) : (
             <span />
           )}
@@ -553,7 +558,10 @@ export default async function Attribution({
         {(costs.count ?? 0) > 0 && (
           <nav className="log-pagination" aria-label="Horse expense pages">
             {cpage > 1 ? (
-              <Link href={`/admin/attribution?cpage=${cpage - 1}`}>
+              <Link
+                className="button secondary"
+                href={`/admin/attribution?cpage=${cpage - 1}`}
+              >
                 Previous
               </Link>
             ) : (
@@ -561,7 +569,12 @@ export default async function Attribution({
             )}
             <span>Page {cpage}</span>
             {cpage * 25 < (costs.count ?? 0) ? (
-              <Link href={`/admin/attribution?cpage=${cpage + 1}`}>Next</Link>
+              <Link
+                className="button secondary"
+                href={`/admin/attribution?cpage=${cpage + 1}`}
+              >
+                Next
+              </Link>
             ) : (
               <span />
             )}

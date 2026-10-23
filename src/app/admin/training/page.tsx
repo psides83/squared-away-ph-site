@@ -80,7 +80,11 @@ export default async function Training({
           >
             <div className="panel-heading">
               <h2>{selected ? "Edit training stay" : "Welcome to the barn"}</h2>
-              <Link href={closeHref} aria-label="Close training form">
+              <Link
+                className="dialog-close"
+                href={closeHref}
+                aria-label="Close training form"
+              >
                 <X size={20} />
               </Link>
             </div>
@@ -217,9 +221,15 @@ export default async function Training({
           </ActionPanel>
         ) : (
           <p className="notice">
-            First <Link href="/admin/horses?new=1">add a horse</Link> and{" "}
-            <Link href="/admin/customers?new=1">a customer</Link> to create a
-            training stay.
+            First{" "}
+            <Link className="inline-link" href="/admin/horses?new=1">
+              add a horse
+            </Link>{" "}
+            and{" "}
+            <Link className="inline-link" href="/admin/customers?new=1">
+              a customer
+            </Link>{" "}
+            to create a training stay.
           </p>
         ))}
       <section className="panel">

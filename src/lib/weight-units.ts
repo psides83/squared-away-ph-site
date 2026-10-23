@@ -57,3 +57,9 @@ export function weightInOunces(value: string, label: string) {
     );
   return `${ounces / scale}.${(ounces % scale).toString().padStart(12, "0")}`;
 }
+
+/** Keep exact database decimals while removing display-only trailing zeroes. */
+export function conversionWeightText(value: string | number) {
+  const text = typeof value === "number" ? value.toFixed(12) : value;
+  return text.includes(".") ? text.replace(/0+$/, "").replace(/\.$/, "") : text;
+}

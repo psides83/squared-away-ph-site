@@ -299,10 +299,18 @@ export default async function HorseFiles({
           <p className="record-form muted">No horse files in this view yet.</p>
         )}
         <nav className="log-pagination" aria-label="Horse file pages">
-          {page > 1 ? <Link href={href(page - 1)}>Previous</Link> : <span />}
+          {page > 1 ? (
+            <Link className="button secondary" href={href(page - 1)}>
+              Previous
+            </Link>
+          ) : (
+            <span />
+          )}
           <span>Page {page}</span>
           {page * 24 < (files.count ?? 0) ? (
-            <Link href={href(page + 1)}>Next</Link>
+            <Link className="button secondary" href={href(page + 1)}>
+              Next
+            </Link>
           ) : (
             <span />
           )}

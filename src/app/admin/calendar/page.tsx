@@ -1,3 +1,4 @@
+import { HelpPanel } from "@/components/help-panel";
 import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
@@ -97,12 +98,15 @@ export default async function Calendar({
         }
         success={params.success}
       />
-      <p className="notice">
-        Arrival/departure dates describe the physical stay. Only days explicitly
-        marked <strong>Worked</strong> or <strong>Billable rest</strong> count
-        here. Training notes do not automatically classify days, and this
-        calendar does not create invoices.
-      </p>
+      <HelpPanel title="How billable days work">
+        <p>
+          Arrival/departure dates describe the physical stay. Only days
+          explicitly marked <strong>Worked</strong> or{" "}
+          <strong>Billable rest</strong> count here. Training notes do not
+          automatically classify days, and this calendar does not create
+          invoices.
+        </p>
+      </HelpPanel>
       <section className="panel">
         <form action="/admin/calendar" className="log-filter">
           <label>

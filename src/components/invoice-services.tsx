@@ -93,7 +93,7 @@ export function InvoiceServices({
               automatically filtered by expense date. Do not select feed
               purchases recovered through consumed feed, or unrelated
               vet/farrier costs.{" "}
-              <Link href="/admin/attribution">Review cost assignments</Link>{" "}
+              <Link className="inline-link" href="/admin/attribution">Review cost assignments</Link>{" "}
               first.
             </p>
             <SubmitButton>Add selected boarding cost</SubmitButton>

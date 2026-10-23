@@ -1,3 +1,4 @@
+import { HelpPanel } from "@/components/help-panel";
 import { TemporalInput } from "@/components/temporal-input";
 import {
   InventoryUsageReport,
@@ -131,13 +132,16 @@ export default async function Reports({
               </div>
             ))}
           </div>
-          <p className="notice">
-            These figures use payment dates and expense paid dates. They exclude
-            unpaid bills, drafts, voided expenses, and reversed payments.
-            Corrections update past periods. Feed purchases count once as
-            expenses; consuming that feed does not subtract its cost again. This
-            report covers recorded activity only.
-          </p>
+          <HelpPanel title="How these financial reports are calculated">
+            {" "}
+            <p>
+              These figures use payment dates and expense paid dates. They
+              exclude unpaid bills, drafts, voided expenses, and reversed
+              payments. Corrections update past periods. Feed purchases count
+              once as expenses; consuming that feed does not subtract its cost
+              again. This report covers recorded activity only.
+            </p>
+          </HelpPanel>
           <SectionTabs
             id="reports"
             label="Financial report sections"

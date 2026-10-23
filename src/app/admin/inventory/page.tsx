@@ -1,21 +1,23 @@
+import { InventoryProductCard } from "@/components/inventory-product-card";
+import { ConversionManager } from "@/components/conversion-manager";
 import { AppSelect } from "@/components/app-select";
 import { SectionTabs } from "@/components/section-tabs";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
-import { weightUnits } from "@/lib/weight-units";
 import { Package } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { money, dateLabel, today } from "@/lib/format";
 import { PageHeading, Notice, Field, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { StockEntryForm } from "@/components/stock-forms";
-import { saveProduct, saveUnit, reverseConsumption } from "./actions";
+import { saveProduct, reverseConsumption } from "./actions";
 
 export default async function Inventory({
   searchParams,
 }: {
   searchParams: Promise<{
     product?: string;
+    section?: string;
     page?: string;
     error?: string;
     success?: string;
@@ -103,42 +105,12 @@ export default async function Inventory({
                         const qty = Number(b?.quantity_oz ?? 0);
                         const value = Number(b?.value_cents ?? 0);
                         return (
-                          <article className="horse-card" key={p.id}>
-                            <span className="tag">
-                              {p.category}
-                              {p.archived ? " · Archived" : ""}
-                            </span>
-                            <h3>
-                              <Link href={`/admin/inventory?product=${p.id}`}>
-                                {p.name}
-                              </Link>
-                            </h3>
-                            <div className="horse-details">
-                              <strong>
-                                {(qty / 16).toLocaleString("en-US", {
-                                  maximumFractionDigits: 4,
-                                })}{" "}
-                                lb ·{" "}
-                                {qty.toLocaleString("en-US", {
-                                  maximumFractionDigits: 6,
-                                })}{" "}
-                                oz
-                              </strong>
-                              <span>Inventory value: {money(value)}</span>
-                              <span>
-                                Average cost per lb:{" "}
-                                {qty
-                                  ? `$${(((value / qty) * 16) / 100).toFixed(4)}`
-                                  : "No stock"}
-                              </span>
-                            </div>
-                            <Link
-                              className="text-link"
-                              href={`/admin/inventory?product=${p.id}#stock-entry`}
-                            >
-                              Record stock
-                            </Link>
-                          </article>
+                          <InventoryProductCard
+                            key={p.id}
+                            product={p}
+                            quantity={qty}
+                            value={value}
+                          />
                         );
                       })}
                     </div>
@@ -163,182 +135,116 @@ export default async function Inventory({
                       }
                       closeHref="/admin/inventory"
                     >
-                      <form action={saveProduct} className="record-form">
-                        <input
-                          name="id"
-                          type="hidden"
-                          value={selected?.id ?? ""}
-                        />
-                        <div className="form-grid">
-                          <Field
-                            name="name"
-                            label="Product name"
-                            required
-                            defaultValue={selected?.name}
-                          />
-                          <label>
-                            Type
-                            <AppSelect
-                              name="category"
-                              defaultValue={selected?.category ?? "feed"}
-                            >
-                              <option value="feed">Feed</option>
-                              <option value="hay">Hay</option>
-                              <option value="supplement">Supplement</option>
-                            </AppSelect>
-                          </label>
-                          <label>
-                            Purchase expense category
-                            <AppSelect
-                              name="expense_category_id"
-                              required
-                              defaultValue={selected?.expense_category_id ?? ""}
-                            >
-                              <option value="" disabled>
-                                Select a category
-                              </option>
-                              {categories.data?.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.name}
-                                </option>
-                              ))}
-                            </AppSelect>
-                          </label>
-                        </div>
-                        {selected && (
-                          <label className="inline-checkbox">
-                            <input
-                              type="checkbox"
-                              name="archived"
-                              defaultChecked={selected.archived}
-                            />
-                            Archive product (keep history)
-                          </label>
-                        )}
-                        <SubmitButton>
-                          {selected ? "Save product" : "Add product"}
-                        </SubmitButton>
-                        {selected && (
-                          <Link
-                            href="/admin/inventory#product-setup"
-                            className="text-link"
-                          >
-                            Add a different product
-                          </Link>
-                        )}
-                      </form>
-                      {selected && (
-                        <div className="record-form separated">
-                          <h3>Weight conversions</h3>
-                          <p className="muted form-hint">
-                            Metric and US weight units have fixed conversions.
-                            Configure the measured weight of a bag, bale, scoop,
-                            flake, tub, or custom serving. Changes apply to
-                            future transactions, never past feedings. Use a
-                            separate batch-named unit when weights differ. Cups,
-                            teaspoons, tablespoons, milliliters, and liters need
-                            a measured weight for each product; volume does not
-                            have a universal weight.
-                          </p>
-                          {units.data
-                            ?.filter((u) => u.product_id === selected.id)
-                            .map((u) => (
-                              <form
-                                action={saveUnit}
-                                className="conversion-row"
-                                key={u.id}
-                              >
-                                <input name="id" type="hidden" value={u.id} />
-                                <input
-                                  name="product_id"
-                                  type="hidden"
-                                  value={selected.id}
-                                />
-                                <input
-                                  name="label"
-                                  type="hidden"
-                                  value={u.label}
-                                />
-                                <span className="tag">1 {u.label}</span>
-                                {weightUnits.some(
-                                  (unit) => unit.label === u.label,
-                                ) ? (
-                                  <span>
-                                    {
-                                      weightUnits.find(
-                                        (unit) => unit.label === u.label,
-                                      )?.reference
-                                    }{" "}
-                                    (fixed)
-                                  </span>
-                                ) : (
-                                  <>
+                      <Notice error={params.error} success={params.success} />
+                      <SectionTabs
+                        id="product-editor"
+                        label="Product settings"
+                        defaultTab={
+                          params.section === "conversions"
+                            ? "conversions"
+                            : "details"
+                        }
+                        sections={[
+                          {
+                            id: "details",
+                            label: "Product details",
+                            content: (
+                              <>
+                                {" "}
+                                <form
+                                  action={saveProduct}
+                                  className="record-form"
+                                >
+                                  <input
+                                    name="id"
+                                    type="hidden"
+                                    value={selected?.id ?? ""}
+                                  />
+                                  <div className="form-grid">
                                     <Field
-                                      name="weight"
-                                      label="Weight"
-                                      type="number"
-                                      min={0.000000000001}
-                                      step="0.000000000001"
+                                      name="name"
+                                      label="Product name"
                                       required
-                                      defaultValue={u.ounces_per_unit}
+                                      defaultValue={selected?.name}
                                     />
-                                    <AppSelect
-                                      name="weight_unit"
-                                      aria-label="Weight unit"
-                                      defaultValue="oz"
-                                    >
-                                      {weightUnits.map((unit) => (
-                                        <option
-                                          key={unit.label}
-                                          value={unit.label}
-                                        >
-                                          {unit.name}
+                                    <label>
+                                      Type
+                                      <AppSelect
+                                        name="category"
+                                        defaultValue={
+                                          selected?.category ?? "feed"
+                                        }
+                                      >
+                                        <option value="feed">Feed</option>
+                                        <option value="hay">Hay</option>
+                                        <option value="supplement">
+                                          Supplement
                                         </option>
-                                      ))}
-                                    </AppSelect>
-                                    <SubmitButton className="text-button">
-                                      Update
-                                    </SubmitButton>
-                                  </>
-                                )}
-                              </form>
-                            ))}
-                          <form action={saveUnit} className="stack">
-                            <input
-                              name="product_id"
-                              type="hidden"
-                              value={selected.id}
-                            />
-                            <div className="form-grid">
-                              <Field
-                                name="label"
-                                label="New unit (e.g. scoop, flake, bag, bale-batch-2)"
-                                required
-                                maxLength={40}
-                              />
-                              <Field
-                                name="weight"
-                                label="Weight of one unit"
-                                type="number"
-                                min={0.000001}
-                                step="0.000001"
-                                required
-                              />
-                              <label>
-                                Weight measured in
-                                <AppSelect name="weight_unit">
-                                  {weightUnits.map((unit) => (
-                                    <option key={unit.label} value={unit.label}>
-                                      {unit.name}
-                                    </option>
-                                  ))}
-                                </AppSelect>
-                              </label>
-                            </div>
-                            <SubmitButton>Add conversion</SubmitButton>
-                          </form>
-                        </div>
-                      )}
+                                      </AppSelect>
+                                    </label>
+                                    <label>
+                                      Purchase expense category
+                                      <AppSelect
+                                        name="expense_category_id"
+                                        required
+                                        defaultValue={
+                                          selected?.expense_category_id ?? ""
+                                        }
+                                      >
+                                        <option value="" disabled>
+                                          Select a category
+                                        </option>
+                                        {categories.data?.map((c) => (
+                                          <option key={c.id} value={c.id}>
+                                            {c.name}
+                                          </option>
+                                        ))}
+                                      </AppSelect>
+                                    </label>
+                                  </div>
+                                  {selected && (
+                                    <label className="inline-checkbox">
+                                      <input
+                                        type="checkbox"
+                                        name="archived"
+                                        defaultChecked={selected.archived}
+                                      />
+                                      Archive product (keep history)
+                                    </label>
+                                  )}
+                                  <SubmitButton>
+                                    {selected ? "Save product" : "Add product"}
+                                  </SubmitButton>
+                                  {selected && (
+                                    <Link
+                                      href="/admin/inventory#product-setup"
+                                      className="text-link"
+                                    >
+                                      Add a different product
+                                    </Link>
+                                  )}
+                                </form>
+                              </>
+                            ),
+                          },
+                          ...(selected
+                            ? [
+                                {
+                                  id: "conversions",
+                                  label: "Conversions",
+                                  content: (
+                                    <ConversionManager
+                                      productId={selected.id}
+                                      units={(units.data ?? []).filter(
+                                        (u) => u.product_id === selected.id,
+                                      )}
+                                    />
+                                  ),
+                                },
+                              ]
+                            : []),
+                        ]}
+                      />
                     </ActionPanel>
                   </>
                 ),

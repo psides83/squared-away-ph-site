@@ -126,9 +126,11 @@ export default async function Expenses({
       />
       <p className="notice">
         Buying feed, hay, or supplements for stock?{" "}
-        <Link href="/admin/inventory">Record the purchase in Inventory</Link> so
-        the expense and stock are saved together. Don’t enter the same purchase
-        twice.
+        <Link className="inline-link" href="/admin/inventory">
+          Record the purchase in Inventory
+        </Link>{" "}
+        so the expense and stock are saved together. Don’t enter the same
+        purchase twice.
       </p>
       <section className="panel">
         <form method="get" className="record-form">
@@ -214,7 +216,11 @@ export default async function Expenses({
                   ? "Edit expense"
                   : "Record a cost"}
             </h2>
-            <Link href="/admin/expenses" aria-label="Close expense form">
+            <Link
+              className="dialog-close"
+              href="/admin/expenses"
+              aria-label="Close expense form"
+            >
               <X size={20} />
             </Link>
           </div>

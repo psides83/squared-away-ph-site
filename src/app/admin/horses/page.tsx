@@ -6,7 +6,7 @@ import {
 } from "@/components/horse-status";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
-import { ArrowUpRight, Fence, X } from "lucide-react";
+import { Fence, X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
 import { DeleteButton, SubmitButton } from "@/components/submit-button";
@@ -67,7 +67,10 @@ export default async function Horses({
       {showForm && !error && !customers.data?.length && (
         <p className="notice">
           Add a customer before adding or updating a horse.{" "}
-          <Link href="/admin/customers?new=1#record-form">
+          <Link
+            className="inline-link"
+            href="/admin/customers?new=1#record-form"
+          >
             Add your first customer
           </Link>
           .
@@ -86,7 +89,11 @@ export default async function Horses({
                 ? `About ${selected.barn_name}`
                 : "Meet your next good horse"}
             </h2>
-            <Link href="/admin/horses" aria-label="Close horse form">
+            <Link
+              className="dialog-close"
+              href="/admin/horses"
+              aria-label="Close horse form"
+            >
               <X size={20} />
             </Link>
           </div>
@@ -212,12 +219,7 @@ export default async function Horses({
                     {horse.sex === "unknown" ? "Horse" : horse.sex}
                   </span>
                 </div>
-                <h3>
-                  <Link href={`/admin/horses/${horse.id}`}>
-                    {horse.barn_name}
-                    <ArrowUpRight size={17} />
-                  </Link>
-                </h3>
+                <h3>{horse.barn_name}</h3>
                 <p className="muted">
                   {horse.registered_name || "Registered name not added"}
                 </p>

@@ -1,3 +1,4 @@
+import { HelpPanel } from "@/components/help-panel";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
@@ -94,12 +95,14 @@ export default async function Allocations({
         }
         success={params.success}
       />
-      <p className="notice">
-        Allocations distribute an existing cost; they never add another expense
-        or issue a customer charge. Paid expenses appear in reports by their
-        payment date, even when their boarding period differs. Direct horse
-        expenses already belong to that horse.
-      </p>
+      <HelpPanel title="How shared barn costs work">
+        <p>
+          Allocations distribute an existing cost; they never add another
+          expense or issue a customer charge. Paid expenses appear in reports by
+          their payment date, even when their boarding period differs. Direct
+          horse expenses already belong to that horse.
+        </p>
+      </HelpPanel>
       {expense && (
         <ActionPanel
           id="allocate-expense"
@@ -311,13 +314,23 @@ export default async function Allocations({
         )}
         <nav className="log-pagination" aria-label="Shared expense pages">
           {page > 1 ? (
-            <Link href={`/admin/allocations?page=${page - 1}`}>Previous</Link>
+            <Link
+              className="button secondary"
+              href={`/admin/allocations?page=${page - 1}`}
+            >
+              Previous
+            </Link>
           ) : (
             <span />
           )}
           <span>Page {page}</span>
           {page * 25 < (list.count ?? 0) ? (
-            <Link href={`/admin/allocations?page=${page + 1}`}>Next</Link>
+            <Link
+              className="button secondary"
+              href={`/admin/allocations?page=${page + 1}`}
+            >
+              Next
+            </Link>
           ) : (
             <span />
           )}

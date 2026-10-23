@@ -1,3 +1,4 @@
+import { CustomerNavigation } from "@/components/customer-navigation";
 import { InstallApp } from "@/components/install-app";
 import Link from "next/link";
 import { requireCustomer } from "@/lib/auth";
@@ -19,12 +20,7 @@ export default async function CustomerLayout({
         <Link href="/portal" aria-label="Customer portal home">
           <Brand />
         </Link>
-        <nav aria-label="Customer navigation">
-          <Link href="/portal">Overview</Link>
-          <Link href="/portal/horses">Your horses</Link>
-          <Link href="/portal/files">Photos & docs</Link>
-          <Link href="/portal/billing">Billing</Link>
-        </nav>
+        <CustomerNavigation />
         <form action={signOut}>
           <button className="text-button">
             <LogOut size={16} /> Sign out

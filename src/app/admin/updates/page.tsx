@@ -64,7 +64,10 @@ export default async function PublishedUpdates({
         Private training notes, health notes, and reminders stay private. These
         updates are separate customer-visible text. Only published updates are
         shared, and only with customers you grant horse access to in{" "}
-        <Link href="/admin/portal">Customer portal access</Link>.
+        <Link className="inline-link" href="/admin/portal">
+          Customer portal access
+        </Link>
+        .
       </p>
       {!failed && (selected || q.new === "1") && (
         <ActionPanel
@@ -287,13 +290,23 @@ export default async function PublishedUpdates({
         )}
         <nav className="log-pagination" aria-label="Customer update pages">
           {page > 1 ? (
-            <Link href={`/admin/updates?page=${page - 1}`}>Previous</Link>
+            <Link
+              className="button secondary"
+              href={`/admin/updates?page=${page - 1}`}
+            >
+              Previous
+            </Link>
           ) : (
             <span />
           )}
           <span>Page {page}</span>
           {page * 25 < (updates.count ?? 0) ? (
-            <Link href={`/admin/updates?page=${page + 1}`}>Next</Link>
+            <Link
+              className="button secondary"
+              href={`/admin/updates?page=${page + 1}`}
+            >
+              Next
+            </Link>
           ) : (
             <span />
           )}

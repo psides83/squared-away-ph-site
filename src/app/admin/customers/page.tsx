@@ -7,7 +7,7 @@ import {
 } from "@/components/customer-summary";
 import { ActionPanel } from "@/components/action-panel";
 import Link from "next/link";
-import { UsersRound, X, ArrowUpRight } from "lucide-react";
+import { UsersRound, X } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { EmptyState, Field, Notice, PageHeading } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
@@ -90,7 +90,11 @@ export default async function Customers({
         >
           <div className="panel-heading">
             <h2>{selected ? "Edit customer" : "A new relationship"}</h2>
-            <Link href="/admin/customers" aria-label="Close customer form">
+            <Link
+              className="dialog-close"
+              href="/admin/customers"
+              aria-label="Close customer form"
+            >
               <X size={20} />
             </Link>
           </div>
@@ -211,12 +215,7 @@ export default async function Customers({
           <div className="horse-grid customer-grid">
             {data.map((row) => (
               <article className="horse-card" key={row.id}>
-                <h3>
-                  <Link href={`/admin/customers/${row.id}`}>
-                    {row.name}
-                    <ArrowUpRight size={17} />
-                  </Link>
-                </h3>
+                <h3>{row.name}</h3>
                 <CustomerContact phone={row.phone} email={row.email} />
                 <CustomerSummary
                   summary={

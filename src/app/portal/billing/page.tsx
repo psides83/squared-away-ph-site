@@ -95,13 +95,23 @@ export default async function CustomerBilling({
             )}
             <nav className="log-pagination" aria-label="Invoice pages">
               {page > 1 ? (
-                <Link href={`/portal/billing?page=${page - 1}`}>Previous</Link>
+                <Link
+                  className="button secondary"
+                  href={`/portal/billing?page=${page - 1}`}
+                >
+                  Previous
+                </Link>
               ) : (
                 <span />
               )}
               <span>Page {page}</span>
               {page * 25 < Number(result.data?.total ?? 0) ? (
-                <Link href={`/portal/billing?page=${page + 1}`}>Next</Link>
+                <Link
+                  className="button secondary"
+                  href={`/portal/billing?page=${page + 1}`}
+                >
+                  Next
+                </Link>
               ) : (
                 <span />
               )}

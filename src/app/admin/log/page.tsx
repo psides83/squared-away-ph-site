@@ -120,7 +120,7 @@ export default async function TrainingLog({
               <h2>
                 {selected ? "Edit your entry" : "Put the day’s work on paper"}
               </h2>
-              <Link
+              <Link className="inline-link"
                 href={horseId ? `/admin/log?horse=${horseId}` : "/admin/log"}
                 aria-label="Close entry form"
               >
@@ -183,8 +183,11 @@ export default async function TrainingLog({
           </ActionPanel>
         ) : (
           <p className="notice">
-            First <Link href="/admin/horses?new=1">add a horse</Link> to begin
-            their training log.
+            First{" "}
+            <Link className="inline-link" href="/admin/horses?new=1">
+              add a horse
+            </Link>{" "}
+            to begin their training log.
           </p>
         ))}
       {!failed && (

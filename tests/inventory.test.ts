@@ -174,12 +174,19 @@ test("expenses, weighted inventory, feeding, corrections, and private receipts",
           ).rows,
           before,
         );
-        await assert.rejects(
-          db.query(
-            "update public.inventory_units set ounces_per_unit=20 where product_id=$1 and label='lb'",
-            [feed],
-          ),
-          /Standard weight units|check constraint/,
+        const edited = await db.query<{ ounces_per_unit: string }>(
+          "update public.inventory_units set ounces_per_unit=20 where product_id=$1 and label='lb' returning ounces_per_unit",
+          [feed],
+        );
+        assert.equal(Number(edited.rows[0].ounces_per_unit), 20);
+        assert.deepEqual(
+          (
+            await db.query(
+              "select entered_quantity,unit_label,ounces_per_unit,quantity_delta_oz,value_delta_cents from public.inventory_movements where id=$1",
+              [prior.movement_id],
+            )
+          ).rows,
+          before,
         );
       },
     );

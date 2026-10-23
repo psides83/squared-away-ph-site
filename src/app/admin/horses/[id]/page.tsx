@@ -271,7 +271,10 @@ export default async function HorseRecord({
                   <p className="notice">
                     Saving a ration sets this horse’s plan without deducting
                     inventory.{" "}
-                    <Link href="/admin/feeding#feeding-confirm">
+                    <Link
+                      className="inline-link"
+                      href="/admin/feeding#feeding-confirm"
+                    >
                       Go to daily feeding
                     </Link>{" "}
                     to record feed actually given.

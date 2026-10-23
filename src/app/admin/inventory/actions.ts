@@ -49,13 +49,21 @@ export async function saveProduct(form: FormData) {
     `/admin/inventory?${product ? `product=${product}&` : ""}${issue ? `error=${encodeURIComponent(issue)}` : "success=Product+saved."}`,
   );
 }
-export async function saveUnit(form: FormData) {
+export type UnitSaveState = {
+  error?: string;
+  success?: string;
+  revision?: string;
+};
+export async function saveUnit(
+  _state: UnitSaveState,
+  form: FormData,
+): Promise<UnitSaveState> {
   const { db } = await requireAdmin();
   let issue: string | undefined;
   let product: string | null = null;
   try {
     product = identifier(form, "product_id", true);
-    const label = text(form, "label", true, 40)!.toLowerCase();
+    const label = text(form, "label", true, 40)!;
     const ounces = weightInOunces(
       text(form, "weight", true, 30)!,
       text(form, "weight_unit", true, 10)!,
@@ -75,14 +83,20 @@ export async function saveUnit(form: FormData) {
           .select()
           .single()
       : await db.from("inventory_units").insert(rest);
-    issue = message(result.error);
+    issue =
+      result.error?.code === "23505"
+        ? "A conversion with that name already exists for this product. Choose a different name."
+        : message(result.error);
   } catch (e) {
     issue = e instanceof Error ? e.message : "Could not save conversion.";
   }
+  if (issue) return { error: issue };
   revalidatePath("/admin", "layout");
-  redirect(
-    `/admin/inventory?${product ? `product=${product}&` : ""}${issue ? `error=${encodeURIComponent(issue)}` : "success=Conversion+saved.+Previous+transactions+are+unchanged."}`,
-  );
+  return {
+    success:
+      "Conversion saved. Past transactions and current stock are unchanged; future entries use this weight.",
+    revision: crypto.randomUUID(),
+  };
 }
 export async function recordStock(form: FormData) {
   const { db } = await requireAdmin();

@@ -190,7 +190,10 @@ export default async function CustomerRecord({
                           {linked.map((h) => (
                             <article className="horse-card" key={h.id}>
                               <h3>
-                                <Link href={`/admin/horses/${h.id}`}>
+                                <Link
+                                  className="inline-link"
+                                  href={`/admin/horses/${h.id}`}
+                                >
                                   {h.barn_name}
                                 </Link>
                               </h3>
@@ -296,7 +299,10 @@ export default async function CustomerRecord({
                           <article className="customer-invoice-row" key={i.id}>
                             <div>
                               <h3>
-                                <Link href={`/admin/invoices/${i.id}`}>
+                                <Link
+                                  className="inline-link"
+                                  href={`/admin/invoices/${i.id}`}
+                                >
                                   {i.invoice_number
                                     ? `Invoice #${i.invoice_number}`
                                     : "Draft invoice"}
@@ -339,13 +345,23 @@ export default async function CustomerRecord({
                           aria-label="Customer invoice pages"
                         >
                           {page > 1 ? (
-                            <Link href={billUrl(page - 1)}>Previous</Link>
+                            <Link
+                              className="button secondary"
+                              href={billUrl(page - 1)}
+                            >
+                              Previous
+                            </Link>
                           ) : (
                             <span />
                           )}
                           <span>Page {page}</span>
                           {page * 25 < (invoices.count ?? 0) ? (
-                            <Link href={billUrl(page + 1)}>Next</Link>
+                            <Link
+                              className="button secondary"
+                              href={billUrl(page + 1)}
+                            >
+                              Next
+                            </Link>
                           ) : (
                             <span />
                           )}

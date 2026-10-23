@@ -1,7 +1,6 @@
 "use client";
 import { AppSelect } from "@/components/app-select";
 
-import { weightUnits } from "@/lib/weight-units";
 import { servingStepper } from "@/lib/input-format";
 import { ReceiptPicker } from "@/components/receipt-picker";
 import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
@@ -79,9 +78,11 @@ export function ProductUnitFields({
             .filter((u) => u.product_id === product)
             .map((u) => (
               <option key={u.id} value={u.id}>
-                {weightUnits.some((w) => w.label === u.label)
-                  ? `${weightUnits.find((w) => w.label === u.label)!.name} (${u.label})`
-                  : u.label}
+                {u.label} · 1 ={" "}
+                {Number(u.ounces_per_unit).toLocaleString("en-US", {
+                  maximumFractionDigits: 12,
+                })}{" "}
+                oz
               </option>
             ))}
         </AppSelect>

@@ -126,7 +126,11 @@ export default async function Reminders({
             <h2>
               {selected ? "Edit reminder" : "Take it off your mental list"}
             </h2>
-            <Link href={closeHref} aria-label="Close reminder form">
+            <Link
+              className="dialog-close"
+              href={closeHref}
+              aria-label="Close reminder form"
+            >
               <X size={20} />
             </Link>
           </div>
@@ -292,7 +296,10 @@ export default async function Reminders({
                     aria-label={`${view.bucket} reminder pages`}
                   >
                     {view.page > 1 ? (
-                      <Link href={pageHref(view.bucket, view.page - 1)}>
+                      <Link
+                        className="button secondary"
+                        href={pageHref(view.bucket, view.page - 1)}
+                      >
                         Previous
                       </Link>
                     ) : (
@@ -300,7 +307,10 @@ export default async function Reminders({
                     )}
                     <span>Page {view.page}</span>
                     {view.page * 25 < (view.count ?? 0) ? (
-                      <Link href={pageHref(view.bucket, view.page + 1)}>
+                      <Link
+                        className="button secondary"
+                        href={pageHref(view.bucket, view.page + 1)}
+                      >
                         Next
                       </Link>
                     ) : (
