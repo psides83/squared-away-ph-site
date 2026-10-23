@@ -122,7 +122,7 @@ export default async function Feeding({
             sections={[
               {
                 id: "rations",
-                label: "Rations",
+                label: "Feed schedules",
                 content: (
                   <>
                     <SavedRations

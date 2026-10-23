@@ -178,7 +178,7 @@ Daily feeding offers **Confirm a feeding in bulk** and **Record extras for multi
 
 Apply `20261021001800_feeding_times.sql` after the preceding migrations. Saved rations are grouped by horse and feeding time. Morning and Evening are provided; **Manage feeding times** adds custom times with optional clock times, ordering, and archive controls. The same feed or supplement can have different quantities at different times.
 
-Existing daily totals stay unassigned. Edit each line to assign its time and per-feeding amount, adding another line if it is fed at another time. Assign all active lines for a horse before confirming scheduled rations. Historical full-day confirmations cannot be duplicated as timed confirmations on the same date. Individual and bulk confirmations record only the chosen time; extras can be tagged with a time or remain unscheduled. History retains its original label and cost when a feeding time is renamed.
+Existing daily totals stay unassigned. Use **Assign feeding time** to edit the unassigned group together, choosing an empty feeding time and entering each per-feeding amount. Add a separate scheduled time if the same product is fed again later. Assign all active lines for a horse before confirming scheduled rations. Historical full-day confirmations cannot be duplicated as timed confirmations on the same date. Individual and bulk confirmations record only the chosen time; extras can be tagged with a time or remain unscheduled. History retains its original label and cost when a feeding time is renamed.
 
 ### Feed/board defaults and customer invoice format
 
@@ -277,3 +277,9 @@ The correction supports at most 2,000 stock entries per product. Durable recordi
 Cash reports show supplier refunds separately from customer payments and gross expenses paid, including monthly values. Net cash adds received supplier refunds once. They remain unassigned business credits in horse/stay reconciliation. Refund reversals restate their original cash periods. Correcting a mistaken return restores stock at its recorded cost, retains history, and requires active refund entries to be corrected first. These are record corrections, not money transfers or supplier requests. Use them for mistaken entries only.
 
 History pages show 25 returns, with direct return-record links and 20-row refund pagination; aggregate refund totals include all entries. Supplier credits on account, expected-refund balances, exchange matching and return/refund document uploads remain planned. Production migration and authenticated live flows remain unverified.
+
+### Horse feeding schedules (migration 043)
+
+Configure **Horse → Feed schedule → Feeding time → Rations**. Add a feeding time, enter all its ration rows, and save the complete time slot once. Open **Edit feeding time** to change product/unit/quantity, pause a ration, add notes, or remove draft rows. Saved summaries have one edit action per time slot rather than controls on every ration. Whole slots can move to an empty feeding time or be removed with confirmation. Existing unassigned daily totals can be assigned together to an empty named time; occupied schedules are never silently overwritten or merged.
+
+Saves are atomic, administrator-only and protected against stale edits/repeated requests, with retained before/after rows. Inline save errors leave the draft open. Editing a schedule does not deduct inventory or rewrite past consumption; actual confirmation uses the latest active schedule, and schedule writes serialize with confirmation. Up to 100 distinct products can be configured per slot. Archived times/products can retain existing paused rows, but cannot be reactivated through a plan edit. Production migration and authenticated live saves remain unverified.

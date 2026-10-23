@@ -28,6 +28,7 @@ export default async function HorseRecord({
     care_page?: string;
     care_status?: string;
     ration?: string;
+    feed_time?: string;
     new?: string;
     error?: string;
     success?: string;
@@ -113,6 +114,14 @@ export default async function HorseRecord({
     categories,
   ].some((r) => r.error);
   const selected = rations.data?.find((r) => r.id === query.ration);
+  const selectedTime = query.feed_time
+    ? query.feed_time === "unassigned"
+      ? null
+      : query.feed_time
+    : selected?.feeding_time_id;
+  const selectedSlot =
+    selectedTime !== undefined &&
+    (rations.data ?? []).some((r) => r.feeding_time_id === selectedTime);
   const h = horse.data;
   return (
     <>
@@ -121,15 +130,15 @@ export default async function HorseRecord({
       </Link>
       <PageHeading
         title={h?.barn_name ?? "Horse record"}
-        description="Profile, care instructions, and feeding plan."
+        description="Profile, care instructions, and feed schedule."
       />
       <Notice
         error={
           failed
             ? "The horse record could not load. Please refresh."
             : query.error ||
-              (query.ration && !selected
-                ? "That ration could not be found for this horse."
+              ((query.ration && !selected) || (query.feed_time && !selectedSlot)
+                ? "That feeding time could not be found in this horse’s schedule."
                 : undefined)
         }
         success={query.success}
@@ -155,7 +164,11 @@ export default async function HorseRecord({
               ? "care"
               : query.ownership_page
                 ? "ownership"
-                : query.new || query.ration || query.success || query.error
+                : query.new ||
+                    query.ration ||
+                    query.feed_time ||
+                    query.success ||
+                    query.error
                   ? "rations"
                   : "profile"
           }
@@ -284,12 +297,15 @@ export default async function HorseRecord({
             },
             {
               id: "rations",
-              label: "Feeding plan",
+              label: "Feed schedule",
               content: (
                 <>
                   <HorseRationEditor
                     horse={h}
-                    selected={selected}
+                    rations={rations.data ?? []}
+                    sourceTime={selectedSlot ? selectedTime : undefined}
+                    request={crypto.randomUUID()}
+                    newRowId={crypto.randomUUID()}
                     isNew={query.new === "1"}
                     products={products.data ?? []}
                     units={units.data ?? []}
@@ -305,8 +321,8 @@ export default async function HorseRecord({
                     todayConfirmations={[]}
                   />
                   <p className="notice">
-                    Saving a ration sets this horse’s plan without deducting
-                    inventory.{" "}
+                    Saving a feeding time sets this horse’s schedule without
+                    deducting inventory.{" "}
                     <Link
                       className="inline-link"
                       href="/admin/feeding#feeding-confirm"

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ActionPanel } from "@/components/action-panel";
 import { Field } from "@/components/ui";
-import { SubmitButton, DeleteButton } from "@/components/submit-button";
-import { confirmFeeding, deleteRation } from "@/app/admin/inventory/actions";
+import { SubmitButton } from "@/components/submit-button";
+import { confirmFeeding } from "@/app/admin/inventory/actions";
 import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
 import { today } from "@/lib/format";
 
@@ -51,8 +51,10 @@ export function SavedRations({
   return (
     <section className="panel">
       <div className="panel-heading">
-        <h2>Saved rations</h2>
-        <span className="muted">Grouped by horse and feeding time</span>
+        <h2>{editable ? "Feed schedule" : "Feed schedules"}</h2>
+        {!editable && (
+          <span className="muted">Grouped by horse and feeding time</span>
+        )}
       </div>
       <div className="horse-grid file-grid ration-horse-grid">
         {horses?.map((h) => {
@@ -63,9 +65,15 @@ export function SavedRations({
               {groups
                 .filter((g) => lines.some((r) => r.feeding_time_id === g.id))
                 .map((g) => {
-                  const groupLines = lines.filter(
-                    (r) => r.feeding_time_id === g.id,
-                  );
+                  const groupLines = lines
+                    .filter((r) => r.feeding_time_id === g.id)
+                    .sort((a, b) =>
+                      (
+                        products.find((p) => p.id === a.product_id)?.name ?? ""
+                      ).localeCompare(
+                        products.find((p) => p.id === b.product_id)?.name ?? "",
+                      ),
+                    );
                   const active = groupLines.some((r) => r.active);
                   const confirmed = todayConfirmations?.some(
                     (c) =>
@@ -89,24 +97,17 @@ export function SavedRations({
                             {!r.active && <span className="tag">Paused</span>}
                           </p>
                           {r.notes && <p className="muted">{r.notes}</p>}
-                          <div className="row-actions">
-                            <Link
-                              className="text-link"
-                              href={`/admin/horses/${h.id}?ration=${r.id}#ration-form`}
-                            >
-                              {r.feeding_time_id
-                                ? "Edit"
-                                : "Assign feeding time"}
-                            </Link>
-                            {editable && (
-                              <form action={deleteRation.bind(null, h.id)}>
-                                <input name="id" type="hidden" value={r.id} />
-                                <DeleteButton label="Remove" />
-                              </form>
-                            )}
-                          </div>
                         </div>
                       ))}
+                      <div className="row-actions">
+                        <Link
+                          className="text-link"
+                          href={`/admin/horses/${h.id}?feed_time=${g.id ?? "unassigned"}#ration-form`}
+                          aria-label={`Edit ${g.label} feed schedule for ${h.barn_name}`}
+                        >
+                          {g.id ? "Edit feeding time" : "Assign feeding time"}
+                        </Link>
+                      </div>
                       {!editable && active && g.id && !g.archived && (
                         <>
                           <p className="muted">
@@ -166,12 +167,14 @@ export function SavedRations({
                   );
                 })}
               {!lines.length && <p className="muted">No rations saved yet.</p>}
-              <Link
-                className="text-link"
-                href={`/admin/horses/${h.id}${editable ? "?new=1#ration-form" : "#horse-rations"}`}
-              >
-                {editable ? "Add a ration" : "Manage feeding plan"}
-              </Link>
+              {!editable && (
+                <Link
+                  className="text-link"
+                  href={`/admin/horses/${h.id}#horse-rations`}
+                >
+                  Manage feed schedule
+                </Link>
+              )}
             </article>
           );
         })}

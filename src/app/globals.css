@@ -3627,3 +3627,50 @@ input[type="search"]::-webkit-search-decoration {
   font-weight: 650;
   padding-block: 0.4rem;
 }
+
+.feed-schedule-fields {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 20px;
+}
+.feed-schedule-lines {
+  display: grid;
+  gap: 16px;
+}
+.feed-schedule-line {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.feed-schedule-line-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.feed-schedule-line-heading .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.feed-schedule-line details summary {
+  cursor: pointer;
+  padding-block: 6px;
+}
+.feed-schedule-line details label {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+}
+@media (max-width: 600px) {
+  .feed-schedule-line {
+    padding: 16px;
+  }
+}

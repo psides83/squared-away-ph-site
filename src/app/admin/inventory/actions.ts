@@ -5,6 +5,10 @@ import { preparedReceipt, attachReceipt } from "@/lib/receipt-storage";
 import { requireAdmin } from "@/lib/auth";
 import { cents, choice, dateValue, identifier, text } from "@/lib/validation";
 import { weightInOunces } from "@/lib/weight-units";
+import {
+  feedScheduleValues,
+  type FeedScheduleState,
+} from "@/lib/feed-schedules";
 import { quantity, stockValues } from "@/lib/inventory";
 
 function message(error: { message: string; code?: string } | null) {
@@ -149,60 +153,34 @@ export async function recordStock(form: FormData) {
     `/admin/inventory?${product ? `product=${product}&` : ""}${issue ? `error=${encodeURIComponent(issue)}` : "success=Stock+transaction+recorded."}`,
   );
 }
-export async function saveHorseRation(horseId: string, form: FormData) {
+export async function saveHorseFeedSchedule(
+  horseId: string,
+  _previous: FeedScheduleState,
+  form: FormData,
+): Promise<FeedScheduleState> {
   const { db } = await requireAdmin();
-  let issue: string | undefined;
   try {
-    const values = {
-      horse_id: horseId,
-      product_id: identifier(form, "product_id", true),
-      feeding_time_id: identifier(form, "feeding_time_id", true),
-      unit_id: identifier(form, "unit_id", true),
-      quantity: quantity(form),
-      active: form.get("active") === "on",
-      notes: text(form, "notes", false, 2000),
-    };
-    const id = identifier(form, "id");
-    const { error } = id
-      ? await db
-          .from("feed_rations")
-          .update(values)
-          .eq("id", id)
-          .eq("horse_id", horseId)
-          .select()
-          .single()
-      : await db.from("feed_rations").insert(values);
-    issue =
-      error?.code === "23505"
-        ? "This horse already has this product at that feeding time. Edit the existing ration line instead."
-        : message(error);
+    const { error } = await db.rpc(
+      "save_horse_feed_schedule",
+      feedScheduleValues(horseId, form),
+    );
+    if (error)
+      return {
+        error:
+          error.code === "P0001"
+            ? error.message
+            : "The feeding schedule could not be saved. Check the entries and try again.",
+      };
   } catch (e) {
-    issue = e instanceof Error ? e.message : "Could not save ration.";
+    return {
+      error:
+        e instanceof Error
+          ? e.message
+          : "The feeding schedule could not be saved.",
+    };
   }
   revalidatePath("/admin", "layout");
-  redirect(
-    `/admin/horses/${horseId}?${issue ? `ration=${encodeURIComponent(String(form.get("id") ?? ""))}&new=1&error=${encodeURIComponent(issue)}` : "success=Ration+saved.+No+stock+was+deducted."}#${issue ? "ration-form" : "horse-rations"}`,
-  );
-}
-export async function deleteRation(horseId: string, form: FormData) {
-  const { db } = await requireAdmin();
-  let issue = false;
-  try {
-    const { error } = await db
-      .from("feed_rations")
-      .delete()
-      .eq("id", identifier(form, "id", true))
-      .eq("horse_id", horseId)
-      .select()
-      .single();
-    issue = Boolean(error);
-  } catch {
-    issue = true;
-  }
-  revalidatePath("/admin", "layout");
-  redirect(
-    `/admin/horses/${horseId}?${issue ? "error=Ration+could+not+be+removed." : "success=Ration+removed.+Past+feedings+remain+unchanged."}#horse-rations`,
-  );
+  return { ok: true };
 }
 export async function confirmFeeding(form: FormData) {
   const { db } = await requireAdmin();
