@@ -323,3 +323,7 @@ Apply `20261023005200_supplier_exchanges.sql`. Record a replacement inventory pu
 ### Supplier follow-up
 
 Apply `20261023005300_supplier_recovery_queue.sql`. Inventory → Returns & refunds → Supplier follow-up shows outstanding and overdue recovery across all active returns, with separate cash and store-credit totals. Filters cover outstanding, overdue, unset targets and all active returns; 25-row pagination does not truncate global totals. A due date is overdue only after that business date in Central Time. Unset targets stay unknown; cancelled returns are excluded, while original records stay available. Active cash refunds and issued credits satisfy their respective targets; credit use does not reopen them. Delivered notifications remain planned. Remote migration and authenticated production workflows remain unverified.
+
+### Bulk expense entry
+
+Apply `20261023005400_bulk_expenses.sql`. Expenses → Bulk expense entry saves up to 20 separate manual bills together. Shared defaults apply only when adding new rows. Amounts, horse assignments and optional payment dates remain individual; blank paid dates mean unpaid. A styled review confirmation precedes the atomic save. Invalid entries save nothing, and exact retries return the original IDs without overwriting later edits/voids. Open saved records for receipts and customer billing. Record stock purchases in Inventory rather than duplicating them here. Multi-item inventory receipt batches remain future work. Remote migration and authenticated production flows remain unverified.

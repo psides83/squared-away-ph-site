@@ -125,6 +125,9 @@ export default async function Expenses({
         success={params.success}
       />
       <div className="row-actions">
+        <Link className="button secondary" href="/admin/expenses/bulk">
+          Bulk expense entry
+        </Link>
         <Link className="button secondary" href="/admin/expenses/recurring">
           Recurring expenses
         </Link>

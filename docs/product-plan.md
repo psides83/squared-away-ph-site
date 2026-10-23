@@ -8,6 +8,9 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Bulk expense entry: a deliberate Expenses → Bulk expense entry workspace records 1–20 separate manual bills in one atomic save. Optional shared date/vendor/category defaults are copied only to newly added rows; each row retains its own amount, category, date, vendor and horse/shared-barn assignment. New entries are unpaid unless a paid date is entered explicitly. Payment, charge-back and notes fields are progressively disclosed; charge-backs require a horse and do not create invoices automatically. Compact money/date/custom-select controls, whole-button wrapping, add/remove actions and a running total support mobile entry. A styled review confirmation precedes saving. Server validation preserves draft entries on errors; request/payload records prevent duplicate saves and never overwrite later edits or recreate voided expenses. Success links open each saved bill for receipts and billing follow-up. Inventory purchases remain in Inventory so stock and source expenses are recorded together; no inventory or customer invoice entries are created by this batch workflow. Administrator-only batch audit access applies.
+
+
 - Supplier follow-up workspace: Returns & refunds opens a global queue with Outstanding, Overdue, Unset targets and All active filters. Cash-refund and store-credit totals cover all active returns independently of filtering or the 25-row page limit; unknown targets are not treated as zero. Only outstanding targets with a due date before today in Central Time count as overdue. Active refunds and issued linked credits reduce the matching target; spending credit does not reopen it, but reversing refunds/cancelling credits does. Cancelled returns are excluded without deleting their original records. Cards provide deliberate links to the return, refund entry, credit entry and expectation editor; outstanding items sort by urgency and pending due date. Global counts include partial unknown targets and avoid receipt/credit join duplication. Administrator-only RPC access and database validation apply. Delivered notifications remain planned separately.
 
 
@@ -401,7 +404,7 @@ Features in this section are present in the application source. A feature being 
 - Receipt recognition/OCR with provider selection, product/unit suggestions, reviewed draft entry, confidence/error handling, and duplicate-purchase checks. Multi-item receipt purchases need an atomic multi-product purchase/expense model and reviewed tax/discount allocation. Camera/file capture and private receipt attachment are implemented above; automatic recognition is not. See `docs/receipt-scanning.md`.
 - Continue device testing and refinement of mobile workflows, including keyboard/camera behavior on real iOS/Android devices. Native-style navigation and editors are implemented above; this does not imply offline entry or a native binary.
 
-- Extend bulk entry to expense entry and other workflows as their batch requirements are defined. Bulk training sessions and daily/extra/partial feeding are implemented above; different per-horse training details can be entered individually.
+- Extend bulk entry to other workflows as their batch requirements are defined. Bulk expense bills, training sessions and daily/extra/partial feeding are implemented above; multi-item inventory purchase/receipt batches remain planned with receipt recognition. Different per-horse training details can be entered individually.
 
 - Optional online payment processing, delivered notifications, and accounting export after core workflows are established.
 
@@ -599,3 +602,7 @@ Remaining admin expense/reporting improvements (delivered supplier follow-up not
 ### Supplier follow-up verification (2026-10-23)
 
 - All 174 tests and the production build passed. Database integration checks cover complete global totals beyond the first page, overdue/today/no-date boundaries, partial and unknown targets, excess receipts, cancelled returns, credit use and reversal, empty results, stable pagination and administrator isolation. A 390-pixel sample-data preview verified summary/card spacing and non-wrapping filter/action labels; no live records were created. Migration `20261023005300_supplier_recovery_queue.sql` requires deployment; production application and authenticated live workflows have not been confirmed.
+
+### Bulk expense verification (2026-10-23)
+
+- All 176 tests and the production build passed. Checks cover input money/date/horse validation, atomic rollback for later-row failures, duplicate IDs, retry payload matching, later expense edits/voids, paid versus unpaid reporting, row limits, unchanged stock/invoices and administrator isolation. A 390-pixel sample-data preview verified default copying without altering existing entries, live totals, row removal, compact field spacing and the styled review/cancel flow; no live records were created. Migration `20261023005400_bulk_expenses.sql` requires deployment; production application and authenticated live workflows have not been confirmed.
