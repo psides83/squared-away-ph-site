@@ -6,7 +6,10 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { SubmitButton } from "@/components/submit-button";
 import { Field } from "@/components/ui";
 import { supplierReturnAction } from "@/app/admin/inventory/returns/actions";
+import { ReturnExpectations } from "@/components/return-expectations";
+import type { ReturnExpectation } from "@/lib/return-expectations";
 export type SupplierReturn = {
+  expectation?: ReturnExpectation | null;
   id: string;
   product_id: string;
   product_name: string;
@@ -231,6 +234,14 @@ export function SupplierReturnList({
                 </>
               )}
             </div>
+            <ReturnExpectations
+              id={r.id}
+              expectation={r.expectation}
+              cash={r.refunded_cents}
+              credit={r.supplier_credit_cents ?? 0}
+              date={date}
+              cancelled={Boolean(r.cancelled_at)}
+            />
             <details className="supplier-refund-history">
               <summary>Refund history ({r.refund_count})</summary>
               {!r.refunds.length && <p>No cash refund recorded.</p>}
