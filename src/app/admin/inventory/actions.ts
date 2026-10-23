@@ -197,7 +197,7 @@ export async function confirmFeeding(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Feeding+confirmed.+Repeated+confirmation+does+not+deduct+stock+again."}`,
+    `/admin${form.get("return_to") === "home" ? "" : "/feeding"}?${issue ? `error=${encodeURIComponent(issue)}` : "success=Feeding+confirmed.+Repeated+confirmation+does+not+deduct+stock+again."}`,
   );
 }
 export async function undoFeedingConfirmation(form: FormData) {
@@ -214,7 +214,7 @@ export async function undoFeedingConfirmation(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Confirmation+undone.+Stock+restored."}`,
+    `/admin${form.get("return_to") === "home" ? "" : "/feeding"}?${issue ? `error=${encodeURIComponent(issue)}` : "success=Confirmation+undone.+Stock+restored."}`,
   );
 }
 export async function reverseConsumption(form: FormData) {
@@ -257,7 +257,7 @@ export async function confirmBulkFeeding(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=Selected+feeding-time+rations+confirmed.+Already+confirmed+horses+were+not+deducted+again."}`,
+    `/admin${form.get("return_to") === "home" ? "" : "/feeding"}?${issue ? `error=${encodeURIComponent(issue)}` : "success=Selected+feeding-time+rations+confirmed.+Already+confirmed+horses+were+not+deducted+again."}`,
   );
 }
 export async function recordBulkFeeding(form: FormData) {
@@ -292,7 +292,7 @@ export async function recordBulkFeeding(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin/feeding?${issue ? `error=${encodeURIComponent(issue)}` : "success=All+feeding+entries+recorded+together."}`,
+    `/admin${form.get("return_to") === "home" ? "" : "/feeding"}?${issue ? `error=${encodeURIComponent(issue)}` : "success=All+feeding+entries+recorded+together."}`,
   );
 }
 

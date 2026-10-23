@@ -28,8 +28,10 @@ export function SavedRations({
   units,
   todayConfirmations,
   editable = false,
+  home = false,
 }: {
   editable?: boolean;
+  home?: boolean;
   horses: { id: string; barn_name: string }[];
   rations: Ration[];
   times: FeedingTime[];
@@ -136,6 +138,11 @@ export function SavedRations({
                               >
                                 <input
                                   type="hidden"
+                                  name="return_to"
+                                  value={home ? "home" : "feeding"}
+                                />
+                                <input
+                                  type="hidden"
                                   name="confirmation_id"
                                   value={confirmed.id}
                                 />
@@ -171,6 +178,11 @@ export function SavedRations({
                                 action={confirmFeeding}
                                 className="record-form"
                               >
+                                <input
+                                  type="hidden"
+                                  name="return_to"
+                                  value={home ? "home" : "feeding"}
+                                />
                                 <input
                                   name="horse_id"
                                   type="hidden"

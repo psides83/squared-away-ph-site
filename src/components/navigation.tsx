@@ -22,7 +22,8 @@ import {
   Paperclip,
 } from "lucide-react";
 export const navigationLinks = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin", label: "Quick actions", icon: LayoutDashboard },
+  { href: "/admin/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/horses", label: "Horses", icon: Fence },
   { href: "/admin/customers", label: "Customers", icon: UsersRound },
   { href: "/admin/training", label: "Training stays", icon: ClipboardList },

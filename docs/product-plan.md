@@ -8,6 +8,8 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Admin Home is a quick-actions workspace with Feeding and Training tabs, individual horse actions and deliberate bulk editors. Feeding reuses saved ration confirmation, inventory costing and undo protections, returning to Home after saving. Training shows current horses with last-fed/last-trained activity and saves one private session per selected horse with shared date/focus/notes/optional duration. A batch saves atomically, validates training stays for its date, and retains a request snapshot so retries cannot duplicate or overwrite later edits/deletions. Training logs do not implicitly mark billable days. The previous financial/barn dashboard is retained at Overview. Requires migration `20261023004500_quick_training.sql`.
+
 - Feeding times sort automatically by clock time, earliest first, throughout feeding, horse schedules and inventory. Manual display-order inputs and order labels are removed; untimed entries appear last alphabetically, and matching clock times use name order. The legacy order column is retained only for database compatibility; no migration is required.
 
 - Confirmed feeding slots hide Confirm and offer a deliberate Undo confirmation editor with a required reason and styled confirmation. Undo restores all stock movements atomically, retains the original confirmation and correction history, respects invoice reversal protections, and permits a fresh confirmation. Retries of an old undo never undo a newer feeding. Full-day legacy undo clearly applies to the whole confirmation.
@@ -376,7 +378,7 @@ Features in this section are present in the application source. A feature being 
 - Receipt recognition/OCR with provider selection, product/unit suggestions, reviewed draft entry, confidence/error handling, and duplicate-purchase checks. Multi-item receipt purchases need an atomic multi-product purchase/expense model and reviewed tax/discount allocation. Camera/file capture and private receipt attachment are implemented above; automatic recognition is not. See `docs/receipt-scanning.md`.
 - Continue device testing and refinement of mobile workflows, including keyboard/camera behavior on real iOS/Android devices. Native-style navigation and editors are implemented above; this does not imply offline entry or a native binary.
 
-- Extend bulk entry to additional workflows such as training logs or expense entry as their batch requirements are defined; bulk daily and extra/partial feeding are implemented above.
+- Extend bulk entry to expense entry and other workflows as their batch requirements are defined. Bulk training sessions and daily/extra/partial feeding are implemented above; different per-horse training details can be entered individually.
 
 - Optional online payment processing, delivered notifications, and accounting export after core workflows are established.
 
@@ -432,6 +434,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream quantity corrections, supplier credit/document refinements and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Quick-actions Home increment (October 23, 2026): all 160 tests and the production build pass. Local database checks cover atomic bulk training failure, per-horse entries, duplicate and changed retry handling, preservation after edits/deletions, a fresh individual session and non-admin denial. A 390-pixel sample browser preview verifies feeding/training tabs, confirmed-versus-unconfirmed actions, bulk horse selection and the compact session editor. Migration `20261023004500_quick_training.sql`, authenticated production saves and physical-device verification remain unverified; no live records changed.
 
 - Automatic feeding-time order: production build and TypeScript checks pass. No database migration required. Production deployment and physical-device appearance remain unverified.
 

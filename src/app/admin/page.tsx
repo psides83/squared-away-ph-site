@@ -1,247 +1,261 @@
 import Link from "next/link";
-import {
-  FinancialOverview,
-  type FinancialOverviewData,
-} from "@/components/financial-overview";
 import { requireAdmin } from "@/lib/auth";
-import { dateLabel, today } from "@/lib/format";
-import { PageHeading, EmptyState } from "@/components/ui";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Fence,
-  UsersRound,
-  CalendarDays,
-  ClipboardList,
-  Plus,
-  Sun,
-  BookOpen,
-} from "lucide-react";
-
-export default async function Dashboard() {
+import { today, dateLabel } from "@/lib/format";
+import { PageHeading, Notice } from "@/components/ui";
+import { SectionTabs } from "@/components/section-tabs";
+import { ActionPanel } from "@/components/action-panel";
+import { SavedRations } from "@/components/saved-rations";
+import { DailyFeedingBatch } from "@/components/bulk-feeding";
+import { QuickTraining } from "@/components/quick-training";
+import { type TrainingHorse } from "@/components/training-horse-list";
+export default async function QuickActions({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}) {
+  const params = await searchParams;
   const { db } = await requireAdmin();
-  const [horses, customers, stays, reminders, finance] = await Promise.all([
-    db
-      .from("horses")
-      .select("id, barn_name, breed", { count: "exact" })
-      .order("barn_name")
-      .limit(5),
-    db.from("customers").select("id", { count: "exact", head: true }),
-    db
-      .from("training_stays")
-      .select("id", { count: "exact", head: true })
-      .lte("arrival_date", today())
-      .or(`departure_date.is.null,departure_date.gte.${today()}`),
-    db
-      .from("reminders")
-      .select("id, title, due_date")
-      .is("completed_at", null)
-      .order("due_date")
-      .limit(5),
-    db.rpc("admin_financial_overview"),
-  ]);
-  const failed = [horses, customers, stays, reminders].some(
-    (result) => result.error,
+  const date = today();
+  const [horses, rations, products, units, times, confirmations, worklist] =
+    await Promise.all([
+      db.from("horses").select("id,barn_name").order("barn_name"),
+      db.from("feed_rations").select("*"),
+      db.from("inventory_products").select("id,name"),
+      db.from("inventory_units").select("id,label"),
+      db
+        .from("feeding_times")
+        .select("*")
+        .order("time_of_day", { nullsFirst: false })
+        .order("name"),
+      db
+        .from("feeding_confirmations")
+        .select("id,horse_id,feeding_time_id")
+        .eq("feeding_date", date)
+        .is("cancelled_at", null),
+      db.rpc("training_worklist"),
+    ]);
+  const failed = [
+    horses,
+    rations,
+    products,
+    units,
+    times,
+    confirmations,
+    worklist,
+  ].some((r) => r.error);
+  const training = (worklist.data ?? []) as TrainingHorse[];
+  const trainingHorses = training.map((h) => ({
+    id: h.horse_id,
+    barn_name: h.barn_name,
+  }));
+  const plannedHorses = (horses.data ?? []).filter((h) =>
+    rations.data?.some((r) => r.horse_id === h.id && r.active),
   );
-  const stats = [
-    {
-      label: "HORSES IN TRAINING",
-      value: stays.count ?? 0,
-      caption: "Current training stays",
-      icon: Fence,
-      href: "/admin/training",
-    },
-    {
-      label: "HORSES ON FILE",
-      value: horses.count ?? 0,
-      caption: "Every horse, one place",
-      icon: ClipboardList,
-      href: "/admin/horses",
-    },
-    {
-      label: "CUSTOMERS",
-      value: customers.count ?? 0,
-      caption: "People behind the horses",
-      icon: UsersRound,
-      href: "/admin/customers",
-    },
-    {
-      label: "UP NEXT",
-      value: reminders.data?.length
-        ? `${reminders.data.length}${reminders.data.length === 5 ? "+" : ""}`
-        : 0,
-      caption: "Upcoming & overdue reminders",
-      icon: CalendarDays,
-      href: "/admin/reminders",
-    },
-  ];
+  const legacy = new Set(
+    rations.data
+      ?.filter((r) => r.active && !r.feeding_time_id)
+      .map((r) => r.horse_id),
+  );
   return (
     <>
       <PageHeading
-        eyebrow={dateLabel(today()).toUpperCase()}
-        title="A good day starts here."
-        description="A clear view of the horses, the people, and the work ahead."
-        action={{ href: "/admin/horses?new=1", label: "Add a horse" }}
+        eyebrow={dateLabel(date).toUpperCase()}
+        title="Quick actions"
+        description="Record feeding and training while the work is fresh."
       />
-      {failed ? (
-        <p className="notice error" role="alert">
-          We couldn’t load your barn records. Check that the database migration
-          has been applied, then refresh.
-        </p>
-      ) : (
-        <>
-          <section className="welcome-strip">
-            <span className="welcome-icon">
-              <Sun size={30} strokeWidth={1.3} />
-            </span>
-            <div>
-              <p className="eyebrow">WELCOME TO YOUR BARN OFFICE</p>
-              <p>Good records leave more room for good work.</p>
-            </div>
-            <span className="welcome-star" aria-hidden="true">
-              ✦
-            </span>
-          </section>
-          <div className="stats-grid">
-            {stats.map(({ label, value, caption, icon: Icon, href }) => (
-              <Link href={href} className="stat-card" key={label}>
-                <div className="stat-top">
-                  <span>{label}</span>
-                  <Icon size={19} strokeWidth={1.5} />
-                </div>
-                <strong>{value}</strong>
-                <div className="stat-bottom">
-                  <span>{caption}</span>
-                  <ArrowUpRight size={16} />
-                </div>
-              </Link>
-            ))}
-          </div>
-          {finance.error || !finance.data ? (
-            <p className="notice error" role="alert">
-              Financial totals couldn’t load. Check the latest database
-              migration and refresh. Your barn records are still available
-              below.
-            </p>
-          ) : (
-            <FinancialOverview data={finance.data as FinancialOverviewData} />
-          )}
-          <div className="dashboard-grid">
-            <section className="panel">
-              <div className="panel-heading">
-                <div>
-                  <p className="eyebrow">THE HORSE COMES FIRST</p>
-                  <h2>Around the barn</h2>
-                </div>
-                <Link href="/admin/horses" className="text-link">
-                  All horses <ArrowRight size={15} />
-                </Link>
-              </div>
-              {horses.data?.length ? (
-                <div className="record-list">
-                  {horses.data.map((horse) => (
-                    <Link
-                      className="record-row"
-                      href={`/admin/horses/${horse.id}`}
-                      key={horse.id}
-                    >
-                      <span className="horse-initial">
-                        {horse.barn_name.slice(0, 1)}
-                      </span>
-                      <div>
-                        <strong>{horse.barn_name}</strong>
-                        <small>{horse.breed || "Horse profile"}</small>
-                      </div>
-                      <ArrowUpRight size={17} />
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon={Fence}
-                  title="Your next chapter starts with a horse."
-                  description="Add your first horse to keep their profile, training, and care all together."
-                  href="/admin/horses?new=1"
-                  label="Add your first horse"
-                />
-              )}
-            </section>
-            <section className="panel">
-              <div className="panel-heading">
-                <div>
-                  <p className="eyebrow">DON’T MISS A BEAT</p>
-                  <h2>On the calendar</h2>
-                </div>
-                <CalendarDays size={21} strokeWidth={1.4} />
-              </div>
-              {reminders.data?.length ? (
-                <div className="record-list">
-                  {reminders.data.map((reminder) => (
-                    <Link
-                      key={reminder.id}
-                      className="reminder-row"
-                      href={`/admin/reminders?edit=${reminder.id}`}
-                    >
-                      <span
-                        className={
-                          reminder.due_date < today()
-                            ? "reminder-date overdue"
-                            : "reminder-date"
-                        }
+      <Notice
+        error={
+          failed
+            ? "Quick actions couldn’t load. Refresh after the latest database migrations are applied."
+            : params.error
+        }
+        success={params.success}
+      />
+      {!failed && (
+        <SectionTabs
+          id="quick"
+          label="Daily work"
+          sections={[
+            {
+              id: "feeding",
+              label: "Feeding",
+              content: (
+                <>
+                  <div className="section-action-heading">
+                    <div>
+                      <h2>Feeding rounds</h2>
+                      <p className="muted">
+                        Confirm a horse below, or record a feeding time for
+                        several horses.
+                      </p>
+                    </div>
+                    {plannedHorses.length > 0 && (
+                      <ActionPanel
+                        id="quick-bulk-feeding"
+                        label="Feed multiple horses"
                       >
-                        {dateLabel(reminder.due_date)}
-                      </span>
-                      <strong>{reminder.title}</strong>
-                      <ArrowUpRight size={16} />
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon={CalendarDays}
-                  title="A little planning goes a long way."
-                  description="Keep farrier visits, vaccinations, and the everyday details on your radar."
-                  href="/admin/reminders?new=1"
-                  label="Create a reminder"
-                />
-              )}
-            </section>
-          </div>
-          <section className="quick-section">
-            <p className="eyebrow">KEEP THINGS MOVING</p>
-            <div className="quick-grid">
-              {[
-                {
-                  href: "/admin/customers?new=1",
-                  label: "Add a customer",
-                  sub: "Start with the people",
-                  icon: UsersRound,
-                },
-                {
-                  href: "/admin/log?new=1",
-                  label: "Log a session / note",
-                  sub: "Capture the work while it’s fresh",
-                  icon: BookOpen,
-                },
-                {
-                  href: "/admin/reminders?new=1",
-                  label: "Set a reminder",
-                  sub: "Take it off your mental list",
-                  icon: CalendarDays,
-                },
-              ].map(({ href, label, sub, icon: Icon }) => (
-                <Link className="quick-card" key={href} href={href}>
-                  <Icon size={22} strokeWidth={1.4} />
-                  <div>
-                    <strong>{label}</strong>
-                    <small>{sub}</small>
+                        <DailyFeedingBatch
+                          home
+                          date={date}
+                          times={times.data ?? []}
+                          horses={plannedHorses
+                            .filter((h) => !legacy.has(h.id))
+                            .map((h) => ({
+                              ...h,
+                              rations: (rations.data ?? [])
+                                .filter(
+                                  (r) =>
+                                    r.horse_id === h.id &&
+                                    r.active &&
+                                    r.feeding_time_id,
+                                )
+                                .map((r) => ({
+                                  feeding_time_id: r.feeding_time_id!,
+                                  summary: `${Number(r.quantity)} ${units.data?.find((u) => u.id === r.unit_id)?.label ?? ""} · ${products.data?.find((p) => p.id === r.product_id)?.name ?? "Feed"}`,
+                                })),
+                            }))}
+                        />
+                      </ActionPanel>
+                    )}
                   </div>
-                  <Plus size={17} />
-                </Link>
-              ))}
-            </div>
-          </section>
-        </>
+                  {plannedHorses.length ? (
+                    <SavedRations
+                      home
+                      horses={plannedHorses}
+                      rations={rations.data ?? []}
+                      products={products.data ?? []}
+                      units={units.data ?? []}
+                      times={times.data ?? []}
+                      todayConfirmations={confirmations.data ?? []}
+                    />
+                  ) : (
+                    <section className="panel record-form">
+                      <p>
+                        No active feed schedules yet.{" "}
+                        <Link className="text-link" href="/admin/horses">
+                          Set up a horse’s feed schedule
+                        </Link>{" "}
+                        to begin.
+                      </p>
+                    </section>
+                  )}
+                  <div className="row-actions">
+                    <Link
+                      className="button secondary"
+                      href="/admin/feeding#feeding-extras"
+                    >
+                      Extras / partial feeding
+                    </Link>
+                    <Link
+                      className="button secondary"
+                      href="/admin/feeding#feeding-history"
+                    >
+                      Feeding history
+                    </Link>
+                  </div>
+                </>
+              ),
+            },
+            {
+              id: "training",
+              label: "Training",
+              content: (
+                <>
+                  <div className="section-action-heading">
+                    <div>
+                      <h2>Training today</h2>
+                      <p className="muted">
+                        Log each horse’s work, individually or with shared
+                        session details.
+                      </p>
+                    </div>
+                    {training.length > 0 && (
+                      <ActionPanel
+                        id="quick-bulk-training"
+                        label="Train multiple horses"
+                      >
+                        <QuickTraining
+                          horses={trainingHorses}
+                          date={date}
+                          request={crypto.randomUUID()}
+                        />
+                      </ActionPanel>
+                    )}
+                  </div>
+                  <div className="horse-grid">
+                    {training.map((h) => (
+                      <article className="horse-card" key={h.horse_id}>
+                        <h3>
+                          <Link
+                            className="inline-link"
+                            href={`/admin/horses/${h.horse_id}`}
+                          >
+                            {h.barn_name}
+                          </Link>
+                        </h3>
+                        <dl className="training-activity">
+                          <div>
+                            <dt>Last trained</dt>
+                            <dd>
+                              {h.last_trained
+                                ? dateLabel(h.last_trained)
+                                : "No session recorded"}
+                              {h.training_title && (
+                                <small>{h.training_title}</small>
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Last fed</dt>
+                            <dd>
+                              {h.last_fed
+                                ? dateLabel(h.last_fed)
+                                : "No feeding recorded"}
+                              {h.feeding_label && (
+                                <small>{h.feeding_label}</small>
+                              )}
+                            </dd>
+                          </div>
+                        </dl>
+                        <ActionPanel
+                          id={`quick-train-${h.horse_id}`}
+                          label={`Log training · ${h.barn_name}`}
+                        >
+                          <QuickTraining
+                            horses={[
+                              { id: h.horse_id, barn_name: h.barn_name },
+                            ]}
+                            date={date}
+                            request={crypto.randomUUID()}
+                          />
+                        </ActionPanel>
+                      </article>
+                    ))}
+                  </div>
+                  {!training.length && (
+                    <section className="panel record-form">
+                      <p>
+                        No horses currently in training.{" "}
+                        <Link
+                          className="text-link"
+                          href="/admin/training?new=1#record-form"
+                        >
+                          Start a training stay
+                        </Link>{" "}
+                        to begin.
+                      </p>
+                    </section>
+                  )}
+                  <div className="row-actions">
+                    <Link className="button secondary" href="/admin/log">
+                      Training history & notes
+                    </Link>
+                  </div>
+                </>
+              ),
+            },
+          ]}
+        />
       )}
     </>
   );

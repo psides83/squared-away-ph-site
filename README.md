@@ -287,3 +287,7 @@ Saves are atomic, administrator-only and protected against stale edits/repeated 
 ### Undo feeding confirmations (migration 044)
 
 Apply `20261023004400_undo_feeding.sql` before using feeding confirmation undo. The feeding screen hides Confirm for active confirmations and offers a correction editor with a reason and confirmation dialog. Undo reverses the complete recorded batch atomically using existing invoice protections, retains its cancellation history and allows a new confirmation for that slot. Repeating an old undo cannot cancel a newer confirmation. No live migration or production save has been verified.
+
+### Home quick actions (migration 045)
+
+Admin Home now opens daily feeding/training actions; the previous dashboard remains at `/admin/overview`. Apply `20261023004500_quick_training.sql` for private atomic training batches and durable retry protection. Select only horses actually worked. Shared details create separate session records without automatically changing billing days. A current training stay must cover the entered session date. Feeding actions reuse existing stock deductions and confirmation/undo protections. Remote migration and live saves remain unverified.

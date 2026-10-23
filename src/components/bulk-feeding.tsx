@@ -27,7 +27,9 @@ export function DailyFeedingBatch({
   horses,
   date,
   times,
+  home = false,
 }: {
+  home?: boolean;
   horses: Horse[];
   times: FeedingTime[];
   date: string;
@@ -39,6 +41,7 @@ export function DailyFeedingBatch({
   );
   return (
     <form action={confirmBulkFeeding} className="record-form">
+      <input type="hidden" name="return_to" value={home ? "home" : "feeding"} />
       <p>
         Choose the horses that received their saved ration for this feeding
         time. Previously confirmed horses are safely skipped for the same date

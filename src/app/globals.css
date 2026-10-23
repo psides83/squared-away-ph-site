@@ -3679,3 +3679,12 @@ input[type="search"]::-webkit-search-decoration {
 .action-launcher > button[hidden] {
   display: none;
 }
+
+.quick-training-notes {
+  width: 100%;
+  max-width: 42rem;
+}
+.quick-training-notes textarea {
+  width: 100%;
+  max-width: 100%;
+}
