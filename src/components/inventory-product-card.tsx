@@ -73,7 +73,7 @@ export function InventoryProductCard({
           href={`/admin/inventory?product=${product.id}#product-setup`}
         >
           <Settings2 size={17} />
-          Manage product
+          Edit product
         </Link>
         <Link
           className="button tertiary"

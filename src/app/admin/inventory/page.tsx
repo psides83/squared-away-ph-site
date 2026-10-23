@@ -1,3 +1,4 @@
+import { InventoryReturns } from "@/components/inventory-returns";
 import { InventoryProductCard } from "@/components/inventory-product-card";
 import { ConversionManager } from "@/components/conversion-manager";
 import { AppSelect } from "@/components/app-select";
@@ -21,6 +22,9 @@ export default async function Inventory({
     product?: string;
     section?: string;
     page?: string;
+    returns_page?: string;
+    return?: string;
+    refund_page?: string;
     error?: string;
     success?: string;
   }>;
@@ -98,17 +102,18 @@ export default async function Inventory({
         }
         success={params.success}
       />
-      <div className="row-actions">
-        <Link className="text-link" href="/admin/inventory/returns">
-          Supplier returns & refunds
-        </Link>
-      </div>
       {!failed && (
         <>
           <SectionTabs
             id="inventory"
             label="Inventory sections"
-            defaultTab={params.page ? "history" : "products"}
+            defaultTab={
+              params.section === "returns"
+                ? "returns"
+                : params.page
+                  ? "history"
+                  : "products"
+            }
             sections={[
               {
                 id: "products",
@@ -116,36 +121,19 @@ export default async function Inventory({
                 content: (
                   <>
                     {" "}
-                    <div className="horse-grid inventory-grid">
-                      {products.data?.map((p) => {
-                        const b = balances.data?.find(
-                          (b) => b.product_id === p.id,
-                        );
-                        const qty = Number(b?.quantity_oz ?? 0);
-                        const value = Number(b?.value_cents ?? 0);
-                        return (
-                          <InventoryProductCard
-                            key={p.id}
-                            product={p}
-                            quantity={qty}
-                            value={value}
-                          />
-                        );
-                      })}
-                    </div>
-                    {!products.data?.length && (
-                      <section className="panel">
-                        <EmptyState
-                          icon={Package}
-                          title="Start with what’s in the feed room."
-                          description="Add a product, configure its bags, scoops, bales or flakes, then record opening stock or a purchase."
-                          href="#product-setup"
-                          label="Add your first product"
-                        />
-                      </section>
+                    {selected && (
+                      <div className="row-actions">
+                        <Link
+                          className="button secondary"
+                          href="/admin/inventory#product-setup"
+                        >
+                          Add a product
+                        </Link>
+                      </div>
                     )}
                     <ActionPanel
                       id="product-setup"
+                      hideTrigger={Boolean(selected)}
                       label={
                         selected ? `Manage ${selected.name}` : "Add a product"
                       }
@@ -265,6 +253,34 @@ export default async function Inventory({
                         ]}
                       />
                     </ActionPanel>
+                    <div className="horse-grid inventory-grid">
+                      {products.data?.map((p) => {
+                        const b = balances.data?.find(
+                          (b) => b.product_id === p.id,
+                        );
+                        const qty = Number(b?.quantity_oz ?? 0);
+                        const value = Number(b?.value_cents ?? 0);
+                        return (
+                          <InventoryProductCard
+                            key={p.id}
+                            product={p}
+                            quantity={qty}
+                            value={value}
+                          />
+                        );
+                      })}
+                    </div>
+                    {!products.data?.length && (
+                      <section className="panel">
+                        <EmptyState
+                          icon={Package}
+                          title="Start with what’s in the feed room."
+                          description="Add a product, configure its bags, scoops, bales or flakes, then record opening stock or a purchase."
+                          href="#product-setup"
+                          label="Add your first product"
+                        />
+                      </section>
+                    )}
                   </>
                 ),
               },
@@ -297,6 +313,11 @@ export default async function Inventory({
                     )}
                   </>
                 ),
+              },
+              {
+                id: "returns",
+                label: "Returns & refunds",
+                content: <InventoryReturns params={params} />,
               },
               {
                 id: "history",

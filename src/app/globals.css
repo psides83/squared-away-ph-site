@@ -3253,16 +3253,17 @@ input[type="search"]::-webkit-search-decoration {
   margin: 0;
 }
 .inventory-card-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 .inventory-card-actions > .button:first-child {
-  grid-column: 1/-1;
+  flex-basis: 100%;
 }
 .inventory-card-actions > .button {
+  flex: 1 0 auto;
   padding: 11px 10px;
-  white-space: normal;
+  white-space: nowrap;
 }
 .conversion-manager {
   padding: 24px;
@@ -3673,4 +3674,8 @@ input[type="search"]::-webkit-search-decoration {
   .feed-schedule-line {
     padding: 16px;
   }
+}
+
+.action-launcher > button[hidden] {
+  display: none;
 }

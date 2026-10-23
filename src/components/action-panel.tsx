@@ -11,6 +11,7 @@ export function ActionPanel({
   children,
   defaultOpen = false,
   closeHref,
+  hideTrigger = false,
   dismissLabel = "Close without saving",
 }: {
   id: string;
@@ -19,11 +20,13 @@ export function ActionPanel({
   defaultOpen?: boolean;
   closeHref?: string;
   dismissLabel?: string;
+  hideTrigger?: boolean;
 }) {
   const [revision, setRevision] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const titleId = useId();
+  const opener = useRef<HTMLElement | null>(null);
   const router = useRouter();
   const location = usePathname() + "?" + useSearchParams().toString();
   const previousLocation = useRef(location);
@@ -43,7 +46,13 @@ export function ActionPanel({
       window.cancelAnimationFrame(frame);
       dialog.current?.dispatchEvent(new Event("reveal-tab", { bubbles: true }));
       frame = window.requestAnimationFrame(() => {
-        if (dialog.current && !dialog.current.open) dialog.current.showModal();
+        if (dialog.current && !dialog.current.open) {
+          opener.current =
+            document.activeElement instanceof HTMLElement
+              ? document.activeElement
+              : null;
+          dialog.current.showModal();
+        }
       });
     };
     const openForHash = () => {
@@ -71,7 +80,8 @@ export function ActionPanel({
         "",
         window.location.pathname + window.location.search,
       );
-    trigger.current?.focus();
+    if (hideTrigger) opener.current?.focus();
+    else trigger.current?.focus();
     if (navigationClose.current) {
       navigationClose.current = false;
       return;
@@ -81,6 +91,7 @@ export function ActionPanel({
   return (
     <div className="action-launcher" id={id}>
       <button
+        hidden={hideTrigger}
         ref={trigger}
         type="button"
         className="button secondary"
