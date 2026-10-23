@@ -211,3 +211,9 @@ Use the shared app controls for consistent UI: `AppSelect` for choices, `FormInp
 Inventory product names are headings. Use **Record stock**, **Manage product**, or **Conversions** on the card. Product management separates details from conversions; use each conversion’s **Edit** action to change its name or weight. Changes affect future entries and saved-ration confirmations, while current stock and past transactions keep their saved weights/costs. Names preserve capitalization and must be unique per product ignoring case. Untouched metric conversions preserve exact metric arithmetic even when renamed.
 
 Long optional instructions use a collapsed HelpPanel. Shared workspaces use modern action styling and clear record links; customer navigation becomes a bottom bar on phones. Errors and operational warnings stay visible.
+
+## Feed cost versus charges
+
+Apply `20261022003000_feed_charge_comparison.sql` in migration order. In **Reports → Feed cost vs charges**, select service dates to compare each horse’s recorded feed/hay/supplement cost with generated finalized feed charges. Draft charges and actual-cost feeding not on invoices are separate. Expand agreement/invoice detail to review sources. Payments do not change this comparison.
+
+Monthly amounts follow saved source days and calendar-month weights; actual-cost amounts follow claimed consumption. Saved invoice cents reconcile across date slices. Corrections restate original feeding dates in this report, while Feed usage follows ledger dates. Bundled feed, invoice-wide adjustments, unsupported manual charges, and missing feeding records limit comparability and are flagged. This is recorded feed margin, not cash or whole-business profit; it does not establish that every feeding was logged.

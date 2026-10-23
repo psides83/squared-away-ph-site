@@ -8,6 +8,11 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+### Feed cost versus customer charges
+
+- Reports → Feed cost vs charges compares saved weighted feed/hay/supplement consumption costs with generated finalized feed charges per horse for selected service dates. Shows recorded dollar difference and feed margin, draft charges separately, and actual-cost feed not yet reserved on invoices. Monthly charges allocate saved invoice cents across their source days using calendar-month weights and stable penny rounding; actual-cost charges follow claimed consumption costs. Payment/issue dates do not shift service revenue.
+- Horse records link from report cards; collapsed detail shows current agreements and historical invoice/customer sources. Bundled training revenue, invoice-wide adjustments, missing feeding, and identifiable unmatched finalized feed charges suppress misleading margins. Unsupported manual feed charges appear in a review list rather than guessed date allocations. Corrections restate original feeding dates here; Feed usage retains its ledger-date view. No invoices are changed.
+
 Features in this section are present in the application source. A feature being implemented does not by itself confirm that its database migration or Vercel deployment has completed. Move only the delivered portion of a feature here; leave unfinished portions under Planned.
 
 ### App foundation and security
@@ -276,6 +281,8 @@ Features in this section are present in the application source. A feature being 
 
 #### Feed, boarding, and profitability details
 
+- Source-date allocation for unsupported/manual feed charges and attribution of invoice-wide adjustments to feed; bundled training revenue has no feed allocation. The implemented comparison flags these limitations rather than inferring feed margins.
+
 - Split receipts from a single manual invoice among multiple horses/stays if needed. Current reporting links assign the entire invoice to one horse and optionally one matching stay.
 - Add reimbursement-versus-absorbed-cost breakdowns using the implemented expense-to-invoice links. Cash reports already count received invoice payments once; do not add reimbursements a second time as separate revenue.
 - Add persistent boarding occupancy records for horses outside training stays if useful; their actual boarding days can currently be entered in each shared-cost allocation.
@@ -349,6 +356,8 @@ Features in this section are present in the application source. A feature being 
 Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Feed comparison increment (October 22, 2026): migration `20261022003000_feed_charge_comparison.sql` adds an administrator-only read report. All 135 tests, TypeScript checks, and the production build pass. Desktop and 390-pixel local previews verify report layout and collapsed help using sample data; no production records were changed. Local tests cover saved weighted costs, service-date attribution, monthly and cross-month penny reconciliation, actual-cost claims, corrections, drafts/voids, payments, invoice adjustments, manual-charge review and horse assignment, historical billing names, empty/date bounds, and authorization. Remote migration and authenticated production report remain unverified; code completion does not establish deployment.
 
 - Editable conversions and app-UI increment (October 22, 2026): migration `20261022002900_editable_inventory_conversions.sql` removes locked conversion names/weights, derives exact-metric metadata independently of display names, and exposes exact decimal edit values. All 133 tests, TypeScript checks, and the production build pass. Local database checks cover capitalized renames, editable starter units, case-insensitive duplicates, changed metric-labeled weights, preserved old movement snapshots/current stock/ration IDs, future scheduled feeding, reversals, retained exact metric depletion, positive-weight bounds, product immutability, and non-admin denial. Local browser previews verify explicit product actions, collapsed/expanded help, name/weight editors, cancellation, and phone layouts including customer bottom navigation; no console warnings were observed. No production records were changed. Remote migration, authenticated production conversion saves, and physical-device checks remain unverified.
 

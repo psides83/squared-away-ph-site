@@ -1,3 +1,7 @@
+import {
+  FeedComparisonReport,
+  type FeedComparison,
+} from "@/components/feed-comparison-report";
 import { HelpPanel } from "@/components/help-panel";
 import { TemporalInput } from "@/components/temporal-input";
 import {
@@ -72,12 +76,13 @@ export default async function Reports({
     validDate(to) &&
     from <= to &&
     Date.parse(to) - Date.parse(from) <= 3660 * 86400000;
-  const [result, usage] = valid
+  const [result, usage, comparison] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
         db.rpc("inventory_usage_report", { p_from: from, p_to: to }),
+        db.rpc("feed_charge_comparison", { p_from: from, p_to: to }),
       ])
-    : [null, null];
+    : [null, null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -85,8 +90,8 @@ export default async function Reports({
     <>
       <PageHeading
         eyebrow="THE BUSINESS"
-        title="Revenue, costs & cash profit"
-        description="Payments received minus expenses paid, for the dates you choose."
+        title="Business reports"
+        description="Review cash flow, horse and training-visit results, and feed costs versus customer charges."
       />
       <section className="panel">
         <form method="get" className="record-form report-period-form">
@@ -249,6 +254,19 @@ export default async function Reports({
                       usage?.error
                         ? null
                         : (usage?.data as InventoryUsage | null)
+                    }
+                  />
+                ),
+              },
+              {
+                id: "feed-comparison",
+                label: "Feed cost vs charges",
+                content: (
+                  <FeedComparisonReport
+                    report={
+                      comparison?.error
+                        ? null
+                        : (comparison?.data as FeedComparison | null)
                     }
                   />
                 ),
