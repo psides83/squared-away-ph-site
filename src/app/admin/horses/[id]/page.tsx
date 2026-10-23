@@ -1,3 +1,4 @@
+import { HorseCareRecords, type HorseCare } from "@/components/horse-care";
 import {
   OwnershipHistory,
   type OwnershipEvent,
@@ -24,6 +25,8 @@ export default async function HorseRecord({
   params: Promise<{ id: string }>;
   searchParams: Promise<{
     ownership_page?: string;
+    care_page?: string;
+    care_status?: string;
     ration?: string;
     new?: string;
     error?: string;
@@ -41,6 +44,21 @@ export default async function HorseRecord({
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )
     notFound();
+  const carePage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.care_page) || 1)),
+  );
+  const archivedCare = query.care_status === "archived";
+  let careQuery = db
+    .from("horse_care_records")
+    .select("*", { count: "exact" })
+    .eq("horse_id", id)
+    .order("care_date", { ascending: false })
+    .order("id")
+    .range((carePage - 1) * 25, carePage * 25 - 1);
+  careQuery = archivedCare
+    ? careQuery.not("archived_at", "is", null)
+    : careQuery.is("archived_at", null);
   const [
     horse,
     rations,
@@ -52,6 +70,7 @@ export default async function HorseRecord({
     categories,
     owners,
     ownershipEvents,
+    care,
   ] = await Promise.all([
     db.from("horses").select("*").eq("id", id).maybeSingle(),
     db.from("feed_rations").select("*").eq("horse_id", id),
@@ -80,6 +99,7 @@ export default async function HorseRecord({
       .order("recorded_at", { ascending: false })
       .order("id")
       .range((ownershipPage - 1) * 25, ownershipPage * 25 - 1),
+    careQuery,
   ]);
   if (!horse.data && !horse.error) notFound();
   const failed = [
@@ -131,11 +151,13 @@ export default async function HorseRecord({
           id="horse"
           label="Horse record sections"
           defaultTab={
-            query.ownership_page
-              ? "ownership"
-              : query.new || query.ration || query.success || query.error
-                ? "rations"
-                : "profile"
+            query.care_page || query.care_status
+              ? "care"
+              : query.ownership_page
+                ? "ownership"
+                : query.new || query.ration || query.success || query.error
+                  ? "rations"
+                  : "profile"
           }
           sections={[
             {
@@ -196,6 +218,20 @@ export default async function HorseRecord({
                   count={ownershipEvents.count ?? 0}
                   page={ownershipPage}
                   error={Boolean(owners.error || ownershipEvents.error)}
+                />
+              ),
+            },
+            {
+              id: "care",
+              label: "Care",
+              content: (
+                <HorseCareRecords
+                  horse={id}
+                  rows={(care.data ?? []) as HorseCare[]}
+                  total={care.count ?? 0}
+                  page={carePage}
+                  archived={archivedCare}
+                  error={Boolean(care.error)}
                 />
               ),
             },

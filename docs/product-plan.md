@@ -8,6 +8,12 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+### Structured horse care and deliberate customer sharing
+
+- Horse records have a Care tab for completed farrier, veterinary, vaccination, deworming, dental and other care. Entries include date, summary, optional provider, customer-shareable details and a separate trainer-only notes field. New entries start private; editors open deliberately. Future care stays in Reminders rather than being recorded as completed care. Records do not create billing, stock changes or treatment recommendations.
+- Share/unshare/archive/restore actions require a reason and confirmation; sharing previews the customer-visible fields. Unshare before editing; restore returns archived entries to private. Revision checks and request IDs protect stale/repeated saves. Administrator-only before-state audit events retain changes without hard deletion. Current/archived administrator lists paginate 25 per page.
+- Customer horses page separates Progress updates and Care records into tabs. Published, unarchived care is returned only through an explicit safe-field projection and existing active manual account/horse grants. Trainer-only notes and audit data are never in the customer response. Publication-date visible-from rules match progress updates; ownership edits do not grant access. Customer care lists independently paginate and fail without hiding other shared content.
+
 ### Existing-account password recovery
 
 - Sign-in links to Forgot password with a generic request result, provider-controlled delivery and no account-existence disclosure in the UI. Configured canonical HTTPS origin is validated; incoming host/redirect values are not trusted. Included branded Supabase reset template targets the server-side recovery confirmation flow.
@@ -325,7 +331,7 @@ Features in this section are present in the application source. A feature being 
 ### Horse records and customer portal
 
 - Video uploads. Recorded ownership/customer-link history is implemented; historical legal sale dates are not inferred.
-- Add structured customer-shared care records and in-app email invitations/account creation, including invite-type links. Existing-account password setting/recovery, photo/document sharing and published updates are implemented above.
+- In-app email invitations/account creation, including invite-type links. Structured customer-shared care, existing-account password setting/recovery, photo/document sharing and published updates are implemented above.
 
 ### Marketing website
 
@@ -388,9 +394,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Remaining admin expense/reporting improvements (downstream purchase corrections and remaining financial refinements) → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Remaining admin expense/reporting improvements (downstream purchase corrections and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Horse-care increment (October 22, 2026): migration `20261022003600_horse_care.sql` adds care and private audit records plus controlled sharing. All 148 tests pass, including private defaults, idempotent requests, stale revisions, published-edit restrictions, horse immutability, future-date rejection, archive/private restore, explicit co-owner grants, ownership-only denial, publication cutoff, access/account revocation, safe field projection, protected audit tables and 25-row pagination. Desktop/390-pixel sample previews verify action layout, collapsed trainer notes, sharing preview/cancellation and safe customer display. TypeScript and production build pass. Remote migration, authenticated production saves/sharing, and physical-device workflows remain unverified; no production records or grants changed.
 
 - Password-recovery increment (October 22, 2026): no application migration required. All 147 tests pass, covering canonical-origin rejection, recovery-only token validation, password matching/length/whitespace preservation, generic request results, provider-verified identity before updates, update-failure behavior and post-update sign-out ordering. Desktop/390-pixel browser checks verify the request screen, missing-session state and explicit confirmation screen with a dummy token. TypeScript and production build pass. No emails were sent and no credentials changed. Production Site URL/redirect/template/SMTP setup, actual email links, password saves, provider session revocation and physical-device flows remain unverified; see `docs/password-recovery.md`.
 

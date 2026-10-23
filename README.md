@@ -243,3 +243,9 @@ Apply migration `20261022003500_expense_recovery_report.sql`. In an issued invoi
 ## Account password recovery
 
 **Forgot password?** supports existing accounts, explicit email-link confirmation, and setting a new password. It needs no new application migration. Configure the canonical `NEXT_PUBLIC_SITE_URL`, Supabase Site URL/allowed redirect, and the included reset email template before relying on production recovery. See [password-recovery.md](docs/password-recovery.md). No recovery emails or password changes are performed by build/test verification.
+
+## Horse care records
+
+Apply migration `20261022003600_horse_care.sql`. A horse record’s **Care** tab logs completed care, with private-by-default date/type/summary/provider/details and separate trainer-only notes. Use **Share with customers** deliberately after reviewing its preview; manual horse portal grants still determine access. The customer horses page has separate Progress updates and Care records tabs. Private notes and audit fields are excluded by the customer RPC, and direct tables remain administrator-only.
+
+Unshare before editing. Archive removes a record from the customer view; restore returns it to private. Revisions, retry-safe requests and private before-state events retain history. Visible-from filters use the publication date, consistently with existing progress updates. Lists paginate 25 records at a time. Future tasks belong in Reminders; care entries do not generate invoices, expenses or inventory entries. Remote migration and authenticated production sharing require separate verification.
