@@ -291,3 +291,7 @@ Apply `20261023004400_undo_feeding.sql` before using feeding confirmation undo. 
 ### Home quick actions (migration 045)
 
 Admin Home now opens daily feeding/training actions; the previous dashboard remains at `/admin/overview`. Apply `20261023004500_quick_training.sql` for private atomic training batches and durable retry protection. Select only horses actually worked. Shared details create separate session records without automatically changing billing days. A current training stay must cover the entered session date. Feeding actions reuse existing stock deductions and confirmation/undo protections. Remote migration and live saves remain unverified.
+
+### Weekly riding plans (migration 046)
+
+Apply `20261023004600_weekly_riding_schedules.sql` for administrator-only recurring horse riding plans. Open a horse’s Riding schedule tab to choose training/off for all seven days and optionally add notes. Home’s Riding week shows current training horses; training cards show today’s planned status. Plans do not create training logs, confirmations or billable days. Saving/clearing checks the version loaded by the editor to prevent stale overwrites. Remote migration and authenticated production changes remain unverified.

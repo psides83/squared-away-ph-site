@@ -1,3 +1,5 @@
+import { ridingPlanLabel, type RidingSchedule } from "@/lib/riding-schedule";
+import { today } from "@/lib/format";
 import Link from "next/link";
 import { dateLabel } from "@/lib/format";
 export type TrainingHorse = {
@@ -9,7 +11,13 @@ export type TrainingHorse = {
   last_fed: string | null;
   feeding_label: string | null;
 };
-export function TrainingHorseList({ horses }: { horses: TrainingHorse[] }) {
+export function TrainingHorseList({
+  horses,
+  schedules = [],
+}: {
+  horses: TrainingHorse[];
+  schedules?: RidingSchedule[];
+}) {
   return (
     <section className="panel">
       <div className="panel-heading">
@@ -34,6 +42,12 @@ export function TrainingHorseList({ horses }: { horses: TrainingHorse[] }) {
               </h3>
               <p className="muted">
                 In training since {dateLabel(h.arrival_date)}
+              </p>
+              <p className="tag">
+                {ridingPlanLabel(
+                  schedules.find((s) => s.horse_id === h.horse_id),
+                  today(),
+                )}
               </p>
               <dl className="training-activity">
                 <div>
@@ -83,6 +97,12 @@ export function TrainingHorseList({ horses }: { horses: TrainingHorse[] }) {
                   href={`/admin/horses/${h.horse_id}#horse-rations`}
                 >
                   Feeding plan
+                </Link>
+                <Link
+                  className="text-link"
+                  href={`/admin/horses/${h.horse_id}#horse-riding`}
+                >
+                  Riding plan
                 </Link>
               </div>
             </article>

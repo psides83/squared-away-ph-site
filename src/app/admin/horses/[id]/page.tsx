@@ -1,3 +1,7 @@
+import { RidingWeek } from "@/components/riding-schedule";
+import { RidingScheduleEditor } from "@/components/riding-schedule-editor";
+import { type RidingSchedule } from "@/lib/riding-schedule";
+import { ActionPanel } from "@/components/action-panel";
 import { HorseCareRecords, type HorseCare } from "@/components/horse-care";
 import {
   OwnershipHistory,
@@ -72,6 +76,7 @@ export default async function HorseRecord({
     owners,
     ownershipEvents,
     care,
+    riding,
   ] = await Promise.all([
     db.from("horses").select("*").eq("id", id).maybeSingle(),
     db.from("feed_rations").select("*").eq("horse_id", id),
@@ -105,6 +110,11 @@ export default async function HorseRecord({
       .order("id")
       .range((ownershipPage - 1) * 25, ownershipPage * 25 - 1),
     careQuery,
+    db
+      .from("horse_riding_schedules")
+      .select("*")
+      .eq("horse_id", id)
+      .maybeSingle(),
   ]);
   if (!horse.data && !horse.error) notFound();
   const failed = [
@@ -116,6 +126,7 @@ export default async function HorseRecord({
     overview,
     reminders,
     categories,
+    riding,
   ].some((r) => r.error);
   const selected = rations.data?.find((r) => r.id === query.ration);
   const selectedTime = query.feed_time
@@ -134,7 +145,7 @@ export default async function HorseRecord({
       </Link>
       <PageHeading
         title={h?.barn_name ?? "Horse record"}
-        description="Profile, care instructions, and feed schedule."
+        description="Profile, care, feeding and weekly riding plans."
       />
       <Notice
         error={
@@ -295,6 +306,40 @@ export default async function HorseRecord({
                     >
                       View all reminders and completed history
                     </Link>
+                  </div>
+                </section>
+              ),
+            },
+            {
+              id: "riding",
+              label: "Riding schedule",
+              content: (
+                <section className="panel">
+                  <div className="panel-heading">
+                    <h2>Weekly riding schedule</h2>
+                  </div>
+                  <div className="record-form stack">
+                    <RidingWeek
+                      schedule={riding.data as RidingSchedule | null}
+                      date={today()}
+                    />
+                    <p className="muted">
+                      Repeats every week. Plans do not confirm actual training
+                      or mark billable training/rest days.
+                    </p>
+                    <ActionPanel
+                      id="riding-editor"
+                      label={
+                        riding.data?.days
+                          ? "Edit riding plan"
+                          : "Set riding plan"
+                      }
+                    >
+                      <RidingScheduleEditor
+                        horse={{ id, barn_name: h.barn_name }}
+                        schedule={riding.data as RidingSchedule | null}
+                      />
+                    </ActionPanel>
                   </div>
                 </section>
               ),

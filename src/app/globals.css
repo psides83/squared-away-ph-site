@@ -3688,3 +3688,70 @@ input[type="search"]::-webkit-search-decoration {
   width: 100%;
   max-width: 100%;
 }
+
+.riding-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  margin: 18px 0;
+}
+.riding-week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 2px;
+  border: 1px solid var(--line, #dedfd7);
+  border-radius: 12px;
+  font-size: 12px;
+}
+.riding-week-day.training {
+  background: #edf1e9;
+  color: #40513b;
+}
+.riding-week-day.off {
+  background: #f7f4ef;
+  color: #726756;
+}
+.riding-day-editor {
+  display: grid;
+  gap: 8px;
+}
+.riding-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e4e3dc;
+}
+.riding-day-options {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f0f1ec;
+  border-radius: 12px;
+}
+.riding-day-options button {
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #58614f;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.riding-day-options button[aria-pressed="true"] {
+  background: #566448;
+  color: white;
+  box-shadow: 0 1px 3px #0002;
+}
+.riding-day-options button:focus-visible {
+  outline: 2px solid #766042;
+  outline-offset: 2px;
+}
+.riding-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

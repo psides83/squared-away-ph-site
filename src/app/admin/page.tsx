@@ -1,3 +1,5 @@
+import { RidingWeekOverview } from "@/components/riding-schedule";
+import { ridingPlanLabel, type RidingSchedule } from "@/lib/riding-schedule";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { today, dateLabel } from "@/lib/format";
@@ -16,24 +18,33 @@ export default async function QuickActions({
   const params = await searchParams;
   const { db } = await requireAdmin();
   const date = today();
-  const [horses, rations, products, units, times, confirmations, worklist] =
-    await Promise.all([
-      db.from("horses").select("id,barn_name").order("barn_name"),
-      db.from("feed_rations").select("*"),
-      db.from("inventory_products").select("id,name"),
-      db.from("inventory_units").select("id,label"),
-      db
-        .from("feeding_times")
-        .select("*")
-        .order("time_of_day", { nullsFirst: false })
-        .order("name"),
-      db
-        .from("feeding_confirmations")
-        .select("id,horse_id,feeding_time_id")
-        .eq("feeding_date", date)
-        .is("cancelled_at", null),
-      db.rpc("training_worklist"),
-    ]);
+  const [
+    horses,
+    rations,
+    products,
+    units,
+    times,
+    confirmations,
+    worklist,
+    riding,
+  ] = await Promise.all([
+    db.from("horses").select("id,barn_name").order("barn_name"),
+    db.from("feed_rations").select("*"),
+    db.from("inventory_products").select("id,name"),
+    db.from("inventory_units").select("id,label"),
+    db
+      .from("feeding_times")
+      .select("*")
+      .order("time_of_day", { nullsFirst: false })
+      .order("name"),
+    db
+      .from("feeding_confirmations")
+      .select("id,horse_id,feeding_time_id")
+      .eq("feeding_date", date)
+      .is("cancelled_at", null),
+    db.rpc("training_worklist"),
+    db.from("horse_riding_schedules").select("*"),
+  ]);
   const failed = [
     horses,
     rations,
@@ -42,6 +53,7 @@ export default async function QuickActions({
     times,
     confirmations,
     worklist,
+    riding,
   ].some((r) => r.error);
   const training = (worklist.data ?? []) as TrainingHorse[];
   const trainingHorses = training.map((h) => ({
@@ -193,6 +205,14 @@ export default async function QuickActions({
                             {h.barn_name}
                           </Link>
                         </h3>
+                        <p className="tag">
+                          {ridingPlanLabel(
+                            (riding.data as RidingSchedule[] | null)?.find(
+                              (s) => s.horse_id === h.horse_id,
+                            ),
+                            date,
+                          )}
+                        </p>
                         <dl className="training-activity">
                           <div>
                             <dt>Last trained</dt>
@@ -252,6 +272,17 @@ export default async function QuickActions({
                     </Link>
                   </div>
                 </>
+              ),
+            },
+            {
+              id: "riding-week",
+              label: "Riding week",
+              content: (
+                <RidingWeekOverview
+                  horses={trainingHorses}
+                  schedules={(riding.data ?? []) as RidingSchedule[]}
+                  date={date}
+                />
               ),
             },
           ]}

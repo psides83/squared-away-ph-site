@@ -1,3 +1,4 @@
+import { type RidingSchedule } from "@/lib/riding-schedule";
 import { SectionTabs } from "@/components/section-tabs";
 import {
   TrainingHorseList,
@@ -57,7 +58,7 @@ export default async function TrainingLog({
     .order("id")
     .range((page - 1) * pageSize, page * pageSize - 1);
   if (horseId) query = query.eq("horse_id", horseId);
-  const [entries, horses, editing, worklist] = await Promise.all([
+  const [entries, horses, editing, worklist, riding] = await Promise.all([
     query,
     db.from("horses").select("id, barn_name").order("barn_name"),
     params.edit && /^[0-9a-f-]{36}$/i.test(params.edit)
@@ -68,10 +69,15 @@ export default async function TrainingLog({
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     db.rpc("training_worklist"),
+    db.from("horse_riding_schedules").select("*"),
   ]);
   const selected = editing.data;
   const failed =
-    entries.error || horses.error || editing.error || worklist.error;
+    entries.error ||
+    horses.error ||
+    editing.error ||
+    worklist.error ||
+    riding.error;
   const selectedHorse = horses.data?.find((h) => h.id === horseId);
   if (horseId && !horses.error && !selectedHorse)
     filterError =
@@ -120,7 +126,8 @@ export default async function TrainingLog({
               <h2>
                 {selected ? "Edit your entry" : "Put the day’s work on paper"}
               </h2>
-              <Link className="inline-link"
+              <Link
+                className="inline-link"
                 href={horseId ? `/admin/log?horse=${horseId}` : "/admin/log"}
                 aria-label="Close entry form"
               >
@@ -204,6 +211,7 @@ export default async function TrainingLog({
               content: (
                 <TrainingHorseList
                   horses={(worklist.data ?? []) as TrainingHorse[]}
+                  schedules={(riding.data ?? []) as RidingSchedule[]}
                 />
               ),
             },
