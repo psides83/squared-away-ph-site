@@ -77,7 +77,11 @@ export default async function HorseRecord({
     db.from("feed_rations").select("*").eq("horse_id", id),
     db.from("inventory_products").select("*").order("name"),
     db.from("inventory_units").select("*"),
-    db.from("feeding_times").select("*").order("sort_order").order("name"),
+    db
+      .from("feeding_times")
+      .select("*")
+      .order("time_of_day", { nullsFirst: false })
+      .order("name"),
     db.rpc("horse_overview"),
     db
       .from("reminders")

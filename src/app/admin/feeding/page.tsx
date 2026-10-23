@@ -49,7 +49,11 @@ export default async function Feeding({
       .select("id,horse_id,feeding_time_id")
       .is("cancelled_at", null)
       .eq("feeding_date", today()),
-    db.from("feeding_times").select("*").order("sort_order").order("name"),
+    db
+      .from("feeding_times")
+      .select("*")
+      .order("time_of_day", { nullsFirst: false })
+      .order("name"),
   ]);
   const selected = rations.data?.find((r) => r.id === params.edit);
   if (selected)

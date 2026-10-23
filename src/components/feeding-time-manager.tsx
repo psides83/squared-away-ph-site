@@ -20,7 +20,6 @@ type Draft = {
   id: string;
   name: string;
   time_of_day: string;
-  sort_order: string;
 };
 export function FeedingTimeManager({ times }: { times: FeedingTime[] }) {
   const [state, action, pending] = useActionState(manageFeedingTimes, {});
@@ -39,16 +38,6 @@ export function FeedingTimeManager({ times }: { times: FeedingTime[] }) {
         id: crypto.randomUUID(),
         name: "",
         time_of_day: "",
-        sort_order: String(
-          Math.min(
-            1000,
-            Math.max(
-              0,
-              ...saved.map((t) => t.sort_order),
-              ...rows.map((t) => Number(t.sort_order)),
-            ) + 10,
-          ),
-        ),
       },
     ]);
   }
@@ -66,7 +55,8 @@ export function FeedingTimeManager({ times }: { times: FeedingTime[] }) {
         <p>
           Add as many feeding times as your routine needs, then save all new
           times together. Edit saved times individually. Clock times are
-          optional.
+          optional. Saved times appear from earliest to latest; times without a
+          clock time appear last, alphabetically.
         </p>
         <Notice error={state.error} success={state.success} />
         {saved.map((t) => (
@@ -89,16 +79,6 @@ export function FeedingTimeManager({ times }: { times: FeedingTime[] }) {
                       label="Clock time (optional)"
                       type="time"
                       defaultValue={t.time_of_day?.slice(0, 5)}
-                    />
-                    <Field
-                      name="sort_order"
-                      label="Display order"
-                      type="number"
-                      min={0}
-                      max={1000}
-                      step="1"
-                      defaultValue={t.sort_order}
-                      required
                     />
                   </div>
                   <label className="inline-checkbox">
@@ -127,10 +107,7 @@ export function FeedingTimeManager({ times }: { times: FeedingTime[] }) {
               <div className="record-row">
                 <div>
                   <strong>{feedingTimeLabel(t)}</strong>
-                  <p className="muted">
-                    Order {t.sort_order}
-                    {t.archived ? " · Archived" : ""}
-                  </p>
+                  {t.archived && <p className="muted">Archived</p>}
                 </div>
                 <button
                   type="button"
@@ -156,7 +133,6 @@ export function FeedingTimeManager({ times }: { times: FeedingTime[] }) {
                   ...r,
                   name: r.name.trim(),
                   time_of_day: r.time_of_day || null,
-                  sort_order: r.sort_order === "" ? null : Number(r.sort_order),
                 })),
               )}
             />
@@ -180,19 +156,6 @@ export function FeedingTimeManager({ times }: { times: FeedingTime[] }) {
                       value={r.time_of_day}
                       onChange={(e) =>
                         change(r.id, { time_of_day: e.target.value })
-                      }
-                    />
-                    <DraftField
-                      name={`order_${r.id}`}
-                      label="Display order"
-                      type="number"
-                      min={0}
-                      max={1000}
-                      step="1"
-                      required
-                      value={r.sort_order}
-                      onChange={(e) =>
-                        change(r.id, { sort_order: e.target.value })
                       }
                     />
                   </div>

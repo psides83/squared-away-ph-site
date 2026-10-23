@@ -58,7 +58,11 @@ export default async function Inventory({
     query,
     db.from("expense_categories").select("*").order("name"),
     db.from("horses").select("id,barn_name").order("barn_name"),
-    db.from("feeding_times").select("*").order("sort_order").order("name"),
+    db
+      .from("feeding_times")
+      .select("*")
+      .order("time_of_day", { nullsFirst: false })
+      .order("name"),
   ]);
   const returnLinks = movements.data?.length
     ? await db

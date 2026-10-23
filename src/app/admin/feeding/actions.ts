@@ -19,23 +19,22 @@ export async function manageFeedingTimes(
   try {
     let error;
     if (operation === "create") {
+      const rows: unknown = JSON.parse(text(form, "rows", true, 250000)!);
+      if (!Array.isArray(rows)) throw new Error("Enter valid feeding times.");
       const result = await db.rpc("create_feeding_times", {
-        p_rows: JSON.parse(text(form, "rows", true, 250000)!),
+        // Retain the legacy database field for compatibility; display uses clock time.
+        p_rows: rows.map((row) => ({ ...row, sort_order: 0 })),
       });
       error = result.error;
     } else if (operation === "edit") {
-      const clock = text(form, "time_of_day", false, 8),
-        sort = text(form, "sort_order", true, 4)!;
+      const clock = text(form, "time_of_day", false, 8);
       if (clock && !/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(clock))
         throw new Error("Enter a valid clock time.");
-      if (!/^\d+$/.test(sort) || Number(sort) > 1000)
-        throw new Error("Display order must be between 0 and 1000.");
       const result = await db
         .from("feeding_times")
         .update({
           name: text(form, "name", true, 60),
           time_of_day: clock,
-          sort_order: Number(sort),
           archived: form.get("archived") === "on",
         })
         .eq("id", identifier(form, "id", true)!)
@@ -54,7 +53,7 @@ export async function manageFeedingTimes(
     const result = await db
       .from("feeding_times")
       .select("*")
-      .order("sort_order")
+      .order("time_of_day", { nullsFirst: false })
       .order("name");
     revalidatePath("/admin", "layout");
     return {
