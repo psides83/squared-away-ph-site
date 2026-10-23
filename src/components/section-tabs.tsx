@@ -1,5 +1,6 @@
 "use client";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { flushSync } from "react-dom";
 
 type Section = { id: string; label: string; content: ReactNode };
@@ -17,6 +18,7 @@ export function SectionTabs({
   defaultTab?: string;
   printTab?: string;
 }) {
+  const location = usePathname() + "?" + useSearchParams().toString();
   const [active, setActive] = useState(defaultTab ?? sections[0]?.id);
   const visible = sections.some((s) => s.id === active)
     ? active
@@ -24,10 +26,10 @@ export function SectionTabs({
   const root = useRef<HTMLDivElement>(null);
   const previousDefault = useRef(defaultTab);
   useLayoutEffect(() => {
-    function followHash() {
+    function followHash(rawHash = window.location.hash) {
       let hash: string;
       try {
-        hash = decodeURIComponent(window.location.hash.slice(1));
+        hash = decodeURIComponent(rawHash.slice(1));
       } catch {
         return;
       }
@@ -47,14 +49,50 @@ export function SectionTabs({
       );
       if (panel?.dataset.tabKey) setActive(panel.dataset.tabKey);
     };
+    const navigation = () => followHash();
+    const followLink = (event: MouseEvent) => {
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        event.defaultPrevented
+      )
+        return;
+      const link =
+        event.target instanceof Element
+          ? event.target.closest<HTMLAnchorElement>("a[href]")
+          : null;
+      if (
+        !link ||
+        link.hasAttribute("download") ||
+        (link.target && link.target !== "_self")
+      )
+        return;
+      const url = new URL(link.href, window.location.href);
+      if (
+        url.origin !== window.location.origin ||
+        url.pathname !== window.location.pathname ||
+        !url.hash
+      )
+        return;
+      // Next's client links can update history without firing hashchange.
+      // Reveal mounted panels before its scroll-to-anchor behavior runs.
+      flushSync(() => followHash(url.hash));
+    };
     root.current?.addEventListener("reveal-tab", reveal);
     followHash();
-    window.addEventListener("hashchange", followHash);
+    document.addEventListener("click", followLink, true);
+    window.addEventListener("hashchange", navigation);
+    window.addEventListener("popstate", navigation);
     return () => {
       root.current?.removeEventListener("reveal-tab", reveal);
-      window.removeEventListener("hashchange", followHash);
+      document.removeEventListener("click", followLink, true);
+      window.removeEventListener("hashchange", navigation);
+      window.removeEventListener("popstate", navigation);
     };
-  }, [id, defaultTab]);
+  }, [id, defaultTab, location]);
   function select(key: string, focus = false) {
     setActive(key);
     window.history.replaceState(

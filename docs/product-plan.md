@@ -8,6 +8,9 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Inventory Record stock navigation fix: shared tab navigation reveals a mounted target panel for same-page client links before anchor scrolling, follows route/query changes and restores matching tabs on Back/Forward. The page-level stock button and per-product stock links now reveal the transaction form, including when selecting another product or repeating an action. Modified/new-tab clicks and external links retain normal browser behavior; switching sections keeps mounted form values.
+
+
 - Horse feed schedules now follow horse → feeding time → rations. Open a time-slot editor, select a time, add/change all its product/unit/quantity/paused-state/notes rows and save together. Saved views show one edit action per feeding time, with no per-ration edit/remove controls; draft row removal stays inside the editor. Slots can move to an empty time or be cleared with an app-styled confirmation, and legacy unassigned totals can move together into an empty named time. Each save is an administrator-only plan revision with retained before/after rows, request retry protection, stale-edit detection and atomic rollback. Writes serialize with actual feeding confirmations, including older administrator clients. Editing a plan never changes stock or recorded consumption; new feeding confirmations use its latest active rations. Inline errors retain the open draft, notes are collapsed, and money/measurement control conventions remain shared. Up to 100 distinct product rations per time slot are supported; moving onto an already configured time is blocked rather than overwriting or merging its plan.
 
 
@@ -423,6 +426,8 @@ Features in this section are present in the application source. A feature being 
 Remaining admin expense/reporting improvements (downstream quantity corrections, supplier credit/document refinements and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Stock-button fix (October 23, 2026): no migration required. A local sample using the actual tab and stock-form components reproduced the URL-changing/hidden-form failure before the fix. Browser checks after the fix verify page-level and product links, selected product, repeated same-page actions and Back/Forward. All 158 tests, TypeScript checks and the production build pass. No stock transaction was submitted. Live deployed navigation remains unverified.
 
 - Feeding-schedule increment (October 23, 2026): migration `20261023004300_horse_feed_schedules.sql` adds atomic slot saves, retained revisions and schedule-write serialization. Local database checks cover multi-ration save/retry, stale forms, invalid-unit and duplicate rollback, occupied-time protection, whole-slot removal/move, legacy assignment, paused archived slots, cross-horse row protection, unchanged past feeding/stock snapshots and administrator privacy. Form parsing checks row alignment, units/quantity/notes, explicit source time and pauses. Desktop/390-pixel sample previews verify grouped read-only rations, one edit action per time, adding/removing draft rows without losing other values, inline validation, custom clear confirmation/cancellation and compact inputs. All 158 tests, TypeScript checks and the production build pass. Remote migration, authenticated production saves and physical-device behavior remain unverified; no production records changed.
 
