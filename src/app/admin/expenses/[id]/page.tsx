@@ -1,3 +1,4 @@
+import { ExpenseExchanges } from "@/components/expense-exchanges";
 import { ExpenseSupplierCredits } from "@/components/expense-supplier-credits";
 import { AppSelect } from "@/components/app-select";
 import Link from "next/link";
@@ -23,6 +24,7 @@ export default async function ExpenseRecord({
     error?: string;
     success?: string;
     credit_application_page?: string;
+    exchange_page?: string;
   }>;
 }) {
   const { id } = await params,
@@ -231,7 +233,11 @@ export default async function ExpenseRecord({
             id="expense"
             label="Expense record sections"
             defaultTab={
-              query.credit_application_page ? "supplier-credits" : "details"
+              query.exchange_page
+                ? "exchanges"
+                : query.credit_application_page
+                  ? "supplier-credits"
+                  : "details"
             }
             sections={[
               {
@@ -374,6 +380,22 @@ export default async function ExpenseRecord({
                               Math.floor(
                                 Number(query.credit_application_page) || 1,
                               ),
+                            ),
+                          )}
+                        />
+                      ),
+                    },
+                    {
+                      id: "exchanges",
+                      label: "Exchanges",
+                      content: (
+                        <ExpenseExchanges
+                          expense={id}
+                          page={Math.max(
+                            1,
+                            Math.min(
+                              10000,
+                              Math.floor(Number(query.exchange_page) || 1),
                             ),
                           )}
                         />

@@ -100,14 +100,16 @@ export async function InventoryReturns({
           Supplier credits tab. Set optional expected cash and store-credit
           amounts on each return to track what remains outstanding. Issued
           credit counts as received even after it is spent; reversed refunds and
-          cancelled credits reopen the target. Exchange purchases are not
-          matched automatically.
+          cancelled credits reopen the target. Replacement purchases are
+          recorded separately at full value and linked explicitly from each
+          return.
         </p>
         <p>
           Use correction actions only for mistaken records. Refund reversals
           restate the original cash period; cancelling a mistaken return
           restores stock at the return’s recorded cost and retains its history.
-          Active refunds and linked supplier credits must be corrected first.
+          Active refunds, linked supplier credits and replacement purchase links
+          must be corrected first.
         </p>
       </HelpPanel>
       {!failed && (

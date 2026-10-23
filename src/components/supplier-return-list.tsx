@@ -77,6 +77,12 @@ export function SupplierReturnList({
               )}
               <Link
                 className="button secondary"
+                href={`/admin/inventory/returns/${r.id}/exchanges`}
+              >
+                Replacement purchases
+              </Link>
+              <Link
+                className="button secondary"
                 href={`/admin/inventory/returns/${r.id}/documents`}
               >
                 <Paperclip size={17} aria-hidden="true" />
