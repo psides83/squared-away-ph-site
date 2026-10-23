@@ -8,6 +8,8 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Shared panel spacing: direct explanatory text, report empty states, and history details have consistent body padding instead of touching card edges. Mobile headings, body text, forms, table cells, and pagination share aligned horizontal insets; pagination wraps when needed.
+
 ### Feed cost versus customer charges
 
 - Reports → Feed cost vs charges compares saved weighted feed/hay/supplement consumption costs with generated finalized feed charges per horse for selected service dates. Shows recorded dollar difference and feed margin, draft charges separately, and actual-cost feed not yet reserved on invoices. Monthly charges allocate saved invoice cents across their source days using calendar-month weights and stable penny rounding; actual-cost charges follow claimed consumption costs. Payment/issue dates do not shift service revenue.
@@ -356,6 +358,8 @@ Features in this section are present in the application source. A feature being 
 Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Panel-spacing increment (October 22, 2026): no migration required. Desktop and 390-pixel local browser previews confirm padded matching-page descriptions/empty states and aligned headings/table insets. Shared rules also cover bare report descriptions and direct history details. Production build and its TypeScript check pass; deployed rendering and real-device checks remain unverified.
 
 - Feed comparison increment (October 22, 2026): migration `20261022003000_feed_charge_comparison.sql` adds an administrator-only read report. All 135 tests, TypeScript checks, and the production build pass. Desktop and 390-pixel local previews verify report layout and collapsed help using sample data; no production records were changed. Local tests cover saved weighted costs, service-date attribution, monthly and cross-month penny reconciliation, actual-cost claims, corrections, drafts/voids, payments, invoice adjustments, manual-charge review and horse assignment, historical billing names, empty/date bounds, and authorization. Remote migration and authenticated production report remain unverified; code completion does not establish deployment.
 

@@ -3477,3 +3477,39 @@ input[type="search"]::-webkit-search-decoration {
     font-size: 20px;
   }
 }
+
+/* Keep panel copy aligned with headings, forms, and table content. */
+.panel > p:not(.notice):not(.record-form),
+.panel > details {
+  margin: 0;
+  padding: 20px 24px;
+  overflow-wrap: anywhere;
+}
+.panel > p:not(.notice):not(.record-form) {
+  line-height: 1.65;
+}
+.panel > details + details {
+  border-top: 1px solid var(--line);
+}
+.panel > details > p {
+  margin-top: 12px;
+}
+@media (max-width: 750px) {
+  .panel-heading,
+  .panel > p:not(.notice):not(.record-form),
+  .panel > details,
+  .panel > .record-form,
+  .panel > .log-pagination {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .panel > .table-scroll th,
+  .panel > .table-scroll td {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .panel > .log-pagination {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
