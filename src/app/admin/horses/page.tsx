@@ -255,7 +255,7 @@ export default async function Horses({
                     href={`/admin/horses/${horse.id}`}
                     className="text-link"
                   >
-                    View horse record
+                    Horse record
                   </Link>
                   <Link
                     className="text-link"

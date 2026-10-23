@@ -3513,3 +3513,20 @@ input[type="search"]::-webkit-search-decoration {
     flex-wrap: wrap;
   }
 }
+
+/* Action groups wrap whole controls rather than squeezing their labels. */
+.row-actions {
+  flex-wrap: wrap;
+}
+.row-actions > :is(a, button, form),
+.row-actions > form > :is(button, .button) {
+  flex-shrink: 0;
+}
+.row-actions :is(.button, .text-button, .text-link) {
+  white-space: nowrap;
+}
+.horse-card > .row-actions {
+  justify-content: flex-start;
+  gap: 8px;
+  align-items: center;
+}

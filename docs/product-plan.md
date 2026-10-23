@@ -8,6 +8,8 @@ Build the admin experience first, for one administrator and up to ten horses in 
 
 ## Implemented
 
+- Action groups wrap whole buttons/links onto additional rows while preserving single-line labels. Horse-card footer actions use consistent gaps and the concise “Horse record” label, avoiding squeezed multiline buttons on narrow cards.
+
 - Shared panel spacing: direct explanatory text, report empty states, and history details have consistent body padding instead of touching card edges. Mobile headings, body text, forms, table cells, and pagination share aligned horizontal insets; pagination wraps when needed.
 
 ### Feed cost versus customer charges
@@ -358,6 +360,8 @@ Features in this section are present in the application source. A feature being 
 Background scheduling for the implemented recurring engine and remaining admin expense/reporting improvements → customer onboarding refinements and structured care sharing. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
 
 ## Verification and deployment status
+
+- Action-label layout increment (October 22, 2026): no migration required. A local 390-pixel preview with a narrow horse card confirms single-line labels and wrapping of whole controls. Production build and TypeScript check pass. Live deployment and physical-device rendering remain unverified.
 
 - Panel-spacing increment (October 22, 2026): no migration required. Desktop and 390-pixel local browser previews confirm padded matching-page descriptions/empty states and aligned headings/table insets. Shared rules also cover bare report descriptions and direct history details. Production build and its TypeScript check pass; deployed rendering and real-device checks remain unverified.
 
