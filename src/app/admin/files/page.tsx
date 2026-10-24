@@ -1,3 +1,6 @@
+import { SectionTabs } from "@/components/section-tabs";
+import { HelpPanel } from "@/components/help-panel";
+import { recoverVideo } from "./video-actions";
 import { HorseVideoPlayer } from "@/components/horse-video-player";
 import { HorseVideoUpload } from "@/components/horse-video-upload";
 import { FilePicker } from "@/components/file-picker";
@@ -17,6 +20,7 @@ export default async function HorseFiles({
     horse?: string;
     file?: string;
     page?: string;
+    pending_page?: string;
     error?: string;
     success?: string;
   }>;
@@ -32,12 +36,27 @@ export default async function HorseFiles({
     .order("id")
     .range((page - 1) * 24, page * 24 - 1);
   if (horse) list = list.eq("horse_id", horse);
-  const [files, horses, selected] = await Promise.all([
+  const pendingPage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(q.pending_page) || 1)),
+  );
+  let pendingQuery = db
+    .from("horse_video_uploads")
+    .select("id,horse_id,title,file_name,size_bytes,created_at", {
+      count: "exact",
+    })
+    .is("attached_at", null)
+    .order("created_at", { ascending: false })
+    .order("id")
+    .range((pendingPage - 1) * 24, pendingPage * 24 - 1);
+  if (horse) pendingQuery = pendingQuery.eq("horse_id", horse);
+  const [files, horses, selected, pendingUploads] = await Promise.all([
     list,
     db.from("horses").select("id,barn_name").order("barn_name"),
     q.file && /^[0-9a-f-]{36}$/i.test(q.file)
       ? db.from("horse_files").select("*").eq("id", q.file).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    pendingQuery,
   ]);
   const file = selected.data;
   const history = file
@@ -259,77 +278,213 @@ export default async function HorseFiles({
           </div>
         </ActionPanel>
       )}
-      <section className="panel">
-        <form className="log-filter" method="get">
-          <label>
-            Horse
-            <AppSelect name="horse" defaultValue={horse ?? ""}>
-              <option value="">All horses</option>
-              {horses.data?.map((h) => (
-                <option key={h.id} value={h.id}>
-                  {h.barn_name}
-                </option>
-              ))}
-            </AppSelect>
-          </label>
-          <button className="button secondary" type="submit">
-            Filter files
-          </button>
-        </form>
-        <div className="customer-horse-grid file-grid">
-          {files.data?.map((f) => (
-            <article className="panel customer-horse-card" key={f.id}>
-              {f.content_type.startsWith("image/") && (
-                <img
-                  className="horse-file-thumb"
-                  src={`/admin/files/${f.id}`}
-                  alt={f.title}
-                  loading="lazy"
-                />
-              )}
-              <p className="eyebrow">
-                {horses.data?.find((h) => h.id === f.horse_id)?.barn_name} ·{" "}
-                {f.kind}
-              </p>
-              <h3>{f.title}</h3>
-              <small>
-                {f.archived_at
-                  ? "Archived"
-                  : f.published_at
-                    ? "Published"
-                    : "Private"}{" "}
-                · {dateLabel(f.created_at.slice(0, 10))}
-              </small>
-              <Link
-                className="text-link"
-                href={`/admin/files?file=${f.id}${horse ? `&horse=${horse}` : ""}`}
-              >
-                Review / sharing
-              </Link>
-            </article>
-          ))}
-        </div>
-        {!files.data?.length && !failed && (
-          <p className="record-form muted">No horse files in this view yet.</p>
-        )}
-        <nav className="log-pagination" aria-label="Horse file pages">
-          {page > 1 ? (
-            <Link className="button secondary" href={href(page - 1)}>
-              Previous
-            </Link>
-          ) : (
-            <span />
-          )}
-          <span>Page {page}</span>
-          {page * 24 < (files.count ?? 0) ? (
-            <Link className="button secondary" href={href(page + 1)}>
-              Next
-            </Link>
-          ) : (
-            <span />
-          )}
-        </nav>
-      </section>
+      <SectionTabs
+        id="horse-files"
+        label="Horse file views"
+        defaultTab={q.pending_page ? "pending" : "library"}
+        sections={[
+          {
+            id: "library",
+            label: "File library",
+            content: (
+              <section className="panel">
+                <form className="log-filter" method="get">
+                  <label>
+                    Horse
+                    <AppSelect name="horse" defaultValue={horse ?? ""}>
+                      <option value="">All horses</option>
+                      {horses.data?.map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.barn_name}
+                        </option>
+                      ))}
+                    </AppSelect>
+                  </label>
+                  <button className="button secondary" type="submit">
+                    Filter files
+                  </button>
+                </form>
+                <div className="customer-horse-grid file-grid">
+                  {files.data?.map((f) => (
+                    <article className="panel customer-horse-card" key={f.id}>
+                      {f.content_type.startsWith("image/") && (
+                        <img
+                          className="horse-file-thumb"
+                          src={`/admin/files/${f.id}`}
+                          alt={f.title}
+                          loading="lazy"
+                        />
+                      )}
+                      <p className="eyebrow">
+                        {
+                          horses.data?.find((h) => h.id === f.horse_id)
+                            ?.barn_name
+                        }{" "}
+                        · {f.kind}
+                      </p>
+                      <h3>{f.title}</h3>
+                      <small>
+                        {f.archived_at
+                          ? "Archived"
+                          : f.published_at
+                            ? "Published"
+                            : "Private"}{" "}
+                        · {dateLabel(f.created_at.slice(0, 10))}
+                      </small>
+                      <Link
+                        className="text-link"
+                        href={`/admin/files?file=${f.id}${horse ? `&horse=${horse}` : ""}`}
+                      >
+                        Review / sharing
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+                {!files.data?.length && !failed && (
+                  <p className="record-form muted">
+                    No horse files in this view yet.
+                  </p>
+                )}
+                <nav className="log-pagination" aria-label="Horse file pages">
+                  {page > 1 ? (
+                    <Link className="button secondary" href={href(page - 1)}>
+                      Previous
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                  <span>Page {page}</span>
+                  {page * 24 < (files.count ?? 0) ? (
+                    <Link className="button secondary" href={href(page + 1)}>
+                      Next
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                </nav>
+              </section>
+            ),
+          },
+          {
+            id: "pending",
+            label: `Pending uploads${pendingUploads.count ? ` (${pendingUploads.count})` : ""}`,
+            content: (
+              <section className="panel">
+                <div className="record-form">
+                  <h2>Recover a video save</h2>
+                  <p className="muted">
+                    These videos were prepared but have not been added to the
+                    file library. Check a video to finish saving it privately if
+                    its upload reached storage.
+                  </p>
+                  <HelpPanel title="What if an upload is incomplete?">
+                    <p>
+                      If the original editor is still open, retry there to
+                      continue uploading. After closing it, an incomplete
+                      transfer needs a fresh upload of the original file.
+                      Pending entries are retained; this view does not delete
+                      storage or publish videos.
+                    </p>
+                  </HelpPanel>
+                  {pendingUploads.error ? (
+                    <p className="notice error" role="alert">
+                      Pending uploads could not load. Refresh to retry.
+                    </p>
+                  ) : (
+                    <>
+                      {horse && (
+                        <p className="muted">
+                          Showing pending videos for{" "}
+                          {horses.data?.find((h) => h.id === horse)
+                            ?.barn_name ?? "the selected horse"}
+                          .{" "}
+                          <Link
+                            className="text-link"
+                            href="/admin/files#horse-files-pending"
+                          >
+                            Show all horses
+                          </Link>
+                        </p>
+                      )}
+                      <div className="customer-horse-grid">
+                        {pendingUploads.data?.map((upload) => (
+                          <article
+                            className="panel customer-horse-card"
+                            key={upload.id}
+                          >
+                            <p className="eyebrow">
+                              {horses.data?.find(
+                                (h) => h.id === upload.horse_id,
+                              )?.barn_name ?? "Horse record"}
+                            </p>
+                            <h3>{upload.title}</h3>
+                            <p className="muted">
+                              {upload.file_name} ·{" "}
+                              {(upload.size_bytes / 1024 / 1024).toFixed(1)} MB
+                            </p>
+                            <small>
+                              Prepared{" "}
+                              {new Date(upload.created_at).toLocaleString(
+                                "en-US",
+                                { timeZone: "America/Chicago" },
+                              )}{" "}
+                              Central
+                            </small>
+                            <form
+                              action={recoverVideo}
+                              className="form-actions"
+                            >
+                              <input
+                                type="hidden"
+                                name="upload_id"
+                                value={upload.id}
+                              />
+                              <SubmitButton>
+                                Check &amp; finish save
+                              </SubmitButton>
+                            </form>
+                          </article>
+                        ))}
+                      </div>
+                      {!pendingUploads.data?.length && (
+                        <p className="muted">
+                          No pending video uploads in this view.
+                        </p>
+                      )}
+                      <nav
+                        className="log-pagination"
+                        aria-label="Pending upload pages"
+                      >
+                        {pendingPage > 1 ? (
+                          <Link
+                            className="button secondary"
+                            href={`/admin/files?pending_page=${pendingPage - 1}${horse ? `&horse=${horse}` : ""}#horse-files-pending`}
+                          >
+                            Previous
+                          </Link>
+                        ) : (
+                          <span />
+                        )}
+                        <span>Page {pendingPage}</span>
+                        {pendingPage * 24 < (pendingUploads.count ?? 0) ? (
+                          <Link
+                            className="button secondary"
+                            href={`/admin/files?pending_page=${pendingPage + 1}${horse ? `&horse=${horse}` : ""}#horse-files-pending`}
+                          >
+                            Next
+                          </Link>
+                        ) : (
+                          <span />
+                        )}
+                      </nav>
+                    </>
+                  )}
+                </div>
+              </section>
+            ),
+          },
+        ]}
+      />
     </>
   );
 }

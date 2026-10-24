@@ -225,3 +225,66 @@ test("videos attach only after verified storage metadata, remain private and fol
     await db.close();
   }
 });
+
+test("pending videos survive failed recovery and leave the queue only after one private attachment", async () => {
+  const db = await inventoryDatabase();
+  try {
+    await login(db, adminId);
+    const horse = (
+      await db.query<{ id: string }>(
+        "insert into horses(barn_name) values('Recovery horse') returning id",
+      )
+    ).rows[0].id;
+    const id = crypto.randomUUID();
+    const path = (
+      await db.query<{ path: string }>(
+        "select prepare_horse_video($1,$2,'Interrupted save','original.mp4','video/mp4',12000) path",
+        [id, horse],
+      )
+    ).rows[0].path;
+    const pending = () =>
+      db.query(
+        "select id from horse_video_uploads where attached_at is null and id=$1",
+        [id],
+      );
+    assert.equal((await pending()).rows.length, 1);
+    await assert.rejects(
+      db.query("select finish_horse_video($1)", [id]),
+      /Complete the video upload/,
+    );
+    assert.equal((await pending()).rows.length, 1);
+    await login(db, outsiderId);
+    assert.equal((await pending()).rows.length, 0);
+    await assert.rejects(
+      db.query("select finish_horse_video($1)", [id]),
+      /Administrator/,
+    );
+    await login(db, adminId);
+    await db.query(
+      "insert into storage.objects(bucket_id,name,metadata) values('horse-videos',$1,$2)",
+      [path, { size: 12000, mimetype: "video/mp4" }],
+    );
+    // Recover using only the persisted ID, without preparing again or the original File.
+    await db.query("select finish_horse_video($1)", [id]);
+    await db.query("select finish_horse_video($1)", [id]);
+    assert.equal((await pending()).rows.length, 0);
+    const files = await db.query<{ published_at: null; archived_at: null }>(
+      "select published_at,archived_at from horse_files where id=$1",
+      [id],
+    );
+    assert.equal(files.rows.length, 1);
+    assert.equal(files.rows[0].published_at, null);
+    assert.equal(files.rows[0].archived_at, null);
+    assert.equal(
+      (
+        await db.query(
+          "select id from portal_admin_events where file_id=$1 and kind='file_attached'",
+          [id],
+        )
+      ).rows.length,
+      1,
+    );
+  } finally {
+    await db.close();
+  }
+});

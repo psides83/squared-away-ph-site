@@ -2,6 +2,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { identifier, text, choice } from "@/lib/validation";
 import { videoSize, resumableEndpoint } from "@/lib/horse-video";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 export async function prepareVideo(form: FormData) {
   const { db } = await requireAdmin();
@@ -77,4 +78,34 @@ export async function finishVideo(id: string) {
     };
   revalidatePath("/admin/files");
   return { ok: true as const };
+}
+
+/** Reuses the database's locked, idempotent attachment check after an editor closes. */
+export async function recoverVideo(form: FormData) {
+  const { db } = await requireAdmin();
+  let id = "";
+  let error = "";
+  try {
+    id = identifier(form, "upload_id", true)!;
+    const result = await db.rpc("finish_horse_video", { p_id: id });
+    if (result.error) {
+      if (result.error.code === "P0001") {
+        error = result.error.message.includes("Complete the video upload")
+          ? "This video has not finished uploading. If its original editor is still open, retry there. Otherwise upload the original video again; this pending record is retained."
+          : result.error.message;
+      } else
+        error =
+          "The video could not be checked. Please retry when the connection is available.";
+    }
+  } catch {
+    error = "The video could not be checked. Please refresh and retry.";
+  }
+  if (error)
+    redirect(
+      `/admin/files?error=${encodeURIComponent(error)}#horse-files-pending`,
+    );
+  revalidatePath("/admin/files");
+  redirect(
+    `/admin/files?file=${id}&success=Video+recovered+privately.+Review+before+sharing.`,
+  );
 }
