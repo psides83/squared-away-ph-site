@@ -26,7 +26,7 @@ export default async function HorseFiles({
   }>;
 }) {
   const q = await searchParams;
-  const { db } = await requireAdmin();
+  const { db, user } = await requireAdmin();
   const page = Math.max(1, Math.min(10000, Math.floor(Number(q.page) || 1)));
   const horse = q.horse && /^[0-9a-f-]{36}$/i.test(q.horse) ? q.horse : null;
   let list = db
@@ -42,9 +42,12 @@ export default async function HorseFiles({
   );
   let pendingQuery = db
     .from("horse_video_uploads")
-    .select("id,horse_id,title,file_name,size_bytes,created_at", {
-      count: "exact",
-    })
+    .select(
+      "id,horse_id,title,file_name,content_type,size_bytes,created_at,sha256",
+      {
+        count: "exact",
+      },
+    )
     .is("attached_at", null)
     .order("created_at", { ascending: false })
     .order("id")
@@ -95,7 +98,11 @@ export default async function HorseFiles({
         <div className="panel-heading">
           <h2>Upload a private video</h2>
         </div>
-        <HorseVideoUpload horses={horses.data ?? []} horse={horse} />
+        <HorseVideoUpload
+          horses={horses.data ?? []}
+          horse={horse}
+          userId={user.id}
+        />
       </ActionPanel>
       <ActionPanel id="upload-file" label="Upload a private file">
         <div className="panel-heading">
@@ -379,9 +386,11 @@ export default async function HorseFiles({
                   </p>
                   <HelpPanel title="What if an upload is incomplete?">
                     <p>
-                      If the original editor is still open, retry there to
-                      continue uploading. After closing it, an incomplete
-                      transfer needs a fresh upload of the original file.
+                      Select Resume upload and choose the original video again.
+                      Its contents are checked before continuing. The same
+                      browser can resume a saved transfer for up to 24 hours;
+                      otherwise it starts again in the same pending record.
+                      Older entries without Resume upload need a fresh upload.
                       Pending entries are retained; this view does not delete
                       storage or publish videos.
                     </p>
@@ -443,6 +452,18 @@ export default async function HorseFiles({
                                 Check &amp; finish save
                               </SubmitButton>
                             </form>
+                            {upload.sha256 && (
+                              <ActionPanel
+                                id={`resume-video-${upload.id}`}
+                                label="Resume upload"
+                              >
+                                <HorseVideoUpload
+                                  horses={horses.data ?? []}
+                                  userId={user.id}
+                                  resume={{ ...upload, sha256: upload.sha256 }}
+                                />
+                              </ActionPanel>
+                            )}
                           </article>
                         ))}
                       </div>

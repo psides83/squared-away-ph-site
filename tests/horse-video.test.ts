@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  safeVideoTransferUrl,
+  matchingVideoTransfer,
+  videoTransferFingerprint,
+  videoDigest,
+  verifyVideoReselection,
   videoType,
   videoSize,
   videoLimit,
@@ -287,4 +292,161 @@ test("pending videos survive failed recovery and leave the queue only after one 
   } finally {
     await db.close();
   }
+});
+
+test("video resume verifies all file bytes and restricts signed requests to the storage transfer endpoint", async () => {
+  const bytes = new TextEncoder().encode("original video");
+  const digest = await videoDigest(bytes.buffer);
+  assert.match(digest, /^[0-9a-f]{64}$/);
+  assert.notEqual(
+    digest,
+    await videoDigest(new TextEncoder().encode("different clip").buffer),
+  );
+  const pending = {
+    id: crypto.randomUUID(),
+    horse_id: crypto.randomUUID(),
+    title: "Clip",
+    file_name: "original.mp4",
+    size_bytes: 14,
+    content_type: "video/mp4",
+    sha256: digest,
+  };
+  verifyVideoReselection({ size: 14 }, "video/mp4", digest, pending);
+  for (const [size, mime, hash] of [
+    [15, "video/mp4", digest],
+    [14, "video/webm", digest],
+    [14, "video/mp4", "0".repeat(64)],
+  ] as const)
+    assert.throws(
+      () => verifyVideoReselection({ size }, mime, hash, pending),
+      /different video/,
+    );
+  const endpoint =
+    "https://example.storage.supabase.co/storage/v1/upload/resumable";
+  assert.equal(safeVideoTransferUrl(endpoint, endpoint), true);
+  assert.equal(safeVideoTransferUrl(`${endpoint}/abc`, endpoint), true);
+  for (const url of [
+    "https://evil.example/upload",
+    `${endpoint}-other/abc`,
+    `${endpoint}/abc?token=secret`,
+    `${endpoint}/abc#hash`,
+    endpoint.replace("https:", "http:"),
+    endpoint.replace("https://", "https://user:password@"),
+    `${endpoint}/../object`,
+    "invalid",
+  ])
+    assert.equal(safeVideoTransferUrl(url, endpoint), false, url);
+});
+test("persisted video fingerprints bind resume attempts to one immutable pending file", async () => {
+  const db = await inventoryDatabase();
+  try {
+    await login(db, adminId);
+    const horse = (
+      await db.query<{ id: string }>(
+        "insert into horses(barn_name) values('Resume horse') returning id",
+      )
+    ).rows[0].id;
+    const id = crypto.randomUUID(),
+      hash = "a".repeat(64);
+    const prepare = (digest: string) =>
+      db.query<{ path: string }>(
+        "select prepare_horse_video_transfer($1,$2,'Resume clip','original.mp4','video/mp4',10000,$3) path",
+        [id, horse, digest],
+      );
+    const path = (await prepare(hash)).rows[0].path;
+    assert.equal((await prepare(hash)).rows[0].path, path);
+    await assert.rejects(prepare("b".repeat(64)), /different video/);
+    await assert.rejects(prepare("invalid"), /original video/);
+    assert.equal(
+      (
+        await db.query<{ sha256: string }>(
+          "select sha256 from horse_video_uploads where id=$1",
+          [id],
+        )
+      ).rows[0].sha256,
+      hash,
+    );
+    await db.query(
+      "insert into storage.objects(bucket_id,name,metadata) values('horse-videos',$1,$2)",
+      [path, { size: 10000, mimetype: "video/mp4" }],
+    );
+    await db.query("select finish_horse_video($1)", [id]);
+    assert.equal((await prepare(hash)).rows[0].path, path);
+    await assert.rejects(prepare("b".repeat(64)), /different video/);
+    // Older completed objects never acquire an unverified replacement fingerprint.
+    const legacy = crypto.randomUUID();
+    const legacyPath = (
+      await db.query<{ path: string }>(
+        "select prepare_horse_video($1,$2,'Legacy','legacy.mp4','video/mp4',10000) path",
+        [legacy, horse],
+      )
+    ).rows[0].path;
+    await db.query(
+      "insert into storage.objects(bucket_id,name,metadata) values('horse-videos',$1,$2)",
+      [legacyPath, { size: 10000, mimetype: "video/mp4" }],
+    );
+    await assert.rejects(
+      db.query(
+        "select prepare_horse_video_transfer($1,$2,'Legacy','legacy.mp4','video/mp4',10000,$3)",
+        [legacy, horse, hash],
+      ),
+      /older upload/,
+    );
+    await login(db, outsiderId);
+    await assert.rejects(prepare(hash), /Administrator/);
+    assert.equal(
+      (await db.query("select sha256 from horse_video_uploads")).rows.length,
+      0,
+    );
+    await db.exec("reset role;set role anon");
+    await assert.rejects(prepare(hash), /permission denied/);
+  } finally {
+    await db.close();
+  }
+});
+
+test("transfer lookup ignores expired, foreign-path and malformed browser entries", () => {
+  const endpoint =
+      "https://example.storage.supabase.co/storage/v1/upload/resumable",
+    path = "horse/clip.mp4",
+    now = Date.parse("2026-10-24T12:00:00Z");
+  const entry = {
+    size: 10000,
+    uploadUrl: `${endpoint}/abc`,
+    parallelUploadUrls: null,
+    creationTime: "2026-10-24T11:00:00Z",
+    metadata: { bucketName: "horse-videos", objectName: path },
+  };
+  assert.equal(
+    matchingVideoTransfer([entry], endpoint, path, 10000, now),
+    entry,
+  );
+  for (const changed of [
+    { ...entry, creationTime: "2026-10-23T12:00:00Z" },
+    { ...entry, creationTime: "bad" },
+    { ...entry, creationTime: "2026-10-25T12:00:00Z" },
+    { ...entry, size: 20000 },
+    {
+      ...entry,
+      metadata: { ...entry.metadata, objectName: "another/clip.mp4" },
+    },
+    { ...entry, uploadUrl: "https://evil.example/clip" },
+    { ...entry, parallelUploadUrls: [`${endpoint}/other`] },
+  ])
+    assert.equal(
+      matchingVideoTransfer([changed], endpoint, path, 10000, now),
+      undefined,
+    );
+  assert.notEqual(
+    videoTransferFingerprint("admin1", "clip1", "hash"),
+    videoTransferFingerprint("admin2", "clip1", "hash"),
+  );
+  assert.notEqual(
+    videoTransferFingerprint("admin1", "clip1", "hash"),
+    videoTransferFingerprint("admin1", "clip2", "hash"),
+  );
+  assert.notEqual(
+    videoTransferFingerprint("admin1", "clip1", "hash"),
+    videoTransferFingerprint("admin1", "clip1", "different"),
+  );
 });

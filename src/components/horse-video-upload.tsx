@@ -3,10 +3,20 @@ import { useEffect, useRef, useState } from "react";
 import { Upload } from "tus-js-client";
 import { useRouter } from "next/navigation";
 import { AppSelect } from "@/components/app-select";
+import { HelpPanel } from "@/components/help-panel";
 import { FilePicker } from "@/components/file-picker";
 import { Field } from "@/components/ui";
 import { prepareVideo, finishVideo } from "@/app/admin/files/video-actions";
-import { videoType, videoSize } from "@/lib/horse-video";
+import {
+  videoType,
+  videoSize,
+  videoDigest,
+  verifyVideoReselection,
+  safeVideoTransferUrl,
+  videoTransferFingerprint,
+  matchingVideoTransfer,
+  type PendingVideoTransfer,
+} from "@/lib/horse-video";
 type Work = {
   id: string;
   file: File;
@@ -18,9 +28,13 @@ type Work = {
 export function HorseVideoUpload({
   horses,
   horse,
+  userId,
+  resume,
 }: {
   horses: { id: string; barn_name: string }[];
   horse?: string | null;
+  userId: string;
+  resume?: PendingVideoTransfer;
 }) {
   const router = useRouter(),
     work = useRef<Work | null>(null),
@@ -65,7 +79,14 @@ export function HorseVideoUpload({
             },
             chunkSize: 6 * 1024 * 1024,
             uploadDataDuringCreation: true,
-            storeFingerprintForResuming: false,
+            storeFingerprintForResuming: true,
+            fingerprint: async () =>
+              videoTransferFingerprint(
+                userId,
+                item.id,
+                String(item.form.get("sha256")),
+              ),
+
             removeFingerprintOnSuccess: true,
             retryDelays: [0, 3000, 5000, 10000, 20000],
             metadata: {
@@ -75,6 +96,10 @@ export function HorseVideoUpload({
               cacheControl: "0",
             },
             onBeforeRequest: (req) => {
+              if (!safeVideoTransferUrl(req.getURL(), info.endpoint))
+                throw Error(
+                  "The saved transfer address is invalid. Start a new upload.",
+                );
               req.setHeader("x-signature", item.token!);
             },
             onProgress: (sent, total) => {
@@ -82,20 +107,32 @@ export function HorseVideoUpload({
                 setProgress(Math.round((sent * 100) / total));
             },
             onError: () => {
-              if (mounted.current) {
+              if (mounted.current && work.current === item) {
                 setBusy(false);
                 setError(
-                  "Upload interrupted. Keep this editor open and retry to resume.",
+                  "Upload interrupted. Retry here, or reopen this video from Pending uploads and select the original file.",
                 );
               }
-              locked.current = false;
+              if (work.current === item) locked.current = false;
             },
             onSuccess: () => {
               item.uploaded = true;
               void complete(item);
             },
           });
-        setStage("Uploading privately…");
+        const previous = await item.upload
+          .findPreviousUploads()
+          .catch(() => []);
+        if (!mounted.current || work.current !== item) return;
+        const saved = matchingVideoTransfer(
+          previous,
+          info.endpoint,
+          info.path,
+          item.file.size,
+        );
+        if (saved && !item.upload.url)
+          item.upload.resumeFromPreviousUpload(saved);
+        setStage(saved ? "Resuming private upload…" : "Uploading privately…");
         item.upload.start();
       } else await complete(item);
     } catch (e) {
@@ -111,7 +148,7 @@ export function HorseVideoUpload({
     }
   }
   async function complete(item: Work) {
-    if (!mounted.current) return;
+    if (!mounted.current || work.current !== item) return;
     setStage("Saving private video record…");
     try {
       const result = await finishVideo(item.id);
@@ -143,17 +180,29 @@ export function HorseVideoUpload({
       const file = data.get("file");
       if (!(file instanceof File)) throw Error("Choose a video first.");
       videoSize(file.size);
+      setBusy(true);
+      setError("");
+      setStage("Checking video contents…");
       const type = videoType(
         new Uint8Array(await file.slice(0, 65536).arrayBuffer()),
       );
-      const id = crypto.randomUUID();
+      const sha256 = await videoDigest(await file.arrayBuffer());
+      if (!mounted.current) return;
+      if (resume) verifyVideoReselection(file, type.mime, sha256, resume);
+      const id = resume?.id ?? crypto.randomUUID();
       const meta = new FormData();
       for (const field of ["horse_id", "title"])
         meta.set(field, String(data.get(field) ?? ""));
+      if (resume) {
+        meta.set("horse_id", resume.horse_id);
+        meta.set("title", resume.title);
+      }
       meta.set("upload_id", id);
+      meta.set("sha256", sha256);
       meta.set(
         "file_name",
-        file.name.replace(/[\r\n\0]/g, "").slice(0, 200) ||
+        (resume?.file_name ??
+          file.name.replace(/[\r\n\0]/g, "").slice(0, 200)) ||
           `horse-video.${type.extension}`,
       );
       meta.set("content_type", type.mime);
@@ -162,6 +211,7 @@ export function HorseVideoUpload({
       setPending(true);
       await run();
     } catch (e) {
+      setBusy(false);
       setError(e instanceof Error ? e.message : "Choose a supported video.");
     } finally {
       selecting.current = false;
@@ -176,30 +226,40 @@ export function HorseVideoUpload({
       }}
     >
       <fieldset className="video-fields" disabled={pending}>
-        <div className="form-grid">
-          <label>
-            Horse
-            <AppSelect
-              aria-label="Video horse"
-              name="horse_id"
+        {resume ? (
+          <div className="notice">
+            <strong>{resume.title}</strong>
+            <p>
+              Select the original video: {resume.file_name}. Its contents will
+              be verified before resuming.
+            </p>
+          </div>
+        ) : (
+          <div className="form-grid">
+            <label>
+              Horse
+              <AppSelect
+                aria-label="Video horse"
+                name="horse_id"
+                required
+                defaultValue={horse ?? ""}
+              >
+                <option value="">Choose horse</option>
+                {horses.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.barn_name}
+                  </option>
+                ))}
+              </AppSelect>
+            </label>
+            <Field
+              label="Video title (visible if shared)"
+              name="title"
               required
-              defaultValue={horse ?? ""}
-            >
-              <option value="">Choose horse</option>
-              {horses.map((h) => (
-                <option key={h.id} value={h.id}>
-                  {h.barn_name}
-                </option>
-              ))}
-            </AppSelect>
-          </label>
-          <Field
-            label="Video title (visible if shared)"
-            name="title"
-            required
-            maxLength={200}
-          />
-        </div>
+              maxLength={200}
+            />
+          </div>
+        )}
         <label>
           MP4, MOV, or WebM · up to 50 MB
           <FilePicker
@@ -210,10 +270,22 @@ export function HorseVideoUpload({
         </label>
       </fieldset>
       <p className="form-hint muted">
-        Uploads directly to private storage. Keep this editor open to resume an
-        interrupted upload. Videos start private. Device playback depends on the
-        clip’s codec; no video conversion is performed.
+        Videos start private. You can reopen unfinished videos from Pending
+        uploads.
       </p>
+      <HelpPanel title="Upload and playback details">
+        <p>
+          After closing this editor, select the original file again to continue.
+          Transfer progress can resume on this browser while its saved transfer
+          is available (up to 24 hours); otherwise it starts again in the same
+          record. Clearing browser data removes saved transfer progress. Clips
+          are not kept in browser storage.
+        </p>
+        <p>
+          Device playback depends on the clip’s codec. No video conversion is
+          performed.
+        </p>
+      </HelpPanel>
       {busy && (
         <div role="status" aria-live="polite">
           <p>
@@ -244,7 +316,9 @@ export function HorseVideoUpload({
               ? work.current?.uploaded
                 ? "Retry saving video"
                 : "Retry upload"
-              : "Upload video privately"}
+              : resume
+                ? "Resume private upload"
+                : "Upload video privately"}
         </button>
         {pending && !busy && (
           <button

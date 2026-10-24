@@ -9,7 +9,7 @@ export async function prepareVideo(form: FormData) {
   try {
     const id = identifier(form, "upload_id", true)!;
     const size = videoSize(Number(form.get("size")));
-    const result = await db.rpc("prepare_horse_video", {
+    const result = await db.rpc("prepare_horse_video_transfer", {
       p_id: id,
       p_horse: identifier(form, "horse_id", true),
       p_title: text(form, "title", true, 200),
@@ -20,6 +20,7 @@ export async function prepareVideo(form: FormData) {
         "video/webm",
       ]),
       p_size: size,
+      p_sha256: text(form, "sha256", true, 64),
     });
     if (result.error)
       throw Error(
@@ -91,7 +92,7 @@ export async function recoverVideo(form: FormData) {
     if (result.error) {
       if (result.error.code === "P0001") {
         error = result.error.message.includes("Complete the video upload")
-          ? "This video has not finished uploading. If its original editor is still open, retry there. Otherwise upload the original video again; this pending record is retained."
+          ? "This video has not finished uploading. Use Resume upload to select the original file again. Older uploads without that option need a fresh upload; this pending record is retained."
           : result.error.message;
       } else
         error =

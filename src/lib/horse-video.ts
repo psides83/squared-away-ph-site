@@ -67,3 +67,91 @@ export function resumableEndpoint(value: string) {
     url.hostname = url.hostname.replace(".supabase.co", ".storage.supabase.co");
   return `${url.origin}/storage/v1/upload/resumable`;
 }
+
+/** Check every transfer request before adding a fresh signed upload token. */
+export function safeVideoTransferUrl(value: string, endpoint: string) {
+  try {
+    const url = new URL(value),
+      base = new URL(endpoint);
+    return (
+      url.origin === base.origin &&
+      !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash &&
+      (url.pathname === base.pathname ||
+        url.pathname.startsWith(`${base.pathname}/`))
+    );
+  } catch {
+    return false;
+  }
+}
+export function videoDigest(bytes: ArrayBuffer) {
+  return crypto.subtle
+    .digest("SHA-256", bytes)
+    .then((hash) =>
+      Array.from(new Uint8Array(hash), (byte) =>
+        byte.toString(16).padStart(2, "0"),
+      ).join(""),
+    );
+}
+export type PendingVideoTransfer = {
+  id: string;
+  horse_id: string;
+  title: string;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
+  sha256: string;
+};
+export function verifyVideoReselection(
+  file: { size: number },
+  mime: string,
+  sha256: string,
+  pending: PendingVideoTransfer,
+) {
+  if (
+    file.size !== pending.size_bytes ||
+    mime !== pending.content_type ||
+    sha256 !== pending.sha256
+  )
+    throw Error(
+      "This is a different video. Select the original file to resume this upload.",
+    );
+}
+
+export function videoTransferFingerprint(
+  user: string,
+  id: string,
+  sha256: string,
+) {
+  return `saph-video:${user}:${id}:${sha256}`;
+}
+export function matchingVideoTransfer<
+  T extends {
+    size: number | null;
+    uploadUrl: string | null;
+    parallelUploadUrls: string[] | null;
+    creationTime: string;
+    metadata: Record<string, string>;
+  },
+>(
+  entries: T[],
+  endpoint: string,
+  path: string,
+  size: number,
+  now = Date.now(),
+): T | undefined {
+  return entries.find(
+    (entry) =>
+      entry.size === size &&
+      !entry.parallelUploadUrls &&
+      entry.uploadUrl &&
+      entry.metadata.bucketName === "horse-videos" &&
+      entry.metadata.objectName === path &&
+      safeVideoTransferUrl(entry.uploadUrl, endpoint) &&
+      Number.isFinite(Date.parse(entry.creationTime)) &&
+      now - Date.parse(entry.creationTime) >= 0 &&
+      now - Date.parse(entry.creationTime) < 24 * 60 * 60 * 1000,
+  );
+}

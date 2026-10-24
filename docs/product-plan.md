@@ -387,6 +387,12 @@ Features in this section are present in the application source. A feature being 
 - Horse files now has File library and Pending uploads tabs. The pending view lists prepared, unattached videos in stable 24-entry pages, with horse filtering, original filename, size and Central preparation time.
 - An explicit Check & finish save action recovers a completed storage upload using its saved identifier after the original editor closes. The existing database check verifies stored size/type, attaches privately and records one audit event; retries do not duplicate files. Incomplete uploads remain pending with clear retry guidance. No storage objects are deleted or videos published by recovery.
 
+### Resume interrupted video transfers
+
+- New video preparations save a SHA-256 fingerprint of the entire selected clip. Pending uploads offer a deliberate Resume upload editor: reselect the original file after closing/reloading, verify its full contents, and reuse the original upload identifier and metadata.
+- Browser transfer progress is scoped to the administrator, pending identifier and file fingerprint. Matching progress can resume for up to 24 hours; missing/expired progress restarts into the same record. Stored transfer addresses must match the configured storage origin and resumable path before receiving a fresh signed token. Saved entries must match the target bucket/path and size; signed tokens and video bytes are not persisted by this workflow.
+- Videos remain private and attachment retries remain idempotent. Older pending entries without a saved fingerprint retain completed-upload recovery but need a new upload for incomplete transfers. Browser data removal, private-browsing limitations, provider expiry and a different device can require restarting transfer bytes. This does not provide background/offline uploads.
+
 ## Planned (not implemented)
 
 ### Expenses, receipts, billing, and profitability
@@ -406,7 +412,7 @@ Features in this section are present in the application source. A feature being 
 
 ### Horse records and customer portal
 
-- Video transcoding, generated thumbnails, cleanup of abandoned upload intents and objects, and resuming incomplete transfers after closing/reloading the editor. Recovery of completed uploads whose file save was interrupted is implemented above. Private video upload/playback and recorded ownership/customer-link history are implemented; historical legal sale dates are not inferred.
+- Video transcoding, generated thumbnails, and cleanup of abandoned upload intents and objects. Recovery of completed uploads and reselecting original files to resume incomplete transfers after closing/reloading are implemented above. Private video upload/playback and recorded ownership/customer-link history are implemented; historical legal sale dates are not inferred.
 - In-app email invitations/account creation, including invite-type links. Structured customer-shared care, existing-account password setting/recovery, photo/document sharing and published updates are implemented above.
 
 ### Marketing website
@@ -635,3 +641,5 @@ Remaining admin expense/reporting improvements (production push setup/device ver
 - All 188 tests, TypeScript and the production build passed. Checks cover both invoice effects, partial refunds, payment caps and dates, exact retry/reversal behavior, later-payment blockers, paired adjustment rollback, explicit expense-recovery caps, cross-month business/horse cash results, private customer history and paginated aggregates. A 390-pixel sample preview verified source-payment choices, both invoice-effect explanations, currency input spacing, collapsed optional details and the amount/source/effect confirmation with cancellation; no financial record was saved. Migration `20261023005700_customer_refunds.sql`, authenticated production recording and physical-device/PDF verification remain unverified. No live financial records or payments were changed.
 
 - Pending-video recovery increment (October 24, 2026): all 189 tests, TypeScript and the production build pass. Database checks cover retained incomplete uploads, administrator-only pending access and recovery, successful attachment using only the saved identifier, private visibility and one file/audit event across retries. Uses the existing video migration `20261023003700_horse_videos.sql`; no new migration. Authenticated production recovery, actual storage transfers and physical-device behavior remain unverified. Incomplete transfers still require the original open editor or a fresh upload; automatic cleanup and cross-reload transfer resumption remain planned. No live files or customer records changed.
+
+- Video-transfer resume increment (October 24, 2026): all 192 tests, TypeScript and the production build pass. Checks cover file-content/size/type mismatches, immutable persisted fingerprints and exact retries, retained private attachments, legacy-object safeguards, administrator/customer/anonymous isolation, browser progress expiry, account/upload scoping and rejection of foreign or malformed transfer addresses. A 390-pixel browser sample verifies the deliberate Resume upload editor and collapsed guidance (`/tmp/video-resume-phone.png`). Migration `20261024005800_video_transfer_resume.sql`, real TUS pause/reload/reselection, unavailable browser storage, provider expiry and physical-device behavior remain unverified. No live files were uploaded or modified. Uses the documented Supabase signed-token/TUS resume flow: https://supabase.com/docs/guides/storage/uploads/resumable-uploads.
