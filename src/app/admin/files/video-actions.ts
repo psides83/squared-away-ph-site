@@ -110,3 +110,41 @@ export async function recoverVideo(form: FormData) {
     `/admin/files?file=${id}&success=Video+recovered+privately.+Review+before+sharing.`,
   );
 }
+
+export async function changeVideoUpload(
+  _previous: { error?: string },
+  form: FormData,
+): Promise<{ error?: string }> {
+  const { db } = await requireAdmin();
+  let issue = "";
+  let id = "";
+  try {
+    id = identifier(form, "upload_id", true)!;
+    const rawRevision = text(form, "revision", true, 10)!;
+    if (
+      !/^\d+$/.test(rawRevision) ||
+      !Number.isSafeInteger(Number(rawRevision))
+    )
+      throw Error("Refresh this upload before continuing.");
+    const result = await db.rpc("change_horse_video_upload", {
+      p_request: identifier(form, "request", true),
+      p_id: id,
+      p_revision: Number(rawRevision),
+      p_action: choice(form, "change", ["abandon", "restore"]),
+      p_reason: text(form, "reason", true, 2000),
+    });
+    if (result.error)
+      throw Error(
+        result.error.code === "P0001"
+          ? result.error.message
+          : "This upload could not be updated. Refresh and retry.",
+      );
+  } catch (e) {
+    issue =
+      e instanceof Error ? e.message : "This upload could not be updated.";
+  }
+  if (issue) return { error: issue };
+  revalidatePath("/admin/files");
+  revalidatePath(`/admin/files/uploads/${id}`);
+  redirect(`/admin/files/uploads/${id}?success=Upload+status+saved.`);
+}

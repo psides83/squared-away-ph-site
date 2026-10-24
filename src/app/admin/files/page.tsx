@@ -21,6 +21,7 @@ export default async function HorseFiles({
     file?: string;
     page?: string;
     pending_page?: string;
+    aside_page?: string;
     error?: string;
     success?: string;
   }>;
@@ -49,18 +50,35 @@ export default async function HorseFiles({
       },
     )
     .is("attached_at", null)
+    .is("abandoned_at", null)
     .order("created_at", { ascending: false })
     .order("id")
     .range((pendingPage - 1) * 24, pendingPage * 24 - 1);
   if (horse) pendingQuery = pendingQuery.eq("horse_id", horse);
-  const [files, horses, selected, pendingUploads] = await Promise.all([
-    list,
-    db.from("horses").select("id,barn_name").order("barn_name"),
-    q.file && /^[0-9a-f-]{36}$/i.test(q.file)
-      ? db.from("horse_files").select("*").eq("id", q.file).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-    pendingQuery,
-  ]);
+  const asidePage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(q.aside_page) || 1)),
+  );
+  let asideQuery = db
+    .from("horse_video_uploads")
+    .select("id,horse_id,title,file_name,abandoned_at,abandoned_reason", {
+      count: "exact",
+    })
+    .not("abandoned_at", "is", null)
+    .order("abandoned_at", { ascending: false })
+    .order("id")
+    .range((asidePage - 1) * 24, asidePage * 24 - 1);
+  if (horse) asideQuery = asideQuery.eq("horse_id", horse);
+  const [files, horses, selected, pendingUploads, asideUploads] =
+    await Promise.all([
+      list,
+      db.from("horses").select("id,barn_name").order("barn_name"),
+      q.file && /^[0-9a-f-]{36}$/i.test(q.file)
+        ? db.from("horse_files").select("*").eq("id", q.file).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      pendingQuery,
+      asideQuery,
+    ]);
   const file = selected.data;
   const history = file
     ? await db
@@ -288,7 +306,9 @@ export default async function HorseFiles({
       <SectionTabs
         id="horse-files"
         label="Horse file views"
-        defaultTab={q.pending_page ? "pending" : "library"}
+        defaultTab={
+          q.aside_page ? "aside" : q.pending_page ? "pending" : "library"
+        }
         sections={[
           {
             id: "library",
@@ -452,6 +472,12 @@ export default async function HorseFiles({
                                 Check &amp; finish save
                               </SubmitButton>
                             </form>
+                            <Link
+                              className="button secondary"
+                              href={`/admin/files/uploads/${upload.id}`}
+                            >
+                              Manage upload
+                            </Link>
                             {upload.sha256 && (
                               <ActionPanel
                                 id={`resume-video-${upload.id}`}
@@ -491,6 +517,94 @@ export default async function HorseFiles({
                           <Link
                             className="button secondary"
                             href={`/admin/files?pending_page=${pendingPage + 1}${horse ? `&horse=${horse}` : ""}#horse-files-pending`}
+                          >
+                            Next
+                          </Link>
+                        ) : (
+                          <span />
+                        )}
+                      </nav>
+                    </>
+                  )}
+                </div>
+              </section>
+            ),
+          },
+          {
+            id: "aside",
+            label: `Set aside${asideUploads.count ? ` (${asideUploads.count})` : ""}`,
+            content: (
+              <section className="panel">
+                <div className="record-form">
+                  <h2>Set-aside uploads</h2>
+                  <p className="muted">
+                    Retained uploads you can restore to the pending queue.
+                    Stored files have not been deleted.
+                  </p>
+                  {horse && (
+                    <p className="muted">
+                      Filtered to the selected horse.{" "}
+                      <Link
+                        className="text-link"
+                        href="/admin/files#horse-files-aside"
+                      >
+                        Show all horses
+                      </Link>
+                    </p>
+                  )}
+                  {asideUploads.error ? (
+                    <p className="notice error" role="alert">
+                      Set-aside uploads could not load. Refresh to retry.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="customer-horse-grid">
+                        {asideUploads.data?.map((upload) => (
+                          <article
+                            className="panel customer-horse-card"
+                            key={upload.id}
+                          >
+                            <p className="eyebrow">
+                              {horses.data?.find(
+                                (h) => h.id === upload.horse_id,
+                              )?.barn_name ?? "Horse record"}
+                            </p>
+                            <h3>{upload.title}</h3>
+                            <p className="muted">{upload.file_name}</p>
+                            <p>{upload.abandoned_reason}</p>
+                            <Link
+                              className="button secondary"
+                              href={`/admin/files/uploads/${upload.id}`}
+                            >
+                              Review / restore
+                            </Link>
+                          </article>
+                        ))}
+                      </div>
+                      {!asideUploads.data?.length && (
+                        <p className="muted">
+                          No set-aside uploads in this view.
+                        </p>
+                      )}
+                      <nav
+                        className="log-pagination"
+                        aria-label="Set-aside upload pages"
+                      >
+                        {asidePage > 1 ? (
+                          <Link
+                            className="button secondary"
+                            href={`/admin/files?aside_page=${asidePage - 1}${horse ? `&horse=${horse}` : ""}#horse-files-aside`}
+                          >
+                            Previous
+                          </Link>
+                        ) : (
+                          <span />
+                        )}
+                        <span>Page {asidePage}</span>
+                        {asidePage * 24 < (asideUploads.count ?? 0) ? (
+                          <Link
+                            className="button secondary"
+                            href={`/admin/files?aside_page=${asidePage + 1}${horse ? `&horse=${horse}` : ""}#horse-files-aside`}
                           >
                             Next
                           </Link>
