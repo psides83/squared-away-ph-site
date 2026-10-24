@@ -1,3 +1,4 @@
+import { InvoiceRefundSummary } from "@/components/invoice-refund-summary";
 import { phoneDisplay } from "@/lib/input-format";
 import { CustomerInvoiceLines } from "@/components/customer-invoice-lines";
 import Link from "next/link";
@@ -79,9 +80,19 @@ export default async function CustomerInvoice({
             <strong>{money(Number(i.total_cents))}</strong>
           </p>
           <p>
-            <span>Recorded payments</span>
+            <span>
+              {Number(i.refunded_cents) > 0
+                ? "Payments retained after refunds"
+                : "Recorded payments"}
+            </span>
             <strong>{money(Number(i.paid_cents))}</strong>
           </p>
+          {Number(i.refunded_cents) > 0 && (
+            <p>
+              <span>Refunds returned</span>
+              <strong>{money(Number(i.refunded_cents))}</strong>
+            </p>
+          )}
           <p className="invoice-balance">
             <span>
               {i.status === "void" ? "Voided — not payable" : "Balance due"}
@@ -97,6 +108,7 @@ export default async function CustomerInvoice({
             <p className="preserve-lines">{i.notes}</p>
           </div>
         )}
+        <InvoiceRefundSummary rows={i.refunds ?? []} />
         {!!i.adjustments.length && (
           <div className="invoice-notes">
             <h3>Adjustments</h3>

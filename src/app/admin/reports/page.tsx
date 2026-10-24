@@ -55,6 +55,7 @@ type Report = {
   net_cents: number;
   supplier_credit_used_cents?: number;
   supplier_refunds_cents?: number;
+  customer_refunds_cents?: number;
   outstanding_cents: number;
   overdue_cents: number;
   categories: { name: string; amount_cents: number; expense_count: number }[];
@@ -64,6 +65,7 @@ type Report = {
     received_cents: number;
     spent_cents: number;
     supplier_refunds_cents?: number;
+    customer_refunds_cents?: number;
   }[];
 };
 function validDate(value: string) {
@@ -143,6 +145,7 @@ export default async function Reports({
               ["PAYMENTS RECEIVED", report.received_cents],
               ["EXPENSES PAID", report.spent_cents],
               ["SUPPLIER REFUNDS", report.supplier_refunds_cents ?? 0],
+              ["CUSTOMER REFUNDS", report.customer_refunds_cents ?? 0],
               ["STORE CREDIT USED", report.supplier_credit_used_cents ?? 0],
               ["NET CASH PROFIT", report.net_cents],
             ].map(([label, value]) => (
@@ -169,6 +172,11 @@ export default async function Reports({
               only.
             </p>
           </HelpPanel>
+          <p className="muted">
+            Customer refunds reduce cash on the date returned. Horse and visit
+            net receipts include those refunds under the invoice’s reporting
+            assignment.
+          </p>
           <SectionTabs
             id="reports"
             label="Financial report sections"
@@ -201,9 +209,10 @@ export default async function Reports({
                           <thead>
                             <tr>
                               <th>Month</th>
-                              <th>Received</th>
+                              <th>Payments received</th>
                               <th>Paid out</th>
                               <th>Supplier refunds</th>
+                              <th>Customer refunds</th>
                               <th>Store credit used</th>
                               <th>Net cash profit</th>
                             </tr>
@@ -215,6 +224,7 @@ export default async function Reports({
                                 <td>{money(m.received_cents)}</td>
                                 <td>{money(m.spent_cents)}</td>
                                 <td>{money(m.supplier_refunds_cents ?? 0)}</td>
+                                <td>{money(m.customer_refunds_cents ?? 0)}</td>
                                 <td>
                                   {money(m.supplier_credit_used_cents ?? 0)}
                                 </td>
@@ -222,7 +232,8 @@ export default async function Reports({
                                   {money(
                                     m.received_cents -
                                       m.spent_cents +
-                                      (m.supplier_refunds_cents ?? 0),
+                                      (m.supplier_refunds_cents ?? 0) -
+                                      (m.customer_refunds_cents ?? 0),
                                   )}
                                 </td>
                               </tr>
@@ -340,7 +351,7 @@ export default async function Reports({
                           <thead>
                             <tr>
                               <th>Horse</th>
-                              <th>Received</th>
+                              <th>Net receipts</th>
                               <th>Direct costs paid</th>
                               <th>Shared costs paid</th>
                               <th>Recorded cash margin</th>
@@ -424,7 +435,7 @@ export default async function Reports({
                             <tr>
                               <th>Horse / billing customer</th>
                               <th>Stay</th>
-                              <th>Received</th>
+                              <th>Net receipts</th>
                               <th>Direct costs paid</th>
                               <th>Shared costs paid</th>
                               <th>Recorded cash margin</th>

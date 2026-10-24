@@ -1,3 +1,5 @@
+import { InvoiceRefunds } from "@/components/invoice-refunds";
+import { InvoiceRefundSummary } from "@/components/invoice-refund-summary";
 import { FeedCostReview } from "@/components/feed-cost-review";
 import {
   ExpensePaymentAssignments,
@@ -41,7 +43,11 @@ export default async function Invoice({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; success?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    success?: string;
+    refund_page?: string;
+  }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -70,6 +76,7 @@ export default async function Invoice({
     expenses,
     links,
     presentation,
+    refundHistory,
   ] = await Promise.all([
     db
       .from("invoice_lines")
@@ -112,6 +119,13 @@ export default async function Invoice({
           .eq("customer_id", invoice.customer_id)
       : Promise.resolve({ data: [], error: null }),
     db.rpc("admin_invoice_presentation", { p_invoice: id }),
+    db
+      .from("invoice_refunds")
+      .select(
+        "id,refunded_on,amount_cents,method,reason,effect,reference,reversed_at",
+      )
+      .eq("invoice_id", id)
+      .order("refunded_on"),
   ]);
   const services =
     invoice.status === "draft" && invoice.stay_id
@@ -146,6 +160,7 @@ export default async function Invoice({
     links,
     services,
     presentation,
+    refundHistory,
   ].some((r) => r.error);
   const date = today();
   const draft = invoice.status === "draft";
@@ -243,6 +258,7 @@ export default async function Invoice({
         id="invoice"
         label="Invoice sections"
         printTab="invoice"
+        defaultTab={query.refund_page ? "refunds" : "invoice"}
         sections={[
           {
             id: "invoice",
@@ -306,9 +322,19 @@ export default async function Invoice({
                       <strong>{money(Number(invoice.total_cents))}</strong>
                     </p>
                     <p>
-                      <span>Recorded payments</span>
+                      <span>
+                        {Number(invoice.refunded_cents) > 0
+                          ? "Payments retained after refunds"
+                          : "Recorded payments"}
+                      </span>
                       <strong>{money(Number(invoice.paid_cents))}</strong>
                     </p>
+                    {Number(invoice.refunded_cents) > 0 && (
+                      <p>
+                        <span>Refunds returned</span>
+                        <strong>{money(Number(invoice.refunded_cents))}</strong>
+                      </p>
+                    )}
                     <p className="invoice-balance">
                       <span>
                         {issued ? "Balance due" : "Remaining (not receivable)"}
@@ -377,6 +403,7 @@ export default async function Invoice({
                         ))}
                       </div>
                     )}
+                    <InvoiceRefundSummary rows={refundHistory.data ?? []} />
                     {!!payments.data?.length && (
                       <div className="invoice-notes">
                         <h3>Payment history</h3>
@@ -921,6 +948,19 @@ export default async function Invoice({
                   </>
                 )}
               </>
+            ),
+          },
+          {
+            id: "refunds",
+            label: "Refunds",
+            content: (
+              <InvoiceRefunds
+                invoice={id}
+                page={Math.max(
+                  1,
+                  Math.min(10000, Math.floor(Number(query.refund_page) || 1)),
+                )}
+              />
             ),
           },
           {
