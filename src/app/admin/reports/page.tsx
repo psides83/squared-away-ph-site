@@ -1,3 +1,5 @@
+import { validCashExportPeriod } from "@/lib/cash-export";
+import { CashExportButton } from "@/components/cash-export-button";
 import {
   ExpenseRecoveryReport,
   type ExpenseRecoveryReportData,
@@ -68,13 +70,6 @@ type Report = {
     customer_refunds_cents?: number;
   }[];
 };
-function validDate(value: string) {
-  return (
-    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-    !Number.isNaN(Date.parse(value)) &&
-    new Date(value).toISOString().slice(0, 10) === value
-  );
-}
 export default async function Reports({
   searchParams,
 }: {
@@ -85,11 +80,7 @@ export default async function Reports({
   const date = today();
   const from = query.from ?? `${date.slice(0, 4)}-01-01`;
   const to = query.to ?? date;
-  const valid =
-    validDate(from) &&
-    validDate(to) &&
-    from <= to &&
-    Date.parse(to) - Date.parse(from) <= 3660 * 86400000;
+  const valid = validCashExportPeriod(from, to);
   const [result, usage, comparison, recovery] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
@@ -201,8 +192,33 @@ export default async function Reports({
                 content: (
                   <>
                     <section className="panel">
-                      <div className="panel-heading">
+                      <div className="panel-heading cash-export-heading">
                         <h2>Monthly cash results</h2>
+                        <CashExportButton from={from} to={to} />
+                      </div>
+                      <div className="record-form">
+                        <HelpPanel title="What is included in the cash export?">
+                          <p>
+                            The CSV includes customer payments, paid expenses,
+                            supplier refunds and customer refunds for the
+                            selected dates. Store credit is shown separately
+                            from cash paid. Full-credit purchases remain visible
+                            with zero cash paid. Unpaid bills, drafts, voided
+                            expenses, reversed transactions and feed consumption
+                            are excluded.
+                          </p>
+                          <p>
+                            Each row includes record IDs for review. Customer
+                            names use the saved invoice details; supplier names
+                            and expense categories reflect current records.
+                            Corrections can change earlier periods. This is a
+                            generic spreadsheet ledger. Direct
+                            accounting-software integrations remain planned.
+                            Exports are limited to 10,000 entries; shorten the
+                            period if needed. Text that could be read as a
+                            spreadsheet formula is prefixed with an apostrophe.
+                          </p>
+                        </HelpPanel>
                       </div>
                       <div className="table-scroll">
                         <table>
