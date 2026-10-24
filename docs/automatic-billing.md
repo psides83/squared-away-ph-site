@@ -29,3 +29,7 @@ The same daily endpoint now calls `run_scheduled_automations()`, a service-only 
 Expense processing is limited to one due occurrence per active schedule each Chicago business date, up to 50 schedules, oldest dates first. Bills always start unpaid. Paused, future and ended schedules are excluded; a backdated schedule advances over multiple daily runs. Manual creation/skips advance the same protected cursor. A voided bill is retained and not recreated. Check the separate last-check timestamp, stale warning and latest 20 expense runs. Removed administrator access blocks that worker. Per-schedule failures are recorded and can retry on a later day; fix or pause failing schedules. Turning either worker off preserves existing records. Both workers complete within the coordinator transaction; the toggles take effect once it releases their settings locks.
 
 Production migration, redeployment, explicit enablement and an actual scheduled invocation must still be verified. Avoid manually invoking the endpoint against real records merely as a connectivity check.
+
+## Administrator push alerts
+
+The production endpoint also dispatches the optional device-push queue after financial workers, including when both are disabled. Its function duration is now 120 seconds for the existing 45-second worker deadline plus bounded push dispatch. Missing VAPID setup skips push without enabling or altering financial automation. Alert setup and real-device verification are separate; see [device notifications](device-notifications.md). A cron that never runs cannot notify itself.

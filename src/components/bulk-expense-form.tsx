@@ -240,7 +240,7 @@ export function BulkExpenseForm({
                         name={name("paid_on")}
                         type="date"
                       />
-                      <label className="check">
+                      <label className="inline-checkbox">
                         <input type="checkbox" name={name("reimbursable")} />
                         Mark for customer charge-back (requires a horse)
                       </label>

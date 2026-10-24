@@ -4056,3 +4056,6 @@ input[type="search"]::-webkit-search-decoration {
   width: 100%;
   max-width: 30rem;
 }
+
+/* Make the full notification option label a comfortable touch target. */
+.push-option { min-height: 44px; }
