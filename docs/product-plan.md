@@ -385,7 +385,8 @@ Features in this section are present in the application source. A feature being 
 
 - Email delivery, custom send times and interval-based supplier follow-up cadences remain planned; device-push delivery code is implemented above and production setup is separate; physical stock returns and received-cash refund recording are implemented above. Cost-only purchase/opening/inbound recalculation and untouched entry replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, and manually attributed invoices without reliable feed source/period links need further correction/review workflows.
 - Additional scheduler automation policies and independent missed-run/outage monitoring. Device-push failure delivery code is implemented above; production configuration/device delivery remain separate verification work. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
-- Public-page contact/payment details from business settings, invoice delivery/email, customer refunds, and customer credits on account.
+- Public-page contact/payment details from business settings and invoice delivery/email.
+- Customer refunds: the owner selected recording money already returned as the first version (October 23, 2026); sending payments and customer credit balances remain separate later work. Whether a recorded refund must include a matching invoice reduction or may reopen the invoice balance is awaiting owner clarification before implementation.
 
 #### Feed, boarding, and profitability details
 
