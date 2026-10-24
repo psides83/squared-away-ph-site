@@ -331,3 +331,7 @@ Apply `20261023005400_bulk_expenses.sql`. Expenses → Bulk expense entry saves 
 ### Device notifications
 
 Apply `20261023005500_admin_push.sql`, configure the persistent VAPID key pair and existing production scheduler credentials, then redeploy. Run `npm run setup:push` to write a Git-ignored key file without printing secrets. Settings → Device notifications provides explicit device opt-in, per-device preferences and a test notification. Daily supplier reminders and scheduler failures use generic lock-screen wording; financial automations remain independently enabled. No private data is cached by the push service worker. Actual permission prompts and delivery must be verified on physical devices after production setup. See [device notification setup](docs/device-notifications.md) for quotas, retries, limitations and deployment steps.
+
+### Supplier reminder weekdays
+
+Apply `20261023005600_supplier_push_days.sql` after the push foundation migration. Device notifications now lets each device select Monday–Sunday reminder days with daily/weekday shortcuts. Existing devices retain daily reminders. The queue uses Central Time days and suppresses supplier reminders on unselected days, while scheduler-failure alerts remain independent. Pending supplier alerts expire when today is removed from the schedule. The existing daily check time stays unchanged; custom send times and interval-based cadences remain future work. Production migration and physical-device delivery remain unverified.

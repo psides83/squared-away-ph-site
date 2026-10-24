@@ -11,7 +11,7 @@ export default async function Notifications() {
     db
       .from("admin_push_devices")
       .select(
-        "id,endpoint,vapid_public,label,enabled,supplier_alerts,scheduler_alerts",
+        "id,endpoint,vapid_public,label,enabled,supplier_alerts,scheduler_alerts,supplier_days",
       )
       .order("updated_at", { ascending: false }),
     db
@@ -27,15 +27,15 @@ export default async function Notifications() {
       </Link>
       <PageHeading
         title="Device notifications"
-        description="Choose where daily supplier reminders and scheduler failure alerts arrive."
+        description="Choose where supplier reminders and scheduler failure alerts arrive."
       />
       <HelpPanel title="Timing, privacy and device setup">
         <p>
           Overdue supplier follow-ups produce at most one reminder per connected
-          device per business day. Scheduler failures produce at most one alert
-          per device per business day when a scheduled check reports failure.
-          Alerts use general wording; names and financial amounts stay inside
-          the signed-in app.
+          device on each selected business day. Scheduler failures produce at
+          most one alert per device per business day when a scheduled check
+          reports failure. Alerts use general wording; names and financial
+          amounts stay inside the signed-in app.
         </p>
         <p>
           On iPhone and iPad, add this app to your Home Screen and open it there

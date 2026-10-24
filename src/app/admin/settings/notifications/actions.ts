@@ -1,4 +1,5 @@
 "use server";
+import { supplierPushDays } from "@/lib/push-days";
 import { sendDevicePush } from "@/lib/push-delivery";
 import { requireAdmin } from "@/lib/auth";
 import { pushConfig, validatePushSubscription } from "@/lib/web-push";
@@ -9,6 +10,7 @@ export async function registerPushDevice(
   label: string,
   supplier: boolean,
   scheduler: boolean,
+  days: number[],
 ): Promise<{ error?: string; id?: string }> {
   const { db } = await requireAdmin();
   try {
@@ -24,7 +26,7 @@ export async function registerPushDevice(
     )
       throw new Error("Enter a device name and preferences.");
     const sub = validatePushSubscription(subscription);
-    const { data, error } = await db.rpc("save_admin_push_device", {
+    const { data, error } = await db.rpc("save_admin_push_device_schedule", {
       p_endpoint: sub.endpoint,
       p_p256dh: sub.keys.p256dh,
       p_auth: sub.keys.auth,
@@ -32,6 +34,7 @@ export async function registerPushDevice(
       p_label: label.trim(),
       p_supplier: supplier,
       p_scheduler: scheduler,
+      p_days: supplierPushDays(days),
     });
     if (error)
       throw new Error(
@@ -56,12 +59,15 @@ export async function savePushPreferences(
 ): Promise<{ error?: string; success?: string }> {
   const { db } = await requireAdmin();
   try {
-    const { error } = await db.rpc("update_admin_push_device", {
+    const { error } = await db.rpc("update_admin_push_device_schedule", {
       p_id: identifier(form, "id", true),
       p_label: text(form, "label", true, 80),
       p_supplier: form.get("supplier") === "on",
       p_scheduler: form.get("scheduler") === "on",
       p_enabled: form.get("enabled") === "on",
+      p_days: supplierPushDays(
+        form.getAll("supplier_days").map((v) => Number(v)),
+      ),
     });
     if (error)
       throw new Error(

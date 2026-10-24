@@ -4059,3 +4059,8 @@ input[type="search"]::-webkit-search-decoration {
 
 /* Make the full notification option label a comfortable touch target. */
 .push-option { min-height: 44px; }
+
+.push-day-picker legend { margin-bottom: 8px; font-size: 12px; font-weight: 600; }
+.push-day-options { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.push-day-options .button { min-width: 0; min-height: 44px; padding-inline: 0; white-space: nowrap; }
+@media (max-width: 370px) { .push-day-options { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

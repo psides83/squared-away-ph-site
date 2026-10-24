@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState, useActionState, startTransition } from "react";
+import { PushDayPicker } from "@/components/push-day-picker";
+import { pushDaysLabel } from "@/lib/push-days";
 import { useRouter } from "next/navigation";
 import { Bell, BellOff } from "lucide-react";
 import {
@@ -17,6 +19,7 @@ export type PushDevice = {
   label: string;
   enabled: boolean;
   supplier_alerts: boolean;
+  supplier_days: number[];
   scheduler_alerts: boolean;
 };
 export function PushSettings({
@@ -39,6 +42,7 @@ export function PushSettings({
   const [error, setError] = useState<string>();
   const [success, setSuccess] = useState<string>();
   const [label, setLabel] = useState("My device");
+  const [days, setDays] = useState([1, 2, 3, 4, 5, 6, 7]);
   const [supplier, setSupplier] = useState(true),
     [scheduler, setScheduler] = useState(true);
   useEffect(() => {
@@ -124,11 +128,12 @@ export function PushSettings({
         label,
         supplier,
         scheduler,
+        days,
       );
       if (result.error) throw new Error(result.error);
       setCurrent(result.id ?? null);
       setSuccess(
-        "Device connected. Daily supplier follow-ups and scheduler alerts follow your selected preferences.",
+        "Device connected. Supplier follow-ups and scheduler alerts follow your selected preferences.",
       );
       router.refresh();
     } catch (e) {
@@ -218,8 +223,9 @@ export function PushSettings({
                   checked={supplier}
                   onChange={(e) => setSupplier(e.target.checked)}
                 />
-                Daily overdue supplier follow-ups
+                Overdue supplier follow-ups
               </label>
+              <PushDayPicker days={days} onChange={setDays} disabled={busy} />
               <label className="inline-checkbox push-option">
                 <input
                   type="checkbox"
@@ -237,7 +243,8 @@ export function PushSettings({
                     !worker ||
                     support !== "supported" ||
                     busy ||
-                    !label.trim()
+                    !label.trim() ||
+                    !days.length
                   }
                   onClick={enable}
                 >
@@ -292,7 +299,7 @@ export function PushSettings({
           <div className="record-form stack">
             <p>
               {device.supplier_alerts
-                ? "Supplier reminders on"
+                ? `Supplier reminders: ${pushDaysLabel(device.supplier_days)}`
                 : "Supplier reminders off"}{" "}
               ·{" "}
               {device.scheduler_alerts
@@ -309,6 +316,7 @@ export function PushSettings({
   );
 }
 function PushPreferenceForm({ device }: { device: PushDevice }) {
+  const [days, setDays] = useState(device.supplier_days);
   const [state, action, pending] = useActionState(savePushPreferences, {});
   return (
     <form
@@ -336,8 +344,9 @@ function PushPreferenceForm({ device }: { device: PushDevice }) {
             type="checkbox"
             defaultChecked={device.supplier_alerts}
           />
-          Daily overdue supplier follow-ups
+          Overdue supplier follow-ups
         </label>
+        <PushDayPicker days={days} onChange={setDays} />
         <label className="inline-checkbox push-option">
           <input
             name="scheduler"
