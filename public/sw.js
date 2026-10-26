@@ -8,7 +8,11 @@ self.addEventListener("push", (event) => {
   try {
     message = event.data?.json() ?? {};
   } catch {}
-  const allowed = ["/admin/inventory/recovery", "/admin/invoices/recurring"];
+  const allowed = [
+    "/admin/inventory/recovery",
+    "/admin/invoices/recurring",
+    "/admin/reminders",
+  ];
   const url = allowed.includes(message.url)
     ? message.url
     : "/admin/settings/notifications";
@@ -34,6 +38,7 @@ self.addEventListener("notificationclick", (event) => {
     "/admin/inventory/recovery",
     "/admin/invoices/recurring",
     "/admin/settings/notifications",
+    "/admin/reminders",
   ];
   const path = allowed.includes(event.notification.data?.url)
     ? event.notification.data.url

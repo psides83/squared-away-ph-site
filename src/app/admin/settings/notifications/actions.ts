@@ -11,6 +11,7 @@ export async function registerPushDevice(
   supplier: boolean,
   scheduler: boolean,
   days: number[],
+  care: boolean,
 ): Promise<{ error?: string; id?: string }> {
   const { db } = await requireAdmin();
   try {
@@ -22,11 +23,12 @@ export async function registerPushDevice(
       !label.trim() ||
       label.trim().length > 80 ||
       typeof supplier !== "boolean" ||
-      typeof scheduler !== "boolean"
+      typeof scheduler !== "boolean" ||
+      typeof care !== "boolean"
     )
       throw new Error("Enter a device name and preferences.");
     const sub = validatePushSubscription(subscription);
-    const { data, error } = await db.rpc("save_admin_push_device_schedule", {
+    const { data, error } = await db.rpc("save_admin_push_device_preferences", {
       p_endpoint: sub.endpoint,
       p_p256dh: sub.keys.p256dh,
       p_auth: sub.keys.auth,
@@ -35,6 +37,7 @@ export async function registerPushDevice(
       p_supplier: supplier,
       p_scheduler: scheduler,
       p_days: supplierPushDays(days),
+      p_care: care,
     });
     if (error)
       throw new Error(
@@ -59,12 +62,13 @@ export async function savePushPreferences(
 ): Promise<{ error?: string; success?: string }> {
   const { db } = await requireAdmin();
   try {
-    const { error } = await db.rpc("update_admin_push_device_schedule", {
+    const { error } = await db.rpc("update_admin_push_device_preferences", {
       p_id: identifier(form, "id", true),
       p_label: text(form, "label", true, 80),
       p_supplier: form.get("supplier") === "on",
       p_scheduler: form.get("scheduler") === "on",
       p_enabled: form.get("enabled") === "on",
+      p_care: form.get("care") === "on",
       p_days: supplierPushDays(
         form.getAll("supplier_days").map((v) => Number(v)),
       ),

@@ -61,7 +61,7 @@ Open **Settings** to enter your business values. A blank default training rate m
 
 ## Deliberately not implemented yet
 
-Customer refunds/account credits, invoice emailing, multi-horse manual-invoice receipt splits, video transcoding/abandoned-upload cleanup, in-app invitation emails/account creation, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Reminders do not send notifications. Charge-backs are added explicitly to drafts. No fake records are displayed.
+Customer account credits, invoice emailing, multi-horse manual-invoice receipt splits, video transcoding/abandoned-upload cleanup, in-app invitation emails/account creation, public marketing pages, and offline editing/private-record caching. Calendar-day training proration and source-linked feed/boarding charges are available in reviewed drafts; other training policies require manual lines. Care reminders have an explicit per-device daily push opt-in; production delivery requires configuration and device verification. Charge-backs are added explicitly to drafts. No fake records are displayed.
 
 ## Horse photos and documents
 
@@ -353,3 +353,9 @@ Setting aside does not delete storage, revoke already-issued upload tokens or ca
 Apply `20261024006000_cash_ledger_export.sql`. **Reports → Monthly cash → Download cash CSV** exports the currently selected period as a private UTF-8 spreadsheet ledger. Dates follow actual payment, expense-paid and refund dates. Amounts are numeric USD decimals; gross expense and store credit are separate from cash paid. Fully credit-funded settled purchases appear with zero cash out. The ledger excludes unpaid/voided/reversed activity, draft invoices, consumption and non-cash invoice adjustments, and reconciles to the cash report using the same current-record correction rules.
 
 The file includes counterparties, expense categories, invoice numbers, recorded payment methods/references and stable source/related record IDs. Private notes, customer contact details and receipt files are omitted. Issued invoice customer names use snapshots; supplier/category labels reflect current records. Quoted text is formula-neutralized when needed, so some text cells may have a leading apostrophe. No total row is appended, avoiding duplicate totals when summing/importing records. Empty results contain column headers only. The export fails above 10,000 records and asks for a shorter period; it never silently truncates. This is a generic CSV; dedicated accounting-system mappings and bank reconciliation remain separate work.
+
+## Care-reminder notifications
+
+Apply `20261026006100_care_reminder_push.sql`. **Settings → Device notifications → Manage device** adds **Due and overdue care reminders**, initially off for all existing devices. It produces at most one daily generic reminder when any unfinished task in Reminders is due today or overdue in Central Time, independently of supplier weekdays. Completed/future reminders are excluded. The notification opens the authenticated Reminders page without including horse/customer names or care details on the lock screen. A pending reminder expires when no due tasks remain or care alerts are disabled; an alert already in transit may still arrive.
+
+The queue now claims at most 30 alerts per invocation, preserving five parallel sends and existing retry/lease limits. Production VAPID/scheduler setup, migration, per-device permission/opt-in and actual delivery still need verification. See [device notifications](docs/device-notifications.md). No reminders or real push subscriptions were created during implementation.

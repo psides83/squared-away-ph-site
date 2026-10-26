@@ -21,6 +21,7 @@ export type PushDevice = {
   supplier_alerts: boolean;
   supplier_days: number[];
   scheduler_alerts: boolean;
+  care_alerts: boolean;
 };
 export function PushSettings({
   publicKey,
@@ -44,7 +45,8 @@ export function PushSettings({
   const [label, setLabel] = useState("My device");
   const [days, setDays] = useState([1, 2, 3, 4, 5, 6, 7]);
   const [supplier, setSupplier] = useState(true),
-    [scheduler, setScheduler] = useState(true);
+    [scheduler, setScheduler] = useState(true),
+    [care, setCare] = useState(false);
   useEffect(() => {
     let active = true;
     if (
@@ -129,12 +131,11 @@ export function PushSettings({
         supplier,
         scheduler,
         days,
+        care,
       );
       if (result.error) throw new Error(result.error);
       setCurrent(result.id ?? null);
-      setSuccess(
-        "Device connected. Supplier follow-ups and scheduler alerts follow your selected preferences.",
-      );
+      setSuccess("Device connected. Alerts follow your selected preferences.");
       router.refresh();
     } catch (e) {
       if ("Notification" in window && Notification.permission === "denied")
@@ -234,6 +235,18 @@ export function PushSettings({
                 />
                 Scheduled automation failures
               </label>
+              <label className="inline-checkbox push-option">
+                <input
+                  type="checkbox"
+                  checked={care}
+                  onChange={(e) => setCare(e.target.checked)}
+                />
+                Due and overdue care reminders
+              </label>
+              <p className="muted">
+                Care reminders are checked daily, separately from supplier
+                reminder days.
+              </p>
               <div className="form-actions">
                 <button
                   className="button"
@@ -305,6 +318,10 @@ export function PushSettings({
               {device.scheduler_alerts
                 ? "Scheduler alerts on"
                 : "Scheduler alerts off"}
+              {" · "}
+              {device.care_alerts
+                ? "Care reminders daily"
+                : "Care reminders off"}
             </p>
             <ActionPanel id={`push-device-${device.id}`} label="Manage device">
               <PushPreferenceForm device={device} />
@@ -315,7 +332,7 @@ export function PushSettings({
     </>
   );
 }
-function PushPreferenceForm({ device }: { device: PushDevice }) {
+export function PushPreferenceForm({ device }: { device: PushDevice }) {
   const [days, setDays] = useState(device.supplier_days);
   const [state, action, pending] = useActionState(savePushPreferences, {});
   return (
@@ -355,6 +372,18 @@ function PushPreferenceForm({ device }: { device: PushDevice }) {
           />
           Scheduled automation failures
         </label>
+        <label className="inline-checkbox push-option">
+          <input
+            name="care"
+            type="checkbox"
+            defaultChecked={device.care_alerts}
+          />
+          Due and overdue care reminders
+        </label>
+        <p className="muted">
+          A daily reminder when any unfinished task in Reminders is due today or
+          overdue. Supplier reminder days do not change this schedule.
+        </p>
         <label className="inline-checkbox push-option">
           <input
             name="enabled"

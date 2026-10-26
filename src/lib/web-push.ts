@@ -71,6 +71,13 @@ export function pushMessage(kind: string) {
       url: "/admin/invoices/recurring",
       tag: "scheduler-failure",
     };
+  if (kind === "care")
+    return {
+      title: "Care reminders need attention",
+      body: "Care tasks are due or overdue. Open the app to review your reminders.",
+      url: "/admin/reminders",
+      tag: "care-reminders",
+    };
   if (kind === "test")
     return {
       title: "Squared Away notifications",

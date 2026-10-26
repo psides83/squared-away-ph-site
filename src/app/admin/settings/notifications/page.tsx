@@ -11,7 +11,7 @@ export default async function Notifications() {
     db
       .from("admin_push_devices")
       .select(
-        "id,endpoint,vapid_public,label,enabled,supplier_alerts,scheduler_alerts,supplier_days",
+        "id,endpoint,vapid_public,label,enabled,supplier_alerts,scheduler_alerts,supplier_days,care_alerts",
       )
       .order("updated_at", { ascending: false }),
     db
@@ -27,7 +27,7 @@ export default async function Notifications() {
       </Link>
       <PageHeading
         title="Device notifications"
-        description="Choose where supplier reminders and scheduler failure alerts arrive."
+        description="Choose where care reminders, supplier follow-ups and scheduler failure alerts arrive."
       />
       <HelpPanel title="Timing, privacy and device setup">
         <p>
@@ -36,6 +36,14 @@ export default async function Notifications() {
           most one alert per device per business day when a scheduled check
           reports failure. Alerts use general wording; names and financial
           amounts stay inside the signed-in app.
+        </p>
+        <p>
+          Care reminders are optional and off until selected for each device. At
+          most one daily reminder is queued when an unfinished task in Reminders
+          is due today or overdue in Central Time. All reminder categories are
+          included. Completed tasks and future dates do not trigger it. These
+          reminders run during the daily check, independently of supplier
+          weekdays; they are not alarms at an exact appointment time.
         </p>
         <p>
           On iPhone and iPad, add this app to your Home Screen and open it there
@@ -69,7 +77,9 @@ export default async function Notifications() {
               <p key={row.id}>
                 {row.kind === "supplier"
                   ? "Supplier follow-up"
-                  : "Scheduler failure"}{" "}
+                  : row.kind === "care"
+                    ? "Care reminders"
+                    : "Scheduler failure"}{" "}
                 ·{" "}
                 {row.state === "sent" ? "Accepted by push service" : row.state}{" "}
                 ·{" "}

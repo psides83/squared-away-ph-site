@@ -55,7 +55,7 @@ test("push config verifies matching keys; provider validation blocks arbitrary s
     "https://web.push.apple.com/a#secret",
   ])
     assert.throws(() => validatePushSubscription({ ...sub, endpoint }));
-  for (const kind of ["supplier", "scheduler"]) {
+  for (const kind of ["supplier", "scheduler", "care"]) {
     const message = pushMessage(kind);
     assert.ok(message.url.startsWith("/admin/"));
     assert.equal(JSON.stringify(message).includes("$"), false);
@@ -243,6 +243,18 @@ test("push service worker displays generic fallback and only opens allowed same-
   });
   await task;
   assert.equal(opened[0], "https://example.test/admin/settings/notifications");
+  callbacks.push({
+    data: { json: () => pushMessage("care") },
+    waitUntil: (p: Promise<unknown>) => (task = p),
+  });
+  await task;
+  assert.equal(shown[1][1].data.url, "/admin/reminders");
+  callbacks.notificationclick({
+    notification: { close: () => {}, data: { url: "/admin/reminders" } },
+    waitUntil: (p: Promise<unknown>) => (task = p),
+  });
+  await task;
+  assert.equal(opened[1], "https://example.test/admin/reminders");
 });
 
 test("push transport encrypts notifications, restricts endpoints and handles provider outcomes without exposing responses", async (t) => {
