@@ -1,6 +1,7 @@
 export type CashLedgerRow = {
   cash_date: string;
-  kind: "payment" | "expense" | "supplier_refund" | "customer_refund";
+  kind:
+    "advance" | "payment" | "expense" | "supplier_refund" | "customer_refund";
   source_id: string;
   related_id: string | null;
   party: string | null;
@@ -61,6 +62,7 @@ function decimal(cents: number) {
 }
 const labels = {
   payment: "Customer payment",
+  advance: "Customer advance payment",
   expense: "Paid expense",
   supplier_refund: "Supplier refund",
   customer_refund: "Customer refund",
@@ -98,7 +100,8 @@ export function cashLedgerCsv(data: CashLedgerExport) {
     ])
       if (!Number.isSafeInteger(value) || value < 0)
         throw Error("Invalid cash amount in export.");
-    totals.received_cents += row.kind === "payment" ? row.cash_in_cents : 0;
+    totals.received_cents +=
+      row.kind === "payment" || row.kind === "advance" ? row.cash_in_cents : 0;
     totals.spent_cents += row.kind === "expense" ? row.cash_out_cents : 0;
     totals.supplier_refunds_cents +=
       row.kind === "supplier_refund" ? row.cash_in_cents : 0;

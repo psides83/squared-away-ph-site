@@ -275,6 +275,12 @@ export default async function CustomerRecord({
                       <div className="row-actions">
                         <Link
                           className="button secondary"
+                          href={`/admin/customers/${id}/credits`}
+                        >
+                          Account credit
+                        </Link>
+                        <Link
+                          className="button secondary"
                           href={billUrl(1, "all")}
                         >
                           All invoices

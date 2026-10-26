@@ -1,3 +1,4 @@
+import { InvoiceCreditSummary } from "@/components/invoice-credit-summary";
 import { InvoiceRefunds } from "@/components/invoice-refunds";
 import { InvoiceRefundSummary } from "@/components/invoice-refund-summary";
 import { FeedCostReview } from "@/components/feed-cost-review";
@@ -77,6 +78,7 @@ export default async function Invoice({
     links,
     presentation,
     refundHistory,
+    accountCredits,
   ] = await Promise.all([
     db
       .from("invoice_lines")
@@ -126,6 +128,7 @@ export default async function Invoice({
       )
       .eq("invoice_id", id)
       .order("refunded_on"),
+    db.rpc("admin_invoice_credit_history", { p_invoice: id }),
   ]);
   const services =
     invoice.status === "draft" && invoice.stay_id
@@ -161,6 +164,7 @@ export default async function Invoice({
     services,
     presentation,
     refundHistory,
+    accountCredits,
   ].some((r) => r.error);
   const date = today();
   const draft = invoice.status === "draft";
@@ -238,6 +242,12 @@ export default async function Invoice({
             </Link>
           )}
           <PrintInvoice />
+          <Link
+            className="button secondary"
+            href={`/admin/customers/${invoice.customer_id}/credits`}
+          >
+            Account credit
+          </Link>
           <span className="muted">
             Customer format:{" "}
             {presentation.data?.style === "combined_services"
@@ -322,11 +332,7 @@ export default async function Invoice({
                       <strong>{money(Number(invoice.total_cents))}</strong>
                     </p>
                     <p>
-                      <span>
-                        {Number(invoice.refunded_cents) > 0
-                          ? "Payments retained after refunds"
-                          : "Recorded payments"}
-                      </span>
+                      <span>Payments & applied credit</span>
                       <strong>{money(Number(invoice.paid_cents))}</strong>
                     </p>
                     {Number(invoice.refunded_cents) > 0 && (
@@ -403,6 +409,7 @@ export default async function Invoice({
                         ))}
                       </div>
                     )}
+                    <InvoiceCreditSummary rows={accountCredits.data ?? []} />
                     <InvoiceRefundSummary rows={refundHistory.data ?? []} />
                     {!!payments.data?.length && (
                       <div className="invoice-notes">

@@ -14,7 +14,10 @@ export default async function CustomerBilling({
     1,
     Math.min(10000, Math.floor(Number(query.page) || 1)),
   );
-  const result = await db.rpc("portal_invoices", { p_page: page });
+  const [result, credit] = await Promise.all([
+    db.rpc("portal_invoices", { p_page: page }),
+    db.rpc("portal_account_credit"),
+  ]);
   return (
     <>
       <PageHeading
@@ -22,6 +25,24 @@ export default async function CustomerBilling({
         title="Your billing"
         description="Invoices and payments billed to your customer account. Other owners’ billing stays private."
       />
+      <section className="panel">
+        <div className="record-form">
+          <h2>Available account credit</h2>
+          {credit.error ? (
+            <p className="notice error">
+              Account credit could not load. Please try again.
+            </p>
+          ) : (
+            <>
+              <p>{money(Number(credit.data))}</p>
+              <p className="muted">
+                Your trainer chooses when to apply credit to an invoice.
+                Available credit has not yet reduced the balances below.
+              </p>
+            </>
+          )}
+        </div>
+      </section>
       {result.error ? (
         <p className="notice error" role="alert">
           Your billing couldn’t load. Please try again or contact Squared Away.

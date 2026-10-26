@@ -1,3 +1,4 @@
+import { InvoiceCreditSummary } from "@/components/invoice-credit-summary";
 import { InvoiceRefundSummary } from "@/components/invoice-refund-summary";
 import { phoneDisplay } from "@/lib/input-format";
 import { CustomerInvoiceLines } from "@/components/customer-invoice-lines";
@@ -80,11 +81,7 @@ export default async function CustomerInvoice({
             <strong>{money(Number(i.total_cents))}</strong>
           </p>
           <p>
-            <span>
-              {Number(i.refunded_cents) > 0
-                ? "Payments retained after refunds"
-                : "Recorded payments"}
-            </span>
+            <span>Payments & applied credit</span>
             <strong>{money(Number(i.paid_cents))}</strong>
           </p>
           {Number(i.refunded_cents) > 0 && (
@@ -108,6 +105,7 @@ export default async function CustomerInvoice({
             <p className="preserve-lines">{i.notes}</p>
           </div>
         )}
+        <InvoiceCreditSummary rows={i.account_credits ?? []} />
         <InvoiceRefundSummary rows={i.refunds ?? []} />
         {!!i.adjustments.length && (
           <div className="invoice-notes">
