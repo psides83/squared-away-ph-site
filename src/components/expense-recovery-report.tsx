@@ -11,6 +11,8 @@ export type ExpenseRecoveryReportData = {
     other_unbilled_cents: number;
     issued_fee_cents: number;
     recovered_cents: number;
+    cash_recovered_cents?: number;
+    credit_recovered_cents?: number;
     not_recovered_cents: number;
   };
   count: number;
@@ -27,6 +29,8 @@ export type ExpenseRecoveryReportData = {
     draft_cost_cents: number;
     unbilled_cost_cents: number;
     recovered_cents: number;
+    cash_recovered_cents?: number;
+    credit_recovered_cents?: number;
     issued_fee_cents: number;
     invoices: {
       invoice_id: string;
@@ -55,8 +59,8 @@ export function ExpenseRecoveryReport({
     <div className="stack">
       <p className="muted">
         Expenses paid during the selected dates, with their current billing and
-        manually assigned recovery. Customer payments received later are
-        included in assigned recovery.
+        manually assigned recovery. Customer payments and account credit applied
+        later are included in assigned recovery.
       </p>
       <HelpPanel title="How expense recovery differs from cash profit">
         <p>
@@ -67,19 +71,21 @@ export function ExpenseRecoveryReport({
           expense reimbursement source.
         </p>
         <p>
-          Only explicit assignments from active customer payments count as
-          recovered cost. Invoice credits and settled balances do not establish
-          recovery. Missing assignments can understate recovery. Costs not
-          separately billed may be included in training rates, awaiting
-          reimbursement or borne by the business; this report does not assume
-          they are intentionally absorbed.
+          Only explicit assignments from active customer payments or applied
+          account credit count as recovered cost. Unapplied account credit,
+          invoice adjustments and settled balances do not establish recovery.
+          Missing assignments can understate recovery. Costs not separately
+          billed may be included in training rates, awaiting reimbursement or
+          borne by the business; this report does not assume they are
+          intentionally absorbed.
         </p>
         <p>
           This is a current view of a paid-expense cohort, not cash received
-          during the selected dates. Cash reports already include customer
-          payments once. Do not add assigned recovery again as revenue. Voided
-          expenses/invoices, reversed payments and removed assignments are
-          excluded from active totals.
+          during the selected dates. Cash reports already include actual
+          customer cash receipts once, including advances on their received
+          dates. Do not add assigned recovery again as revenue. Voided
+          expenses/invoices, reversed payments/credit applications and removed
+          assignments are excluded from active totals.
         </p>
       </HelpPanel>
       <div className="stats-grid">
@@ -99,19 +105,31 @@ export function ExpenseRecoveryReport({
         <div className="panel-heading">
           <h2>Billing coverage</h2>
         </div>
-        <p>
-          On drafts: <strong>{money(data.totals.draft_cost_cents)}</strong> ·
-          Not separately billed:{" "}
-          <strong>{money(data.totals.unbilled_cost_cents)}</strong> · Fees on
-          finalized linked charges:{" "}
-          <strong>{money(data.totals.issued_fee_cents)}</strong>
-        </p>
-        <p className="muted">
-          Of costs not separately billed:{" "}
-          {money(data.totals.unbilled_reimbursable_cents)} marked for customer
-          charge-back; {money(data.totals.other_unbilled_cents)} other costs.
-          Training/package revenue is not allocated here.
-        </p>
+        <div className="record-form stack">
+          <p>
+            Assigned from cash payments:{" "}
+            <strong>
+              {money(
+                data.totals.cash_recovered_cents ?? data.totals.recovered_cents,
+              )}
+            </strong>{" "}
+            · Assigned from account credit:{" "}
+            <strong>{money(data.totals.credit_recovered_cents ?? 0)}</strong>
+          </p>
+          <p>
+            On drafts: <strong>{money(data.totals.draft_cost_cents)}</strong> ·
+            Not separately billed:{" "}
+            <strong>{money(data.totals.unbilled_cost_cents)}</strong> · Fees on
+            finalized linked charges:{" "}
+            <strong>{money(data.totals.issued_fee_cents)}</strong>
+          </p>
+          <p className="muted">
+            Of costs not separately billed:{" "}
+            {money(data.totals.unbilled_reimbursable_cents)} marked for customer
+            charge-back; {money(data.totals.other_unbilled_cents)} other costs.
+            Training/package revenue is not allocated here.
+          </p>
+        </div>
       </section>
       {data.count > 100 && (
         <p className="notice">
@@ -152,6 +170,11 @@ export function ExpenseRecoveryReport({
                   </div>
                 ))}
               </dl>
+              <p className="muted">
+                Repaid through cash payments{" "}
+                {money(e.cash_recovered_cents ?? e.recovered_cents)} · account
+                credit {money(e.credit_recovered_cents ?? 0)}.
+              </p>
               <details>
                 <summary>Billing sources and payment assignments</summary>
                 <div className="stack feed-comparison-detail">
