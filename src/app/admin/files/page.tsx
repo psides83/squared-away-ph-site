@@ -1,3 +1,4 @@
+import { VideoPreviewBackfill } from "@/components/video-preview-backfill";
 import { SectionTabs } from "@/components/section-tabs";
 import { HelpPanel } from "@/components/help-panel";
 import { recoverVideo } from "./video-actions";
@@ -229,6 +230,26 @@ export default async function HorseFiles({
                 }
               />
             )}
+            {!previews.error &&
+              file.kind === "video" &&
+              !file.archived_at &&
+              !previewIds.has(file.id) && (
+                <ActionPanel
+                  id={`create-preview-${file.id}`}
+                  label="Create video preview"
+                  dismissLabel="Close"
+                >
+                  <VideoPreviewBackfill
+                    file={{
+                      id: file.id,
+                      title: file.title,
+                      size_bytes: file.size_bytes,
+                      content_type: file.content_type,
+                      published: Boolean(file.published_at),
+                    }}
+                  />
+                </ActionPanel>
+              )}
             <div className="row-actions">
               <a
                 className="text-link"
