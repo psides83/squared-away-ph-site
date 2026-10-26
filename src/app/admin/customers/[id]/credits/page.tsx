@@ -1,3 +1,8 @@
+import { CreditRefundForm } from "@/components/credit-refund-form";
+import {
+  CreditRefundHistory,
+  type CreditRefundRow,
+} from "@/components/credit-refund-history";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
@@ -47,9 +52,10 @@ export default async function CustomerCredits({
     notFound();
   const { db } = await requireAdmin(),
     page = Math.max(1, Math.min(10000, Math.floor(Number(raw) || 1)));
-  const [customer, result] = await Promise.all([
+  const [customer, result, refunds] = await Promise.all([
     db.from("customers").select("id,name").eq("id", id).maybeSingle(),
     db.rpc("customer_credit_overview", { p_customer: id, p_page: page }),
+    db.rpc("customer_credit_refund_overview", { p_customer: id, p_page: page }),
   ]);
   if (!customer.error && !customer.data) notFound();
   const data = result.data as
@@ -61,8 +67,39 @@ export default async function CustomerCredits({
         applications: Application[];
       })
     | null;
+  const refundData = refunds.data as {
+    count: number;
+    refunded_cents: number;
+    rows: CreditRefundRow[];
+  } | null;
   const date = today(),
     base = `/admin/customers/${id}/credits`;
+  const paginate = (tab: string, count: number) =>
+    page > 1 || count > 25 ? (
+      <nav className="log-pagination" aria-label="Credit history pages">
+        {page > 1 ? (
+          <Link
+            className="button secondary"
+            href={`${base}?page=${page - 1}#account-credit-${tab}`}
+          >
+            Previous
+          </Link>
+        ) : (
+          <span />
+        )}
+        <span>Page {page}</span>
+        {page * 25 < count ? (
+          <Link
+            className="button secondary"
+            href={`${base}?page=${page + 1}#account-credit-${tab}`}
+          >
+            Next
+          </Link>
+        ) : (
+          <span />
+        )}
+      </nav>
+    ) : null;
   return (
     <>
       <Link
@@ -110,6 +147,14 @@ export default async function CustomerCredits({
                     />
                   </ActionPanel>
                 )}
+                {data.available.length > 0 && !refunds.error && (
+                  <ActionPanel
+                    id="refund-account-credit"
+                    label="Record credit refund"
+                  >
+                    <CreditRefundForm credits={data.available} date={date} />
+                  </ActionPanel>
+                )}
               </div>
             </div>
           </section>
@@ -123,16 +168,19 @@ export default async function CustomerCredits({
             <p>
               Expense-recovery assignments and previous refunds reduce what can
               be moved from a payment. Reverse applications first before
-              correcting a source credit. Corrections retain history and restate
-              the original period; they never move money.
+              correcting a source credit. Active account-credit refunds must
+              also be corrected before reversing their source. Record refunds
+              only after money has actually been returned; they reduce unused
+              credit without changing invoice balances. Corrections retain
+              history and restate the original period; they never move money.
             </p>
             <p>
               Choices show the first 100 available credits, unpaid invoices and
-              eligible payments. History uses 25 entries per tab per page; the
-              available balance includes every active record. Advance cash
-              remains unassigned to a horse or stay in cash reports; applying
-              credit does not change its receipt date or assign that original
-              cash to a horse.
+              eligible payments. History uses 25 entries per tab per page,
+              including credit refunds; the available balance includes every
+              active record. Advance cash remains unassigned to a horse or stay
+              in cash reports; applying credit does not change its receipt date
+              or assign that original cash to a horse.
             </p>
           </HelpPanel>
           <SectionTabs
@@ -199,6 +247,7 @@ export default async function CustomerCredits({
                         <p>No account credits recorded.</p>
                       )}
                     </div>
+                    {paginate("credits", data.credit_count)}
                   </section>
                 ),
               },
@@ -254,38 +303,37 @@ export default async function CustomerCredits({
                         <p>No credit applications recorded.</p>
                       )}
                     </div>
+                    {paginate("applications", data.application_count)}
+                  </section>
+                ),
+              },
+              {
+                id: "refunds",
+                label: "Credit refunds",
+                content: (
+                  <section className="panel">
+                    <div className="panel-heading">
+                      <h2>Account-credit refunds</h2>
+                      {refundData && !refunds.error && (
+                        <span className="tag">
+                          {money(refundData.refunded_cents)} returned
+                        </span>
+                      )}
+                    </div>
+                    {refunds.error || !refundData ? (
+                      <p className="record-form notice error">
+                        Credit refund history could not load. Check the latest
+                        migration and refresh.
+                      </p>
+                    ) : (
+                      <CreditRefundHistory rows={refundData.rows} admin />
+                    )}
+                    {paginate("refunds", refundData?.count ?? 0)}
                   </section>
                 ),
               },
             ]}
           />
-          {(page > 1 ||
-            Math.max(data.credit_count, data.application_count) > 25) && (
-            <nav className="log-pagination" aria-label="Credit history pages">
-              {page > 1 ? (
-                <Link
-                  className="button secondary"
-                  href={`${base}?page=${page - 1}`}
-                >
-                  Previous
-                </Link>
-              ) : (
-                <span />
-              )}
-              <span>Page {page}</span>
-              {page * 25 <
-              Math.max(data.credit_count, data.application_count) ? (
-                <Link
-                  className="button secondary"
-                  href={`${base}?page=${page + 1}`}
-                >
-                  Next
-                </Link>
-              ) : (
-                <span />
-              )}
-            </nav>
-          )}
         </>
       )}
     </>

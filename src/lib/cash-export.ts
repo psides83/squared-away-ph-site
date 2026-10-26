@@ -1,7 +1,12 @@
 export type CashLedgerRow = {
   cash_date: string;
   kind:
-    "advance" | "payment" | "expense" | "supplier_refund" | "customer_refund";
+    | "advance"
+    | "payment"
+    | "expense"
+    | "supplier_refund"
+    | "customer_refund"
+    | "credit_refund";
   source_id: string;
   related_id: string | null;
   party: string | null;
@@ -66,6 +71,7 @@ const labels = {
   expense: "Paid expense",
   supplier_refund: "Supplier refund",
   customer_refund: "Customer refund",
+  credit_refund: "Unused customer credit refund",
 };
 export function cashLedgerCsv(data: CashLedgerExport) {
   if (
@@ -106,7 +112,9 @@ export function cashLedgerCsv(data: CashLedgerExport) {
     totals.supplier_refunds_cents +=
       row.kind === "supplier_refund" ? row.cash_in_cents : 0;
     totals.customer_refunds_cents +=
-      row.kind === "customer_refund" ? row.cash_out_cents : 0;
+      row.kind === "customer_refund" || row.kind === "credit_refund"
+        ? row.cash_out_cents
+        : 0;
     totals.supplier_credit_used_cents += row.credit_cents;
     totals.net_cents += row.cash_in_cents - row.cash_out_cents;
     return [
@@ -147,7 +155,7 @@ export function cashLedgerCsv(data: CashLedgerExport) {
     "Gross expense (USD)",
     "Store credit applied (USD)",
     "Source record ID",
-    "Related invoice or return ID",
+    "Related invoice, return or credit ID",
   ]
     .map(csvText)
     .join(",");
