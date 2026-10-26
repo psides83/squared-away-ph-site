@@ -101,34 +101,42 @@ export default async function QuickActions({
                         several horses.
                       </p>
                     </div>
-                    {plannedHorses.length > 0 && (
-                      <ActionPanel
-                        id="quick-bulk-feeding"
-                        label="Feed multiple horses"
+                    <div className="row-actions">
+                      <Link
+                        className="button secondary"
+                        href="/admin/feeding/past"
                       >
-                        <DailyFeedingBatch
-                          home
-                          date={date}
-                          times={times.data ?? []}
-                          horses={plannedHorses
-                            .filter((h) => !legacy.has(h.id))
-                            .map((h) => ({
-                              ...h,
-                              rations: (rations.data ?? [])
-                                .filter(
-                                  (r) =>
-                                    r.horse_id === h.id &&
-                                    r.active &&
-                                    r.feeding_time_id,
-                                )
-                                .map((r) => ({
-                                  feeding_time_id: r.feeding_time_id!,
-                                  summary: `${Number(r.quantity)} ${units.data?.find((u) => u.id === r.unit_id)?.label ?? ""} · ${products.data?.find((p) => p.id === r.product_id)?.name ?? "Feed"}`,
-                                })),
-                            }))}
-                        />
-                      </ActionPanel>
-                    )}
+                        Log a past feeding
+                      </Link>
+                      {plannedHorses.length > 0 && (
+                        <ActionPanel
+                          id="quick-bulk-feeding"
+                          label="Feed multiple horses"
+                        >
+                          <DailyFeedingBatch
+                            home
+                            date={date}
+                            times={times.data ?? []}
+                            horses={plannedHorses
+                              .filter((h) => !legacy.has(h.id))
+                              .map((h) => ({
+                                ...h,
+                                rations: (rations.data ?? [])
+                                  .filter(
+                                    (r) =>
+                                      r.horse_id === h.id &&
+                                      r.active &&
+                                      r.feeding_time_id,
+                                  )
+                                  .map((r) => ({
+                                    feeding_time_id: r.feeding_time_id!,
+                                    summary: `${Number(r.quantity)} ${units.data?.find((u) => u.id === r.unit_id)?.label ?? ""} · ${products.data?.find((p) => p.id === r.product_id)?.name ?? "Feed"}`,
+                                  })),
+                              }))}
+                          />
+                        </ActionPanel>
+                      )}
+                    </div>
                   </div>
                   {plannedHorses.length ? (
                     <SavedRations

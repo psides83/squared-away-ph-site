@@ -32,12 +32,17 @@ export function FeedingHistory({
             Recorded feedings, grouped by day and feeding time.
           </p>
         </div>
-        <Link
-          className="button secondary"
-          href="/admin/inventory?page=1#inventory-history"
-        >
-          Stock movement history
-        </Link>
+        <div className="row-actions">
+          <Link className="button secondary" href="/admin/feeding/past">
+            Log a past feeding
+          </Link>
+          <Link
+            className="button secondary"
+            href="/admin/inventory?page=1#inventory-history"
+          >
+            Stock movement history
+          </Link>
+        </div>
       </div>
       {!data.days.length && (
         <div className="panel record-form">
@@ -72,6 +77,14 @@ export function FeedingHistory({
                   {horseCount} {horseCount === 1 ? "horse" : "horses"}
                 </span>
               </header>
+              <div className="record-form">
+                <Link
+                  className="button secondary"
+                  href={`/admin/feeding/past?date=${day.date}`}
+                >
+                  Add missed feeding for this day
+                </Link>
+              </div>
               <div className="feeding-history-times">
                 {groups.map((group) => (
                   <section className="feeding-history-time" key={group.id}>

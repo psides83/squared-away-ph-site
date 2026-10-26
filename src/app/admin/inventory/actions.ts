@@ -1,4 +1,5 @@
 "use server";
+import { feedingResultUrl } from "@/lib/past-feeding";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { preparedReceipt, attachReceipt } from "@/lib/receipt-storage";
@@ -257,7 +258,12 @@ export async function confirmBulkFeeding(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin${form.get("return_to") === "home" ? "" : "/feeding"}?${issue ? `error=${encodeURIComponent(issue)}` : "success=Selected+feeding-time+rations+confirmed.+Already+confirmed+horses+were+not+deducted+again."}`,
+    feedingResultUrl(
+      form.get("return_to"),
+      form.get("feeding_date"),
+      issue,
+      false,
+    ),
   );
 }
 export async function recordBulkFeeding(form: FormData) {
@@ -292,7 +298,12 @@ export async function recordBulkFeeding(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect(
-    `/admin${form.get("return_to") === "home" ? "" : "/feeding"}?${issue ? `error=${encodeURIComponent(issue)}` : "success=All+feeding+entries+recorded+together."}`,
+    feedingResultUrl(
+      form.get("return_to"),
+      form.get("feeding_date"),
+      issue,
+      true,
+    ),
   );
 }
 

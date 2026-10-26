@@ -89,6 +89,7 @@ export default async function Feeding({
       <PageHeading
         eyebrow="A GOOD ROUTINE, A CLEAR RECORD"
         title="Daily feeding"
+        action={{ href: "/admin/feeding/past", label: "Log a past feeding" }}
         description="Each horse, each feeding time, and exactly what was fed."
       />
       <Notice

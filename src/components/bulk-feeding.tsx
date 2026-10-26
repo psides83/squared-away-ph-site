@@ -6,6 +6,8 @@ import { feedingTimeLabel, type FeedingTime } from "@/lib/feeding-times";
 import { FormInput } from "@/components/form-input";
 import { servingStepper } from "@/lib/input-format";
 import { useState } from "react";
+import { dateLabel } from "@/lib/format";
+import { ConfirmButton } from "@/components/confirm-button";
 import { Field } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import {
@@ -28,20 +30,35 @@ export function DailyFeedingBatch({
   date,
   times,
   home = false,
+  past,
 }: {
   home?: boolean;
+  past?: {
+    date: string;
+    confirmations: { horse_id: string; feeding_time_id: string | null }[];
+  };
   horses: Horse[];
   times: FeedingTime[];
   date: string;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [time, setTime] = useState(times.find((t) => !t.archived)?.id ?? "");
-  const eligible = horses.filter((h) =>
+  const atTime = horses.filter((h) =>
     h.rations?.some((r) => r.feeding_time_id === time),
   );
+  const logged = new Set(
+    past?.confirmations
+      .filter((c) => c.feeding_time_id === time || c.feeding_time_id === null)
+      .map((c) => c.horse_id),
+  );
+  const eligible = atTime.filter((h) => !logged.has(h.id));
   return (
     <form action={confirmBulkFeeding} className="record-form">
-      <input type="hidden" name="return_to" value={home ? "home" : "feeding"} />
+      <input
+        type="hidden"
+        name="return_to"
+        value={past ? "past-feeding" : home ? "home" : "feeding"}
+      />
       <p>
         Choose the horses that received their saved ration for this feeding
         time. Previously confirmed horses are safely skipped for the same date
@@ -70,14 +87,26 @@ export function DailyFeedingBatch({
             ))}
         </AppSelect>
       </label>
-      <Field
-        name="feeding_date"
-        label="Actual feeding date"
-        type="date"
-        required
-        defaultValue={date}
-        max={date}
-      />
+      {past ? (
+        <>
+          <input type="hidden" name="feeding_date" value={past.date} />
+          <p className="notice">
+            Logging feedings for <strong>{dateLabel(past.date)}</strong>. Review
+            the rations below: saved schedules and current weighted stock costs
+            are used, rather than a historical version of the feeding plan. Use
+            actual quantities if these differed.
+          </p>
+        </>
+      ) : (
+        <Field
+          name="feeding_date"
+          label="Actual feeding date"
+          type="date"
+          required
+          defaultValue={date}
+          max={date}
+        />
+      )}
       <button
         className="text-button"
         type="button"
@@ -92,16 +121,24 @@ export function DailyFeedingBatch({
       >
         {selected.length === eligible.length
           ? "Clear selection"
-          : "Select all horses with rations"}
+          : past
+            ? "Select all missing horses"
+            : "Select all horses with rations"}
       </button>
       <div className="batch-horse-list">
-        {!eligible.length && (
+        {!atTime.length && (
           <p className="muted">
             No assigned active rations at this feeding time. Add rations or
             choose another time.
           </p>
         )}
-        {eligible.map((h) => (
+        {past && atTime.length > 0 && !eligible.length && (
+          <p className="notice success">
+            All horses with a current ration at this feeding time are already
+            logged for {dateLabel(past.date)}.
+          </p>
+        )}
+        {atTime.map((h) => (
           <label className="batch-horse-row" key={h.id}>
             <span>
               <strong>{h.barn_name}</strong>
@@ -112,19 +149,23 @@ export function DailyFeedingBatch({
                   .join(" · ")}
               </small>
             </span>
-            <input
-              type="checkbox"
-              name="horse_id"
-              value={h.id}
-              checked={selected.includes(h.id)}
-              onChange={(e) =>
-                setSelected(
-                  e.target.checked
-                    ? [...selected, h.id]
-                    : selected.filter((id) => id !== h.id),
-                )
-              }
-            />
+            {logged.has(h.id) ? (
+              <span className="tag">Already logged</span>
+            ) : (
+              <input
+                type="checkbox"
+                name="horse_id"
+                value={h.id}
+                checked={selected.includes(h.id)}
+                onChange={(e) =>
+                  setSelected(
+                    e.target.checked
+                      ? [...selected, h.id]
+                      : selected.filter((id) => id !== h.id),
+                  )
+                }
+              />
+            )}
           </label>
         ))}
       </div>
@@ -133,7 +174,17 @@ export function DailyFeedingBatch({
         the whole batch stays unsaved.
       </p>
       {selected.length > 0 ? (
-        <SubmitButton>Confirm selected horses fed</SubmitButton>
+        <div className="form-actions">
+          {past ? (
+            <ConfirmButton
+              message={`Record the selected horses’ saved rations for ${dateLabel(past.date)}? Stock will be deducted once for each missing horse and feeding time. Review current rations before continuing.`}
+            >
+              Save missed feedings
+            </ConfirmButton>
+          ) : (
+            <SubmitButton>Confirm selected horses fed</SubmitButton>
+          )}
+        </div>
       ) : (
         <p>Select at least one horse to continue.</p>
       )}
@@ -147,32 +198,47 @@ export function ExtraFeedingBatch({
   date,
   request,
   times = [],
+  pastDate,
 }: {
   horses: Horse[];
   products: ProductOption[];
   units: UnitOption[];
   date: string;
   request: string;
+  pastDate?: string;
   times?: FeedingTime[];
 }) {
   const [selectedUnit, setSelectedUnit] = useState<UnitOption>();
   return (
     <form action={recordBulkFeeding} className="record-form">
       <input name="request_id" type="hidden" value={request} />
+      {pastDate && (
+        <>
+          <input name="return_to" type="hidden" value="past-feeding" />
+          <input name="feeding_date" type="hidden" value={pastDate} />
+          <p className="notice">
+            Actual quantities fed on <strong>{dateLabel(pastDate)}</strong>.
+            These entries are additional consumption and do not mark a scheduled
+            feeding complete.
+          </p>
+        </>
+      )}
       <p>
         Record one product for several horses, with a separate quantity for
         each. Use this for extras or partial feedings; it does not confirm saved
         daily rations. Leave a quantity blank to skip that horse.
       </p>
       <div className="form-grid">
-        <Field
-          name="feeding_date"
-          label="Actual feeding date"
-          type="date"
-          required
-          defaultValue={date}
-          max={date}
-        />
+        {!pastDate && (
+          <Field
+            name="feeding_date"
+            label="Actual feeding date"
+            type="date"
+            required
+            defaultValue={date}
+            max={date}
+          />
+        )}
         <label>
           Feeding time
           <AppSelect name="feeding_time_id" defaultValue="">
@@ -222,7 +288,17 @@ export function ExtraFeedingBatch({
         Review every quantity before saving. All entries save together and
         deduct stock at its current weighted cost.
       </p>
-      <SubmitButton>Record these feedings</SubmitButton>
+      <div className="form-actions">
+        {pastDate ? (
+          <ConfirmButton
+            message={`Record these actual quantities as additional consumption on ${dateLabel(pastDate)}? They deduct stock and do not confirm a saved feeding schedule. Do not enter quantities already logged.`}
+          >
+            Save actual quantities
+          </ConfirmButton>
+        ) : (
+          <SubmitButton>Record these feedings</SubmitButton>
+        )}
+      </div>
     </form>
   );
 }
