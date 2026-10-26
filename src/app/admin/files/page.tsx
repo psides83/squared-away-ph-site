@@ -88,6 +88,19 @@ export default async function HorseFiles({
         .order("created_at", { ascending: false })
         .limit(20)
     : { data: [], error: null };
+  const videoIds = [
+    ...new Set([
+      ...(files.data ?? []).filter((f) => f.kind === "video").map((f) => f.id),
+      ...(file?.kind === "video" ? [file.id] : []),
+    ]),
+  ];
+  const previews = videoIds.length
+    ? await db
+        .from("horse_video_previews")
+        .select("file_id")
+        .in("file_id", videoIds)
+    : { data: [], error: null };
+  const previewIds = new Set((previews.data ?? []).map((p) => p.file_id));
   const failed = [files, horses, selected, history].some((r) => r.error);
   const href = (next: number) =>
     `/admin/files?page=${next}${horse ? `&horse=${horse}` : ""}`;
@@ -106,6 +119,12 @@ export default async function HorseFiles({
         }
         success={q.success}
       />
+      {previews.error && (
+        <p className="notice">
+          Video previews could not load. Videos remain available; check the
+          latest migration.
+        </p>
+      )}
       <p className="notice">
         Uploads are private by default. Publishing shares the file with every
         customer whose access to that horse permits it. Keep customer-specific
@@ -203,6 +222,11 @@ export default async function HorseFiles({
               <HorseVideoPlayer
                 src={`/admin/files/${file.id}`}
                 title={file.title}
+                poster={
+                  previewIds.has(file.id)
+                    ? `/admin/files/${file.id}?preview=1`
+                    : undefined
+                }
               />
             )}
             <div className="row-actions">
@@ -339,6 +363,14 @@ export default async function HorseFiles({
                           className="horse-file-thumb"
                           src={`/admin/files/${f.id}`}
                           alt={f.title}
+                          loading="lazy"
+                        />
+                      )}
+                      {f.kind === "video" && previewIds.has(f.id) && (
+                        <img
+                          className="horse-file-thumb"
+                          src={`/admin/files/${f.id}?preview=1`}
+                          alt={`Video preview: ${f.title}`}
                           loading="lazy"
                         />
                       )}

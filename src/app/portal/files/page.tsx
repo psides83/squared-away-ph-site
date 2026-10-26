@@ -58,6 +58,7 @@ export default async function CustomerFiles({
                 kind: string;
                 content_type: string;
                 file_name: string;
+                has_preview: boolean;
               }) => (
                 <article className="panel customer-horse-card" key={f.id}>
                   {f.content_type.startsWith("image/") && (
@@ -72,6 +73,11 @@ export default async function CustomerFiles({
                     <HorseVideoPlayer
                       src={`/portal/files/${f.id}`}
                       title={f.title}
+                      poster={
+                        f.has_preview
+                          ? `/portal/files/${f.id}?preview=1`
+                          : undefined
+                      }
                     />
                   )}
                   <p className="eyebrow">

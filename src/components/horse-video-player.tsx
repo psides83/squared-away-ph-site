@@ -3,9 +3,11 @@ import { useState } from "react";
 export function HorseVideoPlayer({
   src,
   title,
+  poster,
 }: {
   src: string;
   title: string;
+  poster?: string;
 }) {
   const [revision, setRevision] = useState(0),
     [error, setError] = useState(false);
@@ -15,6 +17,7 @@ export function HorseVideoPlayer({
         key={revision}
         className="horse-video-player"
         controls
+        poster={poster}
         playsInline
         preload="none"
         src={`${src}?playback=${revision}`}

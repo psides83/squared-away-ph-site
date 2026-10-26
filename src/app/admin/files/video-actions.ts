@@ -77,8 +77,19 @@ export async function finishVideo(id: string) {
           ? result.error.message
           : "Video uploaded but could not attach. Keep this editor open and retry saving.",
     };
+  let previewSaved = false;
+  try {
+    const preview = await db
+      .from("horse_video_previews")
+      .select("file_id")
+      .eq("file_id", id)
+      .maybeSingle();
+    previewSaved = Boolean(preview.data);
+  } catch {
+    /* Preview lookup must not undo a successful video save. */
+  }
   revalidatePath("/admin/files");
-  return { ok: true as const };
+  return { ok: true as const, previewSaved };
 }
 
 /** Reuses the database's locked, idempotent attachment check after an editor closes. */

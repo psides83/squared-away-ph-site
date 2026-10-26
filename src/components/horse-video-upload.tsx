@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { generateVideoPreview } from "@/lib/generate-video-preview";
+import { saveVideoPreview } from "@/app/admin/files/preview-actions";
 import { Upload } from "tus-js-client";
 import { useRouter } from "next/navigation";
 import { AppSelect } from "@/components/app-select";
@@ -24,6 +26,7 @@ type Work = {
   uploaded: boolean;
   upload?: Upload;
   token?: string;
+  previewAbort?: AbortController;
 };
 export function HorseVideoUpload({
   horses,
@@ -51,6 +54,7 @@ export function HorseVideoUpload({
     return () => {
       mounted.current = false;
       void work.current?.upload?.abort();
+      work.current?.previewAbort?.abort();
     };
   }, []);
   async function run() {
@@ -153,9 +157,41 @@ export function HorseVideoUpload({
     try {
       const result = await finishVideo(item.id);
       if (!result.ok) throw Error(result.error);
-      if (mounted.current) {
+      if (!mounted.current || work.current !== item) return;
+      let previewSaved = result.previewSaved;
+      if (!previewSaved) {
+        setStage("Creating a small video preview…");
+        item.previewAbort = new AbortController();
+        try {
+          const image = await generateVideoPreview(
+            item.file,
+            item.previewAbort.signal,
+          );
+          if (!mounted.current || work.current !== item) return;
+          const form = new FormData();
+          form.set("file_id", item.id);
+          form.set("preview", image, "preview.jpg");
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            const timedOut = new Promise<{ ok: boolean }>((resolve) => {
+              timer = setTimeout(() => resolve({ ok: false }), 8000);
+            });
+            previewSaved = (
+              await Promise.race([saveVideoPreview(form), timedOut])
+            ).ok;
+          } finally {
+            if (timer) clearTimeout(timer);
+          }
+        } catch {
+          previewSaved = false;
+        }
+      }
+      if (mounted.current && work.current === item) {
+        const message = previewSaved
+          ? "Video saved with a private preview. Review before sharing."
+          : "Video saved. A preview could not be confirmed; the video is available to review.";
         router.push(
-          `/admin/files?file=${item.id}&success=Private+video+uploaded.+Review+before+sharing.`,
+          `/admin/files?file=${item.id}&success=${encodeURIComponent(message)}`,
         );
         router.refresh();
       }
@@ -282,8 +318,9 @@ export function HorseVideoUpload({
           are not kept in browser storage.
         </p>
         <p>
-          Device playback depends on the clip’s codec. No video conversion is
-          performed.
+          A small preview is generated locally after the video saves. If this
+          device cannot create one, the video still saves. Device playback
+          depends on the clip’s codec. No video conversion is performed.
         </p>
       </HelpPanel>
       {busy && (
