@@ -28,3 +28,17 @@ export function pushDaysLabel(days: readonly number[]) {
     .map((d) => d.label)
     .join(", ");
 }
+
+export function supplierPushInterval(value: unknown) {
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < 1 ||
+    value > 30
+  )
+    throw Error("Choose a supplier reminder interval from 1 to 30 days.");
+  return value;
+}
+export function pushIntervalLabel(value: number) {
+  return value === 1 ? "every eligible day" : `at least ${value} days apart`;
+}

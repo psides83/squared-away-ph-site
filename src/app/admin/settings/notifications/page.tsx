@@ -11,7 +11,7 @@ export default async function Notifications() {
     db
       .from("admin_push_devices")
       .select(
-        "id,endpoint,vapid_public,label,enabled,supplier_alerts,scheduler_alerts,supplier_days,care_alerts",
+        "id,endpoint,vapid_public,label,enabled,supplier_alerts,scheduler_alerts,supplier_days,care_alerts,supplier_interval_days",
       )
       .order("updated_at", { ascending: false }),
     db
@@ -32,10 +32,14 @@ export default async function Notifications() {
       <HelpPanel title="Timing, privacy and device setup">
         <p>
           Overdue supplier follow-ups produce at most one reminder per connected
-          device on each selected business day. Scheduler failures produce at
-          most one alert per device per business day when a scheduled check
-          reports failure. Alerts use general wording; names and financial
-          amounts stay inside the signed-in app.
+          device on each selected business day, subject to that device’s minimum
+          interval (1–30 calendar days). The interval starts after an alert is
+          accepted by the push service, not after a failed attempt. This is
+          checked during the existing daily run, not at an exact chosen send
+          time. Scheduler failures produce at most one alert per device per
+          business day when a scheduled check reports failure. Alerts use
+          general wording; names and financial amounts stay inside the signed-in
+          app.
         </p>
         <p>
           Care reminders are optional and off until selected for each device. At

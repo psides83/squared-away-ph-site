@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useActionState, startTransition } from "react";
 import { PushDayPicker } from "@/components/push-day-picker";
-import { pushDaysLabel } from "@/lib/push-days";
+import { pushDaysLabel, pushIntervalLabel } from "@/lib/push-days";
 import { useRouter } from "next/navigation";
 import { Bell, BellOff } from "lucide-react";
 import {
@@ -9,6 +9,7 @@ import {
   testPushDevice,
   savePushPreferences,
 } from "@/app/admin/settings/notifications/actions";
+import { FormInput } from "@/components/form-input";
 import { Field, Notice } from "@/components/ui";
 import { ActionPanel } from "@/components/action-panel";
 import { SubmitButton } from "@/components/submit-button";
@@ -20,6 +21,7 @@ export type PushDevice = {
   enabled: boolean;
   supplier_alerts: boolean;
   supplier_days: number[];
+  supplier_interval_days?: number;
   scheduler_alerts: boolean;
   care_alerts: boolean;
 };
@@ -44,6 +46,7 @@ export function PushSettings({
   const [success, setSuccess] = useState<string>();
   const [label, setLabel] = useState("My device");
   const [days, setDays] = useState([1, 2, 3, 4, 5, 6, 7]);
+  const [interval, setInterval] = useState(1);
   const [supplier, setSupplier] = useState(true),
     [scheduler, setScheduler] = useState(true),
     [care, setCare] = useState(false);
@@ -132,6 +135,7 @@ export function PushSettings({
         scheduler,
         days,
         care,
+        interval,
       );
       if (result.error) throw new Error(result.error);
       setCurrent(result.id ?? null);
@@ -227,6 +231,26 @@ export function PushSettings({
                 Overdue supplier follow-ups
               </label>
               <PushDayPicker days={days} onChange={setDays} disabled={busy} />
+              <label className="field">
+                Minimum days between supplier reminders
+                <FormInput
+                  aria-label="Minimum days between supplier reminders"
+                  type="number"
+                  min="1"
+                  max="30"
+                  step="1"
+                  suffix="days"
+                  value={interval}
+                  disabled={busy}
+                  onChange={(e) => setInterval(Number(e.target.value))}
+                />
+              </label>
+              <p className="form-hint muted">
+                After a supplier alert is accepted by the push service, wait
+                this many calendar days, then use the next selected weekday. The
+                first alert uses the next eligible daily check. Failed attempts
+                do not start this waiting period.
+              </p>
               <label className="inline-checkbox push-option">
                 <input
                   type="checkbox"
@@ -257,7 +281,10 @@ export function PushSettings({
                     support !== "supported" ||
                     busy ||
                     !label.trim() ||
-                    !days.length
+                    !days.length ||
+                    !Number.isInteger(interval) ||
+                    interval < 1 ||
+                    interval > 30
                   }
                   onClick={enable}
                 >
@@ -312,7 +339,7 @@ export function PushSettings({
           <div className="record-form stack">
             <p>
               {device.supplier_alerts
-                ? `Supplier reminders: ${pushDaysLabel(device.supplier_days)}`
+                ? `Supplier reminders: ${pushDaysLabel(device.supplier_days)} · ${pushIntervalLabel(device.supplier_interval_days ?? 1)}`
                 : "Supplier reminders off"}{" "}
               ·{" "}
               {device.scheduler_alerts
@@ -364,6 +391,22 @@ export function PushPreferenceForm({ device }: { device: PushDevice }) {
           Overdue supplier follow-ups
         </label>
         <PushDayPicker days={days} onChange={setDays} />
+        <Field
+          label="Minimum days between supplier reminders"
+          name="supplier_interval_days"
+          type="number"
+          min="1"
+          max="30"
+          step="1"
+          suffix="days"
+          defaultValue={device.supplier_interval_days ?? 1}
+          required
+        />
+        <p className="form-hint muted">
+          Wait this many calendar days after an accepted supplier alert, then
+          use the next selected weekday. Failed sends do not delay retries. Care
+          and scheduler alerts use their own schedules.
+        </p>
         <label className="inline-checkbox push-option">
           <input
             name="scheduler"

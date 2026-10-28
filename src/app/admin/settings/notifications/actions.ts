@@ -1,5 +1,5 @@
 "use server";
-import { supplierPushDays } from "@/lib/push-days";
+import { supplierPushDays, supplierPushInterval } from "@/lib/push-days";
 import { sendDevicePush } from "@/lib/push-delivery";
 import { requireAdmin } from "@/lib/auth";
 import { pushConfig, validatePushSubscription } from "@/lib/web-push";
@@ -12,6 +12,7 @@ export async function registerPushDevice(
   scheduler: boolean,
   days: number[],
   care: boolean,
+  interval?: number,
 ): Promise<{ error?: string; id?: string }> {
   const { db } = await requireAdmin();
   try {
@@ -28,7 +29,7 @@ export async function registerPushDevice(
     )
       throw new Error("Enter a device name and preferences.");
     const sub = validatePushSubscription(subscription);
-    const { data, error } = await db.rpc("save_admin_push_device_preferences", {
+    const values = {
       p_endpoint: sub.endpoint,
       p_p256dh: sub.keys.p256dh,
       p_auth: sub.keys.auth,
@@ -38,7 +39,14 @@ export async function registerPushDevice(
       p_scheduler: scheduler,
       p_days: supplierPushDays(days),
       p_care: care,
-    });
+    };
+    const { data, error } =
+      interval === undefined
+        ? await db.rpc("save_admin_push_device_preferences", values)
+        : await db.rpc("save_admin_push_device_cadence", {
+            ...values,
+            p_interval: supplierPushInterval(interval),
+          });
     if (error)
       throw new Error(
         error.code === "P0001"
@@ -62,13 +70,16 @@ export async function savePushPreferences(
 ): Promise<{ error?: string; success?: string }> {
   const { db } = await requireAdmin();
   try {
-    const { error } = await db.rpc("update_admin_push_device_preferences", {
+    const { error } = await db.rpc("update_admin_push_device_cadence", {
       p_id: identifier(form, "id", true),
       p_label: text(form, "label", true, 80),
       p_supplier: form.get("supplier") === "on",
       p_scheduler: form.get("scheduler") === "on",
       p_enabled: form.get("enabled") === "on",
       p_care: form.get("care") === "on",
+      p_interval: supplierPushInterval(
+        Number(text(form, "supplier_interval_days", true, 12)),
+      ),
       p_days: supplierPushDays(
         form.getAll("supplier_days").map((v) => Number(v)),
       ),
