@@ -1,4 +1,8 @@
 "use server";
+import {
+  configuredReminderTime,
+  frequentPushConfigured,
+} from "@/lib/push-time";
 import { supplierPushDays, supplierPushInterval } from "@/lib/push-days";
 import { sendDevicePush } from "@/lib/push-delivery";
 import { requireAdmin } from "@/lib/auth";
@@ -13,6 +17,7 @@ export async function registerPushDevice(
   days: number[],
   care: boolean,
   interval?: number,
+  reminderTime?: string | null,
 ): Promise<{ error?: string; id?: string }> {
   const { db } = await requireAdmin();
   try {
@@ -41,12 +46,22 @@ export async function registerPushDevice(
       p_care: care,
     };
     const { data, error } =
-      interval === undefined
-        ? await db.rpc("save_admin_push_device_preferences", values)
-        : await db.rpc("save_admin_push_device_cadence", {
+      reminderTime !== undefined
+        ? await db.rpc("save_admin_push_device_timing", {
             ...values,
             p_interval: supplierPushInterval(interval),
-          });
+            p_time: configuredReminderTime(
+              reminderTime,
+              Boolean(pushConfig(process.env)) &&
+                frequentPushConfigured(process.env),
+            ),
+          })
+        : interval === undefined
+          ? await db.rpc("save_admin_push_device_preferences", values)
+          : await db.rpc("save_admin_push_device_cadence", {
+              ...values,
+              p_interval: supplierPushInterval(interval),
+            });
     if (error)
       throw new Error(
         error.code === "P0001"
@@ -70,7 +85,7 @@ export async function savePushPreferences(
 ): Promise<{ error?: string; success?: string }> {
   const { db } = await requireAdmin();
   try {
-    const { error } = await db.rpc("update_admin_push_device_cadence", {
+    const values = {
       p_id: identifier(form, "id", true),
       p_label: text(form, "label", true, 80),
       p_supplier: form.get("supplier") === "on",
@@ -83,7 +98,21 @@ export async function savePushPreferences(
       p_days: supplierPushDays(
         form.getAll("supplier_days").map((v) => Number(v)),
       ),
-    });
+    };
+    const mode = form.get("reminder_mode");
+    if (mode !== null && mode !== "daily" && mode !== "custom")
+      throw Error("Choose a reminder schedule.");
+    const { error } =
+      mode === null
+        ? await db.rpc("update_admin_push_device_cadence", values)
+        : await db.rpc("update_admin_push_device_timing", {
+            ...values,
+            p_time: configuredReminderTime(
+              mode === "daily" ? null : text(form, "reminder_time", true, 5),
+              Boolean(pushConfig(process.env)) &&
+                frequentPushConfigured(process.env),
+            ),
+          });
     if (error)
       throw new Error(
         error.code === "P0001"

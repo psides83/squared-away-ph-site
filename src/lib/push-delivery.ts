@@ -9,12 +9,19 @@ export async function deliverAdminPush(
   db: SupabaseClient,
   config: PushConfig,
   schedulerFailed: boolean,
+  parallel: 5 | 10 = 5,
+  timedOnly = false,
 ) {
   const { data, error } = await db
-    .rpc("claim_admin_push", {
-      p_public: config.publicKey,
-      p_scheduler_failed: schedulerFailed,
-    })
+    .rpc(
+      timedOnly ? "claim_timed_admin_push" : "claim_admin_push",
+      timedOnly
+        ? { p_public: config.publicKey }
+        : {
+            p_public: config.publicKey,
+            p_scheduler_failed: schedulerFailed,
+          },
+    )
     .abortSignal(AbortSignal.timeout(5000));
   if (error) throw new Error("Push queue could not be checked");
   const jobs = data as {
@@ -27,9 +34,9 @@ export async function deliverAdminPush(
   }[];
   let accepted = 0,
     failed = 0;
-  for (let start = 0; start < jobs.length; start += 5) {
+  for (let start = 0; start < jobs.length; start += parallel) {
     await Promise.all(
-      jobs.slice(start, start + 5).map(async (job) => {
+      jobs.slice(start, start + parallel).map(async (job) => {
         let status = "failed",
           code: number | null = null;
         const result = await sendDevicePush(

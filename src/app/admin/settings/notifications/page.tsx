@@ -1,3 +1,4 @@
+import { frequentPushConfigured } from "@/lib/push-time";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { pushConfig } from "@/lib/web-push";
@@ -11,7 +12,7 @@ export default async function Notifications() {
     db
       .from("admin_push_devices")
       .select(
-        "id,endpoint,vapid_public,label,enabled,supplier_alerts,scheduler_alerts,supplier_days,care_alerts,supplier_interval_days",
+        "id,endpoint,vapid_public,label,enabled,supplier_alerts,scheduler_alerts,supplier_days,care_alerts,supplier_interval_days,reminder_time",
       )
       .order("updated_at", { ascending: false }),
     db
@@ -35,8 +36,10 @@ export default async function Notifications() {
           device on each selected business day, subject to that device’s minimum
           interval (1–30 calendar days). The interval starts after an alert is
           accepted by the push service, not after a failed attempt. This is
-          checked during the existing daily run, not at an exact chosen send
-          time. Scheduler failures produce at most one alert per device per
+          checked on the configured schedule. A chosen reminder time delays
+          supplier and care alerts until that Central Time clock time, then the
+          next check can send them. This is approximate delivery, not an exact
+          alarm. Scheduler failures produce at most one alert per device per
           business day when a scheduled check reports failure. Alerts use
           general wording; names and financial amounts stay inside the signed-in
           app.
@@ -46,8 +49,9 @@ export default async function Notifications() {
           most one daily reminder is queued when an unfinished task in Reminders
           is due today or overdue in Central Time. All reminder categories are
           included. Completed tasks and future dates do not trigger it. These
-          reminders run during the daily check, independently of supplier
-          weekdays; they are not alarms at an exact appointment time.
+          reminders are independent of supplier weekdays and share the device’s
+          preferred time. Existing devices keep the daily check until you choose
+          a custom time.
         </p>
         <p>
           On iPhone and iPad, add this app to your Home Screen and open it there
@@ -57,11 +61,12 @@ export default async function Notifications() {
           browser permission.
         </p>
         <p>
-          Alerts use the daily scheduler. A scheduler that never runs, or an
-          outage that prevents the server reaching the notification queue,
-          cannot report its own failure through this channel. External uptime
-          monitoring remains separate. Permission changes, expired subscriptions
-          and browser data removal may require reconnecting the device.
+          Frequent notification checks require separate production setup on
+          Hobby hosting. A scheduler that never runs, or an outage that prevents
+          the server reaching the notification queue, cannot report its own
+          failure through this channel. External uptime monitoring remains
+          separate. Permission changes, expired subscriptions and browser data
+          removal may require reconnecting the device.
         </p>
       </HelpPanel>
       {devices.error || history.error ? (
@@ -69,6 +74,9 @@ export default async function Notifications() {
       ) : (
         <>
           <PushSettings
+            timingAvailable={
+              Boolean(config) && frequentPushConfigured(process.env)
+            }
             publicKey={config?.publicKey ?? ""}
             configured={
               Boolean(config) && process.env.VERCEL_ENV === "production"

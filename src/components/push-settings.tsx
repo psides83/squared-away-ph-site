@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState, useActionState, startTransition } from "react";
+import { PushReminderTime } from "@/components/push-reminder-time";
+import { pushTimeLabel } from "@/lib/push-time";
 import { PushDayPicker } from "@/components/push-day-picker";
 import { pushDaysLabel, pushIntervalLabel } from "@/lib/push-days";
 import { useRouter } from "next/navigation";
@@ -24,15 +26,18 @@ export type PushDevice = {
   supplier_interval_days?: number;
   scheduler_alerts: boolean;
   care_alerts: boolean;
+  reminder_time?: string | null;
 };
 export function PushSettings({
   publicKey,
   configured,
   devices,
+  timingAvailable = false,
 }: {
   publicKey: string;
   configured: boolean;
   devices: PushDevice[];
+  timingAvailable?: boolean;
 }) {
   const router = useRouter();
   const [worker, setWorker] = useState<ServiceWorkerRegistration | null>(null);
@@ -47,6 +52,7 @@ export function PushSettings({
   const [label, setLabel] = useState("My device");
   const [days, setDays] = useState([1, 2, 3, 4, 5, 6, 7]);
   const [interval, setInterval] = useState(1);
+  const [reminderTime, setReminderTime] = useState<string | null>(null);
   const [supplier, setSupplier] = useState(true),
     [scheduler, setScheduler] = useState(true),
     [care, setCare] = useState(false);
@@ -136,6 +142,7 @@ export function PushSettings({
         days,
         care,
         interval,
+        reminderTime,
       );
       if (result.error) throw new Error(result.error);
       setCurrent(result.id ?? null);
@@ -248,8 +255,8 @@ export function PushSettings({
               <p className="form-hint muted">
                 After a supplier alert is accepted by the push service, wait
                 this many calendar days, then use the next selected weekday. The
-                first alert uses the next eligible daily check. Failed attempts
-                do not start this waiting period.
+                first alert uses the next eligible check. Failed attempts do not
+                start this waiting period.
               </p>
               <label className="inline-checkbox push-option">
                 <input
@@ -268,9 +275,15 @@ export function PushSettings({
                 Due and overdue care reminders
               </label>
               <p className="muted">
-                Care reminders are checked daily, separately from supplier
+                At most one care reminder per day, independently of supplier
                 reminder days.
               </p>
+              <PushReminderTime
+                value={reminderTime}
+                onChange={setReminderTime}
+                available={timingAvailable}
+                disabled={busy}
+              />
               <div className="form-actions">
                 <button
                   className="button"
@@ -284,7 +297,10 @@ export function PushSettings({
                     !days.length ||
                     !Number.isInteger(interval) ||
                     interval < 1 ||
-                    interval > 30
+                    interval > 30 ||
+                    (reminderTime !== null &&
+                      (!timingAvailable ||
+                        !/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(reminderTime)))
                   }
                   onClick={enable}
                 >
@@ -350,8 +366,15 @@ export function PushSettings({
                 ? "Care reminders daily"
                 : "Care reminders off"}
             </p>
+            <p className="muted">
+              {pushTimeLabel(device.reminder_time)} for supplier and care
+              reminders.
+            </p>
             <ActionPanel id={`push-device-${device.id}`} label="Manage device">
-              <PushPreferenceForm device={device} />
+              <PushPreferenceForm
+                device={device}
+                timingAvailable={timingAvailable}
+              />
             </ActionPanel>
           </div>
         </section>
@@ -359,7 +382,16 @@ export function PushSettings({
     </>
   );
 }
-export function PushPreferenceForm({ device }: { device: PushDevice }) {
+export function PushPreferenceForm({
+  device,
+  timingAvailable = false,
+}: {
+  device: PushDevice;
+  timingAvailable?: boolean;
+}) {
+  const [reminderTime, setReminderTime] = useState<string | null>(
+    device.reminder_time?.slice(0, 5) ?? null,
+  );
   const [days, setDays] = useState(device.supplier_days);
   const [state, action, pending] = useActionState(savePushPreferences, {});
   return (
@@ -427,6 +459,11 @@ export function PushPreferenceForm({ device }: { device: PushDevice }) {
           A daily reminder when any unfinished task in Reminders is due today or
           overdue. Supplier reminder days do not change this schedule.
         </p>
+        <PushReminderTime
+          value={reminderTime}
+          onChange={setReminderTime}
+          available={timingAvailable}
+        />
         <label className="inline-checkbox push-option">
           <input
             name="enabled"

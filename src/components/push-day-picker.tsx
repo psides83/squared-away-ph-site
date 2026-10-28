@@ -58,9 +58,8 @@ export function PushDayPicker({
         <p className="notice">Select at least one reminder day.</p>
       )}
       <p className="muted">
-        Reminders run during the daily scheduled check on selected days in
-        Central Time. This changes reminder days, not the scheduler’s check
-        time.
+        Supplier reminders use selected days in Central Time. Preferred time and
+        check frequency are managed separately.
       </p>
     </fieldset>
   );
