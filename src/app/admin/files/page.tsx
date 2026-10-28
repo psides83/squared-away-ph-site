@@ -98,9 +98,12 @@ export default async function HorseFiles({
   const previews = videoIds.length
     ? await db
         .from("horse_video_previews")
-        .select("file_id")
+        .select("file_id,sha256")
         .in("file_id", videoIds)
     : { data: [], error: null };
+  const previewVersions = new Map(
+    (previews.data ?? []).map((p) => [p.file_id, p.sha256]),
+  );
   const previewIds = new Set((previews.data ?? []).map((p) => p.file_id));
   const failed = [files, horses, selected, history].some((r) => r.error);
   const href = (next: number) =>
@@ -225,31 +228,33 @@ export default async function HorseFiles({
                 title={file.title}
                 poster={
                   previewIds.has(file.id)
-                    ? `/admin/files/${file.id}?preview=1`
+                    ? `/admin/files/${file.id}?preview=1&v=${previewVersions.get(file.id)}`
                     : undefined
                 }
               />
             )}
-            {!previews.error &&
-              file.kind === "video" &&
-              !file.archived_at &&
-              !previewIds.has(file.id) && (
-                <ActionPanel
-                  id={`create-preview-${file.id}`}
-                  label="Create video preview"
-                  dismissLabel="Close"
-                >
-                  <VideoPreviewBackfill
-                    file={{
-                      id: file.id,
-                      title: file.title,
-                      size_bytes: file.size_bytes,
-                      content_type: file.content_type,
-                      published: Boolean(file.published_at),
-                    }}
-                  />
-                </ActionPanel>
-              )}
+            {!previews.error && file.kind === "video" && !file.archived_at && (
+              <ActionPanel
+                id={`create-preview-${file.id}`}
+                label={
+                  previewIds.has(file.id)
+                    ? "Replace video preview"
+                    : "Create video preview"
+                }
+                dismissLabel="Close"
+              >
+                <VideoPreviewBackfill
+                  existingHash={previewVersions.get(file.id)}
+                  file={{
+                    id: file.id,
+                    title: file.title,
+                    size_bytes: file.size_bytes,
+                    content_type: file.content_type,
+                    published: Boolean(file.published_at),
+                  }}
+                />
+              </ActionPanel>
+            )}
             <div className="row-actions">
               <a
                 className="text-link"
@@ -390,7 +395,7 @@ export default async function HorseFiles({
                       {f.kind === "video" && previewIds.has(f.id) && (
                         <img
                           className="horse-file-thumb"
-                          src={`/admin/files/${f.id}?preview=1`}
+                          src={`/admin/files/${f.id}?preview=1&v=${previewVersions.get(f.id)}`}
                           alt={`Video preview: ${f.title}`}
                           loading="lazy"
                         />

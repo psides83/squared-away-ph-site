@@ -108,6 +108,25 @@ test("local frame generation waits for a decoded frame, cleans resources and han
     assert.equal(canvas.width, 0);
     assert.equal(canvas.height, 0);
     assert.equal(video.onseeked, null);
+
+    const custom = generateVideoPreview(new Blob(["video"]), undefined, 3.5);
+    video.onloadedmetadata!();
+    assert.equal(video.currentTime, 3.5);
+    video.onseeked!();
+    await custom;
+    const outside = generateVideoPreview(new Blob(["video"]), undefined, 10);
+    video.onloadedmetadata!();
+    await assert.rejects(outside, /before the end/);
+    await assert.rejects(
+      generateVideoPreview(new Blob(), undefined, -1),
+      /frame time/,
+    );
+    await assert.rejects(
+      generateVideoPreview(new Blob(), undefined, Infinity),
+      /frame time/,
+    );
+    assert.equal(loads, 6);
+    assert.equal(paused, 3);
     const controller = new AbortController();
     const cancelled = generateVideoPreview(
       new Blob(["local-video"]),
@@ -115,25 +134,25 @@ test("local frame generation waits for a decoded frame, cleans resources and han
     );
     controller.abort();
     await assert.rejects(cancelled, /cancelled/);
-    assert.equal(paused, 2);
+    assert.equal(paused, 4);
     const unsupported = generateVideoPreview(new Blob(["unsupported"]));
     video.onerror!();
     await assert.rejects(unsupported, /cannot decode/);
-    assert.equal(paused, 3);
-    assert.equal(loads, 6);
+    assert.equal(paused, 5);
+    assert.equal(loads, 10);
     const stalled = generateVideoPreview(new Blob(["stalled"]));
     const rejection = assert.rejects(stalled, /in time/);
     t.mock.timers.tick(8000);
     await rejection;
-    assert.equal(paused, 4);
-    assert.equal(loads, 8);
+    assert.equal(paused, 6);
+    assert.equal(loads, 12);
     const alreadyCancelled = new AbortController();
     alreadyCancelled.abort();
     await assert.rejects(
       generateVideoPreview(new Blob(["cancelled"]), alreadyCancelled.signal),
       /cancelled/,
     );
-    assert.equal(paused, 4);
+    assert.equal(paused, 6);
   } finally {
     if (original) Object.defineProperty(globalThis, "document", original);
     else Reflect.deleteProperty(globalThis, "document");

@@ -3,12 +3,18 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { readSavedVideo } from "@/lib/read-saved-video";
 import { generateVideoPreview } from "@/lib/generate-video-preview";
-import { saveVideoPreview } from "@/app/admin/files/preview-actions";
+import {
+  saveVideoPreview,
+  replaceVideoPreview,
+} from "@/app/admin/files/preview-actions";
 import { ConfirmButton } from "@/components/confirm-button";
+import { FormInput } from "@/components/form-input";
 import { HelpPanel } from "@/components/help-panel";
 export function VideoPreviewBackfill({
   file,
+  existingHash,
 }: {
+  existingHash?: string;
   file: {
     id: string;
     title: string;
@@ -18,6 +24,9 @@ export function VideoPreviewBackfill({
   };
 }) {
   const router = useRouter();
+  const [expected] = useState(existingHash);
+  const [request, setRequest] = useState(() => crypto.randomUUID());
+  const [frame, setFrame] = useState("");
   const [candidate, setCandidate] = useState<Blob | null>(null),
     [image, setImage] = useState(""),
     [busy, setBusy] = useState(false),
@@ -36,6 +45,14 @@ export function VideoPreviewBackfill({
   );
   async function generate() {
     if (active.current) return;
+    const seconds = frame.trim() === "" ? undefined : Number(frame);
+    if (
+      seconds !== undefined &&
+      (!Number.isFinite(seconds) || seconds < 0 || seconds > 86400)
+    ) {
+      setError("Choose a frame time between 0 and 86,400 seconds.");
+      return;
+    }
     const controller = new AbortController();
     active.current = controller;
     let timedOut = false;
@@ -63,12 +80,17 @@ export function VideoPreviewBackfill({
       clearTimeout(timer);
       if (controller.signal.aborted) return;
       setStage("Creating preview…");
-      const preview = await generateVideoPreview(clip, controller.signal);
+      const preview = await generateVideoPreview(
+        clip,
+        controller.signal,
+        seconds,
+      );
       if (controller.signal.aborted) return;
       if (imageUrl.current) URL.revokeObjectURL(imageUrl.current);
       imageUrl.current = URL.createObjectURL(preview);
       setImage(imageUrl.current);
       setCandidate(preview);
+      setRequest(crypto.randomUUID());
       setStage("");
     } catch (e) {
       if (
@@ -108,17 +130,27 @@ export function VideoPreviewBackfill({
       const form = new FormData();
       form.set("file_id", file.id);
       form.set("preview", candidate, "preview.jpg");
-      const deadline = new Promise<{ ok: boolean }>((resolve) => {
-        timer = setTimeout(() => resolve({ ok: false }), 8000);
-      });
-      const result = await Promise.race([saveVideoPreview(form), deadline]);
+      if (expected) {
+        form.set("expected_hash", expected);
+        form.set("request", request);
+      }
+      const deadline = new Promise<{ ok: boolean; error?: string }>(
+        (resolve) => {
+          timer = setTimeout(() => resolve({ ok: false }), 8000);
+        },
+      );
+      const result = await Promise.race([
+        expected ? replaceVideoPreview(form) : saveVideoPreview(form),
+        deadline,
+      ]);
       if (controller.signal.aborted) return;
       if (!result.ok)
         throw Error(
-          "The preview save could not be confirmed. Reopen the video to check, or retry. Your original video is unchanged.",
+          result.error ??
+            "The preview save could not be confirmed. Reopen the video to check, or retry. Your original video is unchanged.",
         );
       router.replace(
-        `/admin/files?file=${file.id}&success=Video+preview+available.`,
+        `/admin/files?file=${file.id}&success=Preview+request+processed.+Review+the+saved+preview.`,
       );
       router.refresh();
     } catch (e) {
@@ -159,11 +191,50 @@ export function VideoPreviewBackfill({
           video.
         </p>
         <p>
-          Existing saved previews are retained. If another session saves one
-          first, this action does not replace it. A save already in progress may
-          finish after closing this editor.
+          {expected
+            ? "Replacing retains the previous preview and an audit entry. If another session changes the preview first, reopen this editor before saving. Retrying an already saved request never reapplies it over a newer preview."
+            : "If another session saves a preview first, this action does not replace it."}{" "}
+          A save already in progress may finish after closing this editor.
         </p>
       </HelpPanel>
+      {expected && (
+        <>
+          <p className="form-hint">Current saved preview</p>
+          <img
+            className="horse-file-preview"
+            src={`/admin/files/${file.id}?preview=1&v=${expected}`}
+            alt={`Current preview for ${file.title}`}
+          />
+        </>
+      )}
+      <label className="field">
+        Frame time (optional)
+        <FormInput
+          aria-label="Frame time in seconds"
+          name="frame_seconds"
+          type="number"
+          min="0"
+          max="86400"
+          step="0.1"
+          suffix="sec"
+          placeholder="Automatic"
+          value={frame}
+          disabled={busy}
+          onChange={(e) => {
+            setFrame(e.target.value);
+            setCandidate(null);
+            setImage("");
+            if (imageUrl.current) {
+              URL.revokeObjectURL(imageUrl.current);
+              imageUrl.current = "";
+            }
+          }}
+        />
+      </label>
+      <p className="form-hint muted">
+        Enter seconds from the start, such as 3.5, then generate and review that
+        frame. Leave blank for an automatic frame near the beginning.
+      </p>
       {error && (
         <p className="notice error" role="alert">
           {error}
@@ -175,11 +246,14 @@ export function VideoPreviewBackfill({
         </p>
       )}
       {image && (
-        <img
-          className="horse-file-preview"
-          src={image}
-          alt={`Generated preview for ${file.title}`}
-        />
+        <>
+          <p className="form-hint">New preview to review</p>
+          <img
+            className="horse-file-preview"
+            src={image}
+            alt={`Generated preview for ${file.title}`}
+          />
+        </>
       )}
       <form
         onSubmit={(event) => {
@@ -192,12 +266,16 @@ export function VideoPreviewBackfill({
             <fieldset className="video-fields" disabled={busy}>
               <ConfirmButton
                 message={
-                  file.published
-                    ? "Save this preview? Customers who can view the published video will also see its preview. The original clip and access grants stay unchanged."
-                    : "Save this preview for the private video? The original clip and sharing settings stay unchanged."
+                  expected
+                    ? file.published
+                      ? "Replace this preview? Customers with access to the published video will see the new image. The previous preview is retained in private history. The video and its sharing settings stay unchanged."
+                      : "Replace the private video’s preview? The previous preview is retained in private history. The original video and sharing settings stay unchanged."
+                    : file.published
+                      ? "Save this preview? Customers who can view the published video will also see its preview. The original clip and access grants stay unchanged."
+                      : "Save this preview for the private video? The original clip and sharing settings stay unchanged."
                 }
               >
-                Save video preview
+                {expected ? "Replace video preview" : "Save video preview"}
               </ConfirmButton>
             </fieldset>
           )}

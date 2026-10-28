@@ -1,15 +1,32 @@
 "use server";
 import { createHash } from "node:crypto";
 import { requireAdmin } from "@/lib/auth";
-import { identifier } from "@/lib/validation";
+import { identifier, text } from "@/lib/validation";
 import { validateVideoPreview, videoPreviewLimit } from "@/lib/video-preview";
 import { revalidatePath } from "next/cache";
-export async function saveVideoPreview(
+type PreviewResult = { ok: boolean; error?: string };
+export async function saveVideoPreview(form: FormData): Promise<PreviewResult> {
+  return persistVideoPreview(form, false);
+}
+export async function replaceVideoPreview(
   form: FormData,
-): Promise<{ ok: boolean }> {
+): Promise<PreviewResult> {
+  return persistVideoPreview(form, true);
+}
+async function persistVideoPreview(
+  form: FormData,
+  replace: boolean,
+): Promise<PreviewResult> {
   const { db } = await requireAdmin();
   try {
     const id = identifier(form, "file_id", true)!;
+    const request = replace ? identifier(form, "request", true) : null;
+    const expected = replace ? text(form, "expected_hash", true, 64) : null;
+    if (replace && !/^[0-9a-f]{64}$/.test(expected ?? ""))
+      return {
+        ok: false,
+        error: "Reopen the preview editor before replacing this image.",
+      };
     const image = form.get("preview");
     if (
       !(image instanceof File) ||
@@ -40,7 +57,13 @@ export async function saveVideoPreview(
       file.data.archived_at
     )
       return { ok: false };
-    if (existing.data) return { ok: true };
+    if (!replace && existing.data) return { ok: true };
+    if (replace && !existing.data)
+      return {
+        ok: false,
+        error:
+          "No saved preview was found. Reopen the video before creating one.",
+      };
     const path = `${file.data.horse_id}/${id}/${hash}.jpg`;
     const stored = await db.storage.from("horse-video-previews").exists(path);
     if (stored.error) return { ok: false };
@@ -59,12 +82,25 @@ export async function saveVideoPreview(
         if (retry.error || !retry.data) return { ok: false };
       }
     }
-    const attached = await db.rpc("attach_video_preview", {
-      p_file: id,
-      p_hash: hash,
-      p_size: bytes.length,
-    });
-    if (attached.error) return { ok: false };
+    const attached = replace
+      ? await db.rpc("replace_video_preview", {
+          p_request: request,
+          p_file: id,
+          p_expected: expected,
+          p_hash: hash,
+          p_size: bytes.length,
+        })
+      : await db.rpc("attach_video_preview", {
+          p_file: id,
+          p_hash: hash,
+          p_size: bytes.length,
+        });
+    if (attached.error)
+      return {
+        ok: false,
+        error:
+          attached.error.code === "P0001" ? attached.error.message : undefined,
+      };
     revalidatePath("/admin/files");
     revalidatePath("/portal/files");
     return { ok: true };

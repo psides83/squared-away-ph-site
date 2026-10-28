@@ -59,6 +59,7 @@ export default async function CustomerFiles({
                 content_type: string;
                 file_name: string;
                 has_preview: boolean;
+                preview_version?: string;
               }) => (
                 <article className="panel customer-horse-card" key={f.id}>
                   {f.content_type.startsWith("image/") && (
@@ -75,7 +76,7 @@ export default async function CustomerFiles({
                       title={f.title}
                       poster={
                         f.has_preview
-                          ? `/portal/files/${f.id}?preview=1`
+                          ? `/portal/files/${f.id}?preview=1&v=${f.preview_version ?? ""}`
                           : undefined
                       }
                     />

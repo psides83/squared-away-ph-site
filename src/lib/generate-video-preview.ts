@@ -3,8 +3,18 @@ import { previewDimensions, videoPreviewLimit } from "./video-preview.ts";
 export function generateVideoPreview(
   file: Blob,
   signal?: AbortSignal,
+  frameSeconds?: number,
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
+    if (
+      frameSeconds !== undefined &&
+      (!Number.isFinite(frameSeconds) ||
+        frameSeconds < 0 ||
+        frameSeconds > 86400)
+    ) {
+      reject(Error("Choose a frame time between 0 and 86,400 seconds."));
+      return;
+    }
     if (signal?.aborted) {
       reject(Error("Preview cancelled."));
       return;
@@ -84,10 +94,23 @@ export function generateVideoPreview(
     video.onloadedmetadata = () => {
       try {
         previewDimensions(video.videoWidth, video.videoHeight);
+        if (
+          frameSeconds !== undefined &&
+          (!Number.isFinite(video.duration) ||
+            video.duration <= 0 ||
+            frameSeconds >= video.duration)
+        ) {
+          finish(
+            undefined,
+            Error("Choose a frame time before the end of this video."),
+          );
+          return;
+        }
         target =
-          Number.isFinite(video.duration) && video.duration > 0
+          frameSeconds ??
+          (Number.isFinite(video.duration) && video.duration > 0
             ? Math.min(1, video.duration / 2)
-            : 0;
+            : 0);
         if (target > 0) video.currentTime = target;
         else capture();
       } catch {
