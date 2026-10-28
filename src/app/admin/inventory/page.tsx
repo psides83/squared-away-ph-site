@@ -301,7 +301,23 @@ export default async function Inventory({
                 label: "Record purchase / stock",
                 content: (
                   <>
-                    {" "}
+                    <section className="panel">
+                      <div className="record-form stack">
+                        <h2>Purchase from a receipt</h2>
+                        <p>
+                          Record several products and business supplies
+                          together, with reviewed tax and discount allocations.
+                        </p>
+                        <div className="form-actions">
+                          <Link
+                            className="button"
+                            href="/admin/inventory/purchases/new"
+                          >
+                            Record a receipt
+                          </Link>
+                        </div>
+                      </div>
+                    </section>
                     {!!products.data?.some((p) => !p.archived) && (
                       <section className="panel" id="stock-entry">
                         <div className="panel-heading">
@@ -427,48 +443,57 @@ export default async function Inventory({
                               </Link>
                             </p>
                           )}
-                          {m.expense_id && (
+                          {(m.expense_id || m.receipt_purchase_id) && (
                             <Link
                               className="text-link"
-                              href={`/admin/expenses/${m.expense_id}`}
+                              href={`/admin/expenses/${m.expense_id || m.receipt_purchase_id}`}
                             >
                               Expense & receipts
                             </Link>
                           )}
-                          {["purchase", "opening", "adjustment_in"].includes(
-                            m.kind,
-                          ) && (
-                            <ActionPanel
-                              id={`revalue-${m.id}`}
-                              label="Correct quantity / cost"
-                            >
-                              <SourceQuantityCorrection
-                                movement={m}
-                                request={crypto.randomUUID()}
-                              />
-                            </ActionPanel>
+                          {m.receipt_purchase_id && (
+                            <p className="muted form-hint">
+                              Part of a multi-item receipt. Use its expense
+                              record to review items or cancel an untouched
+                              receipt.
+                            </p>
                           )}
-                          {["purchase", "opening", "adjustment_in"].includes(
-                            m.kind,
-                          ) && (
-                            <ActionPanel
-                              id={`correct-purchase-${m.id}`}
-                              label="Replace latest entry"
-                            >
-                              <div className="panel-heading">
-                                <h2>Replace latest stock entry</h2>
-                              </div>
-                              <PurchaseCorrectionForm
-                                inbound={m.kind !== "purchase"}
-                                m={m}
-                                units={
-                                  units.data?.filter(
-                                    (u) => u.product_id === m.product_id,
-                                  ) ?? []
-                                }
-                              />
-                            </ActionPanel>
-                          )}
+                          {!m.receipt_purchase_id &&
+                            ["purchase", "opening", "adjustment_in"].includes(
+                              m.kind,
+                            ) && (
+                              <ActionPanel
+                                id={`revalue-${m.id}`}
+                                label="Correct quantity / cost"
+                              >
+                                <SourceQuantityCorrection
+                                  movement={m}
+                                  request={crypto.randomUUID()}
+                                />
+                              </ActionPanel>
+                            )}
+                          {!m.receipt_purchase_id &&
+                            ["purchase", "opening", "adjustment_in"].includes(
+                              m.kind,
+                            ) && (
+                              <ActionPanel
+                                id={`correct-purchase-${m.id}`}
+                                label="Replace latest entry"
+                              >
+                                <div className="panel-heading">
+                                  <h2>Replace latest stock entry</h2>
+                                </div>
+                                <PurchaseCorrectionForm
+                                  inbound={m.kind !== "purchase"}
+                                  m={m}
+                                  units={
+                                    units.data?.filter(
+                                      (u) => u.product_id === m.product_id,
+                                    ) ?? []
+                                  }
+                                />
+                              </ActionPanel>
+                            )}
                           {["feeding", "waste", "adjustment_out"].includes(
                             m.kind,
                           ) &&

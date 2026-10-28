@@ -1,3 +1,4 @@
+import { ReceiptPurchaseItems } from "@/components/receipt-purchase-items";
 import { ExpenseAbsorbedCosts } from "@/components/expense-absorbed-costs";
 import { ExpenseExchanges } from "@/components/expense-exchanges";
 import { ExpenseSupplierCredits } from "@/components/expense-supplier-credits";
@@ -46,7 +47,9 @@ export default async function ExpenseRecord({
   ] = await Promise.all([
     db
       .from("expenses")
-      .select("*,inventory_movements(id,product_id)")
+      .select(
+        "*,inventory_movements(id,product_id),inventory_receipt_purchases(id)",
+      )
       .eq("id", id)
       .maybeSingle(),
     db.from("expense_categories").select("id,name"),
@@ -116,6 +119,9 @@ export default async function ExpenseRecord({
       : [e.inventory_movements]
     : [];
   const stock = movements.length > 0;
+  const receiptPurchase = Array.isArray(e?.inventory_receipt_purchases)
+    ? e.inventory_receipt_purchases.length > 0
+    : Boolean(e?.inventory_receipt_purchases);
   return (
     <>
       <Link className="text-link" href="/admin/expenses">
@@ -220,12 +226,14 @@ export default async function ExpenseRecord({
                       <SubmitButton>Save payment status</SubmitButton>
                     </form>
                   </ActionPanel>
-                  <Link
-                    className="text-link"
-                    href={`/admin/expenses?edit=${id}#record-form`}
-                  >
-                    Edit expense
-                  </Link>
+                  {!receiptPurchase && (
+                    <Link
+                      className="text-link"
+                      href={`/admin/expenses?edit=${id}#record-form`}
+                    >
+                      Edit expense
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
@@ -241,6 +249,15 @@ export default async function ExpenseRecord({
                   : "details"
             }
             sections={[
+              ...(receiptPurchase
+                ? [
+                    {
+                      id: "receipt-items",
+                      label: "Receipt items",
+                      content: <ReceiptPurchaseItems expense={id} />,
+                    },
+                  ]
+                : []),
               {
                 id: "details",
                 label: "Details",
@@ -259,13 +276,21 @@ export default async function ExpenseRecord({
                           ? "Marked for customer charge-back"
                           : "Not marked for full customer charge-back"}
                       </p>
-                      {stock && (
+                      {receiptPurchase ? (
                         <p className="notice">
-                          Stock purchase. Quantity and purchase cost are
-                          retained with inventory history; purchase-cost
-                          corrections are available in Inventory only for the
-                          latest purchase before further stock activity.
+                          Multi-item receipt. Review its saved items and
+                          whole-receipt cancellation in Receipt items. Payment
+                          status can be changed separately.
                         </p>
+                      ) : (
+                        stock && (
+                          <p className="notice">
+                            Stock purchase. Quantity and purchase cost are
+                            retained with inventory history; purchase-cost
+                            corrections are available in Inventory only for the
+                            latest purchase before further stock activity.
+                          </p>
+                        )
                       )}
                       <p className="log-notes">
                         {e.notes || "No private notes added."}
@@ -293,7 +318,7 @@ export default async function ExpenseRecord({
                             </Link>
                           ),
                         )}
-                      {!stock && !e.voided_at && (
+                      {!stock && !receiptPurchase && !e.voided_at && (
                         <details>
                           <summary>Manage expense record</summary>
                           <form action={expenseRecordAction.bind(null, "void")}>
