@@ -3,6 +3,8 @@ import { dateLabel, money, today } from "@/lib/format";
 export type ExpenseFollowup = {
   expense_id: string;
   receipt_count: number;
+  absorbed_cost_cents?: number;
+  unassigned_cost_cents?: number;
   draft_cost_cents: number;
   issued_cost_cents: number;
   invoices: {
@@ -33,6 +35,9 @@ export function ExpenseFollowupSummary({
         {data.receipt_count}{" "}
         {Number(data.receipt_count) === 1 ? "receipt" : "receipts"}
       </span>
+      {Number(data.absorbed_cost_cents) > 0 && (
+        <span>{money(data.absorbed_cost_cents ?? 0)} absorbed by business</span>
+      )}
       {!voided &&
         (data.invoices.length ? (
           <>
@@ -56,7 +61,13 @@ export function ExpenseFollowupSummary({
             )}
           </>
         ) : (
-          <span>{reimbursable ? "Not yet billed" : "No linked invoice"}</span>
+          <span>
+            {Number(data.absorbed_cost_cents) > 0
+              ? `${money(data.unassigned_cost_cents ?? 0)} without a billing decision`
+              : reimbursable
+                ? "Not yet billed"
+                : "No linked invoice"}
+          </span>
         ))}
     </div>
   );

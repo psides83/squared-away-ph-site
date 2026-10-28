@@ -3,6 +3,8 @@ import { HelpPanel } from "@/components/help-panel";
 import { money, dateLabel } from "@/lib/format";
 export type ExpenseRecoveryReportData = {
   totals: {
+    absorbed_cost_cents?: number;
+    undecided_cost_cents?: number;
     paid_cost_cents: number;
     issued_cost_cents: number;
     draft_cost_cents: number;
@@ -24,6 +26,7 @@ export type ExpenseRecoveryReportData = {
     category_name: string;
     horse_name: string | null;
     amount_cents: number;
+    absorbed_cost_cents?: number;
     reimbursable: boolean;
     issued_cost_cents: number;
     draft_cost_cents: number;
@@ -77,7 +80,10 @@ export function ExpenseRecoveryReport({
           Missing assignments can understate recovery. Costs not separately
           billed may be included in training rates, awaiting reimbursement or
           borne by the business; this report does not assume they are
-          intentionally absorbed.
+          intentionally absorbed unless you explicitly designate an amount on
+          the expense record. Absorbed amounts are included in costs not
+          separately billed and not assigned as repaid; they are shown
+          separately from costs awaiting a decision.
         </p>
         <p>
           This is a current view of a paid-expense cohort, not cash received
@@ -123,8 +129,19 @@ export function ExpenseRecoveryReport({
             finalized linked charges:{" "}
             <strong>{money(data.totals.issued_fee_cents)}</strong>
           </p>
+          <p>
+            Intentionally absorbed:{" "}
+            <strong>{money(data.totals.absorbed_cost_cents ?? 0)}</strong> ·
+            Awaiting a billing decision:{" "}
+            <strong>
+              {money(
+                data.totals.undecided_cost_cents ??
+                  data.totals.unbilled_cost_cents,
+              )}
+            </strong>
+          </p>
           <p className="muted">
-            Of costs not separately billed:{" "}
+            Excluding absorbed costs:{" "}
             {money(data.totals.unbilled_reimbursable_cents)} marked for customer
             charge-back; {money(data.totals.other_unbilled_cents)} other costs.
             Training/package revenue is not allocated here.
@@ -163,6 +180,11 @@ export function ExpenseRecoveryReport({
                   ["Assigned as repaid", e.recovered_cents],
                   ["Cost on finalized invoices", e.issued_cost_cents],
                   ["Not separately billed", e.unbilled_cost_cents],
+                  ["Intentionally absorbed", e.absorbed_cost_cents ?? 0],
+                  [
+                    "Awaiting a billing decision",
+                    e.unbilled_cost_cents - (e.absorbed_cost_cents ?? 0),
+                  ],
                 ].map(([label, value]) => (
                   <div key={String(label)}>
                     <dt>{label}</dt>

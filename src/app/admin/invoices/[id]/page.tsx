@@ -107,10 +107,11 @@ export default async function Invoice({
       ? db
           .from("expenses")
           .select(
-            "id,horse_id,vendor,amount_cents,expense_date,invoice_expense_claims(line_id)",
+            "id,horse_id,vendor,amount_cents,expense_date,invoice_expense_claims(line_id),expense_absorptions(amount_cents,retired_at)",
           )
           .eq("reimbursable", true)
           .is("voided_at", null)
+          .is("expense_absorptions.retired_at", null)
           .order("expense_date", { ascending: false })
           .limit(100)
       : Promise.resolve({ data: [], error: null }),
@@ -174,15 +175,28 @@ export default async function Invoice({
   const title = invoice.invoice_number
     ? `SAPH-${invoice.invoice_number}`
     : "Draft invoice";
-  const candidates = (expenses.data ?? []).filter(
-    (e) =>
-      !(Array.isArray(e.invoice_expense_claims)
-        ? e.invoice_expense_claims.length > 0
-        : Boolean(e.invoice_expense_claims)) &&
-      (stay.data
-        ? e.horse_id === stay.data.horse_id
-        : links.data?.some((link) => link.horse_id === e.horse_id)),
-  );
+  const candidates = (expenses.data ?? [])
+    .map((e) => ({
+      ...e,
+      billable_cost_cents:
+        e.amount_cents -
+        (e.expense_absorptions ?? [])
+          .filter((a: { retired_at: string | null }) => !a.retired_at)
+          .reduce(
+            (sum: number, a: { amount_cents: number }) => sum + a.amount_cents,
+            0,
+          ),
+    }))
+    .filter(
+      (e) =>
+        e.billable_cost_cents > 0 &&
+        !(Array.isArray(e.invoice_expense_claims)
+          ? e.invoice_expense_claims.length > 0
+          : Boolean(e.invoice_expense_claims)) &&
+        (stay.data
+          ? e.horse_id === stay.data.horse_id
+          : links.data?.some((link) => link.horse_id === e.horse_id)),
+    );
   const invoiceId = <input name="invoice_id" type="hidden" value={id} />;
   const costFlags = await db
     .from("invoice_feed_cost_flags")
@@ -781,7 +795,7 @@ export default async function Invoice({
                                   <option key={e.id} value={e.id}>
                                     {dateLabel(e.expense_date)} ·{" "}
                                     {e.vendor ?? "Provider"} ·{" "}
-                                    {money(e.amount_cents)}
+                                    {money(e.billable_cost_cents)}
                                   </option>
                                 ))}
                               </AppSelect>
@@ -800,7 +814,8 @@ export default async function Invoice({
                               The expense must be flagged for charge-back and
                               belong to the customer’s horse or this historical
                               stay. Its source cost is preserved; adding it does
-                              not create a second expense.
+                              not create a second expense. Absorbed costs are
+                              excluded from the amount shown and billed.
                             </p>
                             <SubmitButton>Add charge-back</SubmitButton>
                           </form>

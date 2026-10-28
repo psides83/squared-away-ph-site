@@ -1,3 +1,4 @@
+import { ExpenseAbsorbedCosts } from "@/components/expense-absorbed-costs";
 import { ExpenseExchanges } from "@/components/expense-exchanges";
 import { ExpenseSupplierCredits } from "@/components/expense-supplier-credits";
 import { AppSelect } from "@/components/app-select";
@@ -412,6 +413,18 @@ export default async function ExpenseRecord({
                       <h2>Invoice follow-up</h2>
                     </div>
                     <div className="record-form stack">
+                      <ExpenseAbsorbedCosts
+                        expense={id}
+                        cost={e.amount_cents}
+                        reserved={
+                          followup.error || !f
+                            ? null
+                            : Number(f.draft_cost_cents) +
+                              Number(f.issued_cost_cents)
+                        }
+                        stock={stock}
+                        voided={Boolean(e.voided_at)}
+                      />
                       <ExpenseInvoiceLinks
                         data={followup.error ? undefined : f}
                       />
@@ -440,8 +453,9 @@ export default async function ExpenseRecord({
                                 />
                                 <p>
                                   Choose the responsible customer’s draft.
-                                  Already-billed costs and conflicting boarding
-                                  portions cannot be charged again.
+                                  Absorbed costs are excluded. Already-billed
+                                  costs and conflicting boarding portions cannot
+                                  be charged again.
                                 </p>
                                 {drafts.error ||
                                 owners.error ||
