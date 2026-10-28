@@ -1,9 +1,10 @@
 "use client";
+import { ReceiptDuplicateReview } from "@/components/receipt-duplicate-review";
 import { ReceiptOcrReader } from "@/components/receipt-ocr-reader";
 import { ocrPhotoLimit, receiptItemsFromOcr } from "@/lib/receipt-ocr";
 import type { ReceiptOcrResult } from "@/app/admin/inventory/purchases/ocr-actions";
 import Link from "next/link";
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { saveReceiptPurchase } from "@/app/admin/inventory/purchases/actions";
 import { AppSelect } from "@/components/app-select";
@@ -61,11 +62,27 @@ export function ReceiptPurchaseForm({
   const [reviewed, setReviewed] = useState(false),
     [issue, setIssue] = useState<string>();
   const [state, action, pending] = useActionState(saveReceiptPurchase, {});
+  const [duplicatePhoto, setDuplicatePhoto] = useState<File | null>(null),
+    [duplicateAck, setDuplicateAck] = useState(false),
+    [duplicateReason, setDuplicateReason] = useState("");
+  useEffect(() => {
+    if (state.duplicateReview) {
+      setDuplicatePhoto(photo);
+      setDuplicateAck(false);
+      setReviewed(false);
+    }
+  }, [state.duplicateReview]);
+  const showDuplicates = Boolean(
+    state.duplicateReview && photo && duplicatePhoto === photo,
+  );
+  const displayError =
+    state.duplicateReview && !showDuplicates ? undefined : state.error;
   const patch = (id: string, values: Partial<ReceiptItemDraft>) => {
     setItems((rows) =>
       rows.map((r) => (r.id === id ? { ...r, ...values } : r)),
     );
     setReviewed(false);
+    setDuplicateAck(false);
     setIssue(undefined);
   };
   const applyRead = (result: ReceiptOcrResult) => {
@@ -85,6 +102,7 @@ export function ReceiptPurchaseForm({
     );
     setOcrRead(result.id);
     setReviewed(false);
+    setDuplicateAck(false);
     setIssue(undefined);
   };
   let calculated: number | null = null;
@@ -125,7 +143,14 @@ export function ReceiptPurchaseForm({
       action={action}
       className="stack"
       onChange={(e) => {
-        if (e.target.getAttribute("name") !== "reviewed") setReviewed(false);
+        const name = e.target.getAttribute("name");
+        if (name !== "reviewed") setReviewed(false);
+        if (
+          !["reviewed", "duplicate_ack", "duplicate_reason"].includes(
+            name ?? "",
+          )
+        )
+          setDuplicateAck(false);
       }}
       onSubmit={(e) => {
         e.preventDefault();
@@ -240,8 +265,11 @@ export function ReceiptPurchaseForm({
               photoLimit={ocrPhotoLimit}
               onPrepared={(file) => {
                 setPhoto(file);
+                setDuplicateAck(false);
+                setDuplicateReason("");
                 setOcrRead(null);
                 setReviewed(false);
+                setDuplicateAck(false);
               }}
             />
             <ReceiptOcrReader
@@ -304,6 +332,7 @@ export function ReceiptPurchaseForm({
                   onClick={() => {
                     setItems((rows) => rows.filter((r) => r.id !== item.id));
                     setReviewed(false);
+                    setDuplicateAck(false);
                   }}
                 >
                   <Trash2 size={18} />
@@ -475,6 +504,7 @@ export function ReceiptPurchaseForm({
             onClick={() => {
               setItems((rows) => [...rows, freshItem("inventory")]);
               setReviewed(false);
+              setDuplicateAck(false);
             }}
           >
             <Plus size={18} />
@@ -487,18 +517,28 @@ export function ReceiptPurchaseForm({
             onClick={() => {
               setItems((rows) => [...rows, freshItem("expense")]);
               setReviewed(false);
+              setDuplicateAck(false);
             }}
           >
             <Plus size={18} />
             Add expense-only item
           </button>
         </div>
+        {showDuplicates && state.duplicateReview && (
+          <ReceiptDuplicateReview
+            review={state.duplicateReview}
+            acknowledged={duplicateAck}
+            onAcknowledge={setDuplicateAck}
+            reason={duplicateReason}
+            onReason={setDuplicateReason}
+          />
+        )}
         <section className="panel">
           <div className="panel-heading">
             <h2>Review receipt totals</h2>
           </div>
           <div className="record-form stack">
-            <Notice error={state.error ?? issue} />
+            <Notice error={displayError ?? issue} />
             <div className="form-grid">
               {dollar(
                 "Receipt-wide discount",
@@ -523,6 +563,7 @@ export function ReceiptPurchaseForm({
                       ),
                     );
                     setReviewed(false);
+                    setDuplicateAck(false);
                     setIssue(undefined);
                   } catch (error) {
                     setIssue(

@@ -4,7 +4,7 @@ import { ActionPanel } from "@/components/action-panel";
 import { ReceiptPurchaseCancel } from "@/components/receipt-purchase-cancel";
 export async function ReceiptPurchaseItems({ expense }: { expense: string }) {
   const { db } = await requireAdmin();
-  const [purchase, lines] = await Promise.all([
+  const [purchase, lines, duplicateOverride] = await Promise.all([
     db
       .from("inventory_receipt_purchases")
       .select("cancelled_at,cancel_reason,ocr_read_id")
@@ -15,6 +15,11 @@ export async function ReceiptPurchaseItems({ expense }: { expense: string }) {
       .select("*")
       .eq("receipt_id", expense)
       .order("position"),
+    db
+      .from("receipt_duplicate_overrides")
+      .select("reason,matching_records,created_at")
+      .eq("receipt_id", expense)
+      .maybeSingle(),
   ]);
   if (purchase.error || lines.error)
     return (
@@ -40,6 +45,36 @@ export async function ReceiptPurchaseItems({ expense }: { expense: string }) {
           Inventory item costs include their reviewed discount and tax;
           expense-only items add no stock.
         </p>
+        {duplicateOverride.error && (
+          <p className="notice error">
+            Duplicate-review history could not load.
+          </p>
+        )}
+        {duplicateOverride.data && (
+          <details>
+            <summary>Why this matching receipt was recorded again</summary>
+            <div className="stack feed-comparison-detail">
+              <p className="log-notes">{duplicateOverride.data.reason}</p>
+              <p className="muted">
+                Matching-record snapshot saved with this decision. Later expense
+                changes do not rewrite it.
+              </p>
+              {(
+                duplicateOverride.data.matching_records as {
+                  id: string;
+                  vendor: string | null;
+                  expense_date: string;
+                  amount_cents: number;
+                }[]
+              ).map((m) => (
+                <p key={m.id}>
+                  {m.vendor || "Expense"} · {m.expense_date} ·{" "}
+                  {money(m.amount_cents)}
+                </p>
+              ))}
+            </div>
+          </details>
+        )}
         {purchase.data.ocr_read_id && (
           <details>
             <summary>Receipt-reading source</summary>

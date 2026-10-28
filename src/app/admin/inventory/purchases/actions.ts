@@ -1,4 +1,8 @@
 "use server";
+import {
+  receiptDuplicateApproval,
+  type ReceiptDuplicateReview,
+} from "@/lib/receipt-duplicates";
 import { createHash } from "node:crypto";
 import { requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -10,6 +14,7 @@ export type ReceiptPurchaseState = {
   success?: string;
   expense?: string;
   attachmentError?: string;
+  duplicateReview?: ReceiptDuplicateReview;
 };
 export async function saveReceiptPurchase(
   _state: ReceiptPurchaseState,
@@ -24,26 +29,74 @@ export async function saveReceiptPurchase(
       throw Error(
         "Keep the read receipt photo attached, or clear reading provenance and enter manually.",
       );
+    const prior = await db
+      .from("inventory_receipt_purchases")
+      .select("id,payload")
+      .eq("id", values.p_request)
+      .maybeSingle();
+    if (prior.error)
+      throw Error(
+        "Existing receipt requests could not be checked. Please refresh.",
+      );
+    const digest = receipt
+      ? createHash("sha256").update(receipt.bytes).digest("hex")
+      : null;
+    const approval = receiptDuplicateApproval(form);
+    if (approval && !receipt)
+      throw Error(
+        "Keep the matching receipt file selected while reviewing another purchase.",
+      );
+    const review = async () => {
+      const response = await db.rpc("review_receipt_photo", {
+        p_hash: digest,
+        p_exclude: values.p_request,
+      });
+      if (response.error)
+        throw Error("Receipt duplicates could not be checked. Please refresh.");
+      return response.data as ReceiptDuplicateReview;
+    };
+    let duplicateReview: ReceiptDuplicateReview | undefined;
+    if (digest && !prior.data) {
+      duplicateReview = await review();
+      if (
+        duplicateReview.count > 0 &&
+        (!approval || approval.duplicate_review_token !== duplicateReview.token)
+      )
+        return {
+          error:
+            "This receipt file is already linked to an expense. Review the matches below before recording another purchase.",
+          duplicateReview,
+        };
+    }
     const header = {
       ...values.p_header,
-      ...(scan && receipt
-        ? {
-            receipt_sha256: createHash("sha256")
-              .update(receipt.bytes)
-              .digest("hex"),
-          }
+      // Existing pre-fingerprint requests retain their original payload on retries.
+      ...(digest &&
+      (!prior.data ||
+        Object.hasOwn(prior.data.payload?.header ?? {}, "receipt_sha256"))
+        ? { receipt_sha256: digest }
+        : {}),
+      ...(approval && (prior.data || Number(duplicateReview?.count) > 0)
+        ? approval
         : {}),
     };
     const { data, error } = await db.rpc("record_receipt_purchase", {
       ...values,
       p_header: header,
     });
-    if (error)
+    if (error) {
+      if (error.hint === "review_receipt_duplicate" && digest)
+        return {
+          error:
+            "Receipt matches changed. Review the current records before saving.",
+          duplicateReview: await review(),
+        };
       throw Error(
         error.code === "P0001"
           ? error.message
           : "Receipt purchase could not save. Check the values and latest migration.",
       );
+    }
     let attachmentError: string | undefined;
     if (receipt)
       try {

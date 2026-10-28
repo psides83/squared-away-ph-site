@@ -34,7 +34,13 @@ export function ReceiptPicker({
   async function prepare() {
     const field = input.current,
       file = field?.files?.[0];
-    if (!field || !file) return;
+    if (!field) return;
+    if (!file) {
+      setName("");
+      setError("");
+      onPrepared?.(null);
+      return;
+    }
     setError("");
     onPrepared?.(null);
     setBusy(true);
