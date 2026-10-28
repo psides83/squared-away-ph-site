@@ -6,9 +6,13 @@ import { receiptLimit } from "@/lib/inventory";
 export function ReceiptPicker({
   required = false,
   label = "Receipt",
+  photoLimit = receiptLimit,
+  onPrepared,
 }: {
   required?: boolean;
   label?: string;
+  photoLimit?: number;
+  onPrepared?: (file: File | null) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const help = useId();
@@ -32,6 +36,7 @@ export function ReceiptPicker({
       file = field?.files?.[0];
     if (!field || !file) return;
     setError("");
+    onPrepared?.(null);
     setBusy(true);
     field.setCustomValidity("Wait for receipt preparation to finish.");
     try {
@@ -42,7 +47,8 @@ export function ReceiptPicker({
       let ready = file;
       if (
         file.type.startsWith("image/") &&
-        (file.size > receiptLimit ||
+        (photoLimit < receiptLimit ||
+          file.size > photoLimit ||
           !["image/jpeg", "image/png", "image/webp"].includes(file.type))
       ) {
         const bitmap = await createImageBitmap(file, {
@@ -66,9 +72,9 @@ export function ReceiptPicker({
           blob = await new Promise((resolve) =>
             canvas.toBlob(resolve, "image/jpeg", quality),
           );
-          if (blob && blob.size <= receiptLimit) break;
+          if (blob && blob.size <= photoLimit) break;
         }
-        if (!blob || blob.size > receiptLimit)
+        if (!blob || blob.size > photoLimit)
           throw new Error(
             "The photo is still too large. Crop the receipt or choose a smaller image.",
           );
@@ -84,6 +90,7 @@ export function ReceiptPicker({
           "Choose a receipt under 3 MB. Photos can be reduced automatically; PDFs must already fit.",
         );
       setName(ready.name);
+      onPrepared?.(ready);
     } catch (e) {
       field.value = "";
       setName("");
@@ -142,6 +149,7 @@ export function ReceiptPicker({
             onClick={() => {
               if (input.current) input.current.value = "";
               setName("");
+              onPrepared?.(null);
             }}
           >
             <X size={17} />
@@ -152,7 +160,7 @@ export function ReceiptPicker({
         {busy
           ? "Preparing photo…"
           : name ||
-            `Use your camera or choose a JPEG, PNG, WebP, or PDF. ${label} stays private. Up to 3 MB after photo preparation.`}
+            `Use your camera or choose a JPEG, PNG, WebP, or PDF. Selected files stay on this device until you choose to read or save them. ${photoLimit < receiptLimit ? "Photos are prepared under 900 KB for free reading; PDFs up to 3 MB can be attached manually." : "Up to 3 MB after photo preparation."}`}
       </p>
       {error && (
         <p className="notice error" role="alert">

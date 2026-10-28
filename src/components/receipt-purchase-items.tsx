@@ -7,7 +7,7 @@ export async function ReceiptPurchaseItems({ expense }: { expense: string }) {
   const [purchase, lines] = await Promise.all([
     db
       .from("inventory_receipt_purchases")
-      .select("cancelled_at,cancel_reason")
+      .select("cancelled_at,cancel_reason,ocr_read_id")
       .eq("id", expense)
       .single(),
     db
@@ -22,6 +22,13 @@ export async function ReceiptPurchaseItems({ expense }: { expense: string }) {
         Receipt items could not load. Check the latest migration.
       </p>
     );
+  const reading = purchase.data.ocr_read_id
+    ? await db
+        .from("receipt_ocr_reads")
+        .select("extracted_text")
+        .eq("id", purchase.data.ocr_read_id)
+        .maybeSingle()
+    : null;
   return (
     <section className="panel">
       <div className="panel-heading">
@@ -33,6 +40,29 @@ export async function ReceiptPurchaseItems({ expense }: { expense: string }) {
           Inventory item costs include their reviewed discount and tax;
           expense-only items add no stock.
         </p>
+        {purchase.data.ocr_read_id && (
+          <details>
+            <summary>Receipt-reading source</summary>
+            <p>
+              Assisted by OCR.space. Saved item values were reviewed separately;
+              recognized text is unverified.
+            </p>
+            {reading?.data?.extracted_text ? (
+              <pre
+                className="log-notes"
+                style={{
+                  whiteSpace: "pre-wrap",
+                  overflowWrap: "anywhere",
+                  font: "inherit",
+                }}
+              >
+                {reading.data.extracted_text}
+              </pre>
+            ) : (
+              <p>Recognized text is unavailable to this account.</p>
+            )}
+          </details>
+        )}
         {purchase.data.cancelled_at && (
           <p className="notice">
             Cancelled: {purchase.data.cancel_reason}. Original item details

@@ -1,8 +1,10 @@
+import { receiptOcrConfigured } from "@/lib/receipt-ocr";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { PageHeading, Notice } from "@/components/ui";
 import { ReceiptPurchaseForm } from "@/components/receipt-purchase-form";
 import { today } from "@/lib/format";
+export const maxDuration = 60;
 export default async function NewReceiptPurchase() {
   const { db } = await requireAdmin();
   const [products, units, categories] = await Promise.all([
@@ -33,6 +35,7 @@ export default async function NewReceiptPurchase() {
           products={products.data ?? []}
           units={units.data ?? []}
           categories={categories.data ?? []}
+          ocrConfigured={receiptOcrConfigured(process.env)}
           date={today()}
         />
       )}

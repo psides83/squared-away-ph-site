@@ -1,4 +1,5 @@
 "use server";
+import { createHash } from "node:crypto";
 import { requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { preparedReceipt, attachReceipt } from "@/lib/receipt-storage";
@@ -18,7 +19,25 @@ export async function saveReceiptPurchase(
   try {
     const values = receiptPurchaseValues(form);
     const receipt = await preparedReceipt(form.get("receipt"));
-    const { data, error } = await db.rpc("record_receipt_purchase", values);
+    const scan = identifier(form, "ocr_read_id");
+    if (scan && !receipt)
+      throw Error(
+        "Keep the read receipt photo attached, or clear reading provenance and enter manually.",
+      );
+    const header = {
+      ...values.p_header,
+      ...(scan && receipt
+        ? {
+            receipt_sha256: createHash("sha256")
+              .update(receipt.bytes)
+              .digest("hex"),
+          }
+        : {}),
+    };
+    const { data, error } = await db.rpc("record_receipt_purchase", {
+      ...values,
+      p_header: header,
+    });
     if (error)
       throw Error(
         error.code === "P0001"

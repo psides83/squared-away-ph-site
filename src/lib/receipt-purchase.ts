@@ -2,7 +2,7 @@ import { cents, choice, dateValue, identifier, text } from "./validation.ts";
 import { quantity } from "./inventory.ts";
 export type ReceiptItemDraft = {
   id: string;
-  kind: "inventory" | "expense";
+  kind: "" | "inventory" | "expense";
   description: string;
   product_id: string;
   unit_id: string;
@@ -94,6 +94,8 @@ export function receiptPurchaseValues(form: FormData) {
       if (typeof row[key] !== "string") throw Error("Invalid receipt item.");
       f.set(key, row[key]);
     }
+    if (!row.kind)
+      throw Error("Choose an item type for every suggested receipt line.");
     const kind = choice(f, "kind", ["inventory", "expense"]);
     const subtotal = cents(f, "subtotal"),
       discount = cents(f, "discount"),
@@ -123,6 +125,9 @@ export function receiptPurchaseValues(form: FormData) {
     vendor: text(form, "vendor", true, 200),
     category_id: identifier(form, "category_id", true),
     notes: text(form, "notes", false, 5000),
+    ...(identifier(form, "ocr_read_id")
+      ? { ocr_read_id: identifier(form, "ocr_read_id") }
+      : {}),
     total_cents: cents(form, "total"),
     discount_cents: cents(form, "discount"),
     tax_cents: cents(form, "tax"),

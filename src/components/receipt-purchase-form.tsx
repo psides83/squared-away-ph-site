@@ -1,4 +1,7 @@
 "use client";
+import { ReceiptOcrReader } from "@/components/receipt-ocr-reader";
+import { ocrPhotoLimit, receiptItemsFromOcr } from "@/lib/receipt-ocr";
+import type { ReceiptOcrResult } from "@/app/admin/inventory/purchases/ocr-actions";
 import Link from "next/link";
 import { startTransition, useActionState, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
@@ -34,12 +37,20 @@ export function ReceiptPurchaseForm({
   units,
   categories,
   date,
+  ocrConfigured = false,
 }: {
   products: { id: string; name: string }[];
   units: { id: string; product_id: string; label: string }[];
   categories: { id: string; name: string }[];
   date: string;
+  ocrConfigured?: boolean;
 }) {
+  const [photo, setPhoto] = useState<File | null>(null),
+    [ocrBusy, setOcrBusy] = useState(false),
+    [ocrRead, setOcrRead] = useState<string | null>(null);
+  const [vendor, setVendor] = useState(""),
+    [purchaseDate, setPurchaseDate] = useState(date),
+    [paidOn, setPaidOn] = useState("");
   const [request] = useState(() => crypto.randomUUID());
   const [items, setItems] = useState<ReceiptItemDraft[]>(() => [
     freshItem(products.length ? "inventory" : "expense"),
@@ -54,6 +65,25 @@ export function ReceiptPurchaseForm({
     setItems((rows) =>
       rows.map((r) => (r.id === id ? { ...r, ...values } : r)),
     );
+    setReviewed(false);
+    setIssue(undefined);
+  };
+  const applyRead = (result: ReceiptOcrResult) => {
+    if (!result.suggestion || !result.id) return;
+    const suggestion = result.suggestion;
+    setVendor(suggestion.vendor ?? "");
+    setPurchaseDate(suggestion.date ?? "");
+    setPaidOn("");
+    setTax(suggestion.tax ?? "");
+    setDiscount(suggestion.discount ?? "");
+    setTotal(suggestion.total ?? "");
+    const suggestedItems = receiptItemsFromOcr(suggestion, products);
+    setItems(
+      suggestedItems.length
+        ? suggestedItems
+        : [freshItem(products.length ? "inventory" : "expense")],
+    );
+    setOcrRead(result.id);
     setReviewed(false);
     setIssue(undefined);
   };
@@ -133,8 +163,12 @@ export function ReceiptPurchaseForm({
           </div>
         </div>
       )}
-      <fieldset className="stack" disabled={pending || Boolean(state.expense)}>
+      <fieldset
+        className="stack"
+        disabled={pending || Boolean(state.expense) || ocrBusy}
+      >
         <input name="request_id" type="hidden" value={request} />
+        <input name="ocr_read_id" type="hidden" value={ocrRead ?? ""} />
         <input name="items" type="hidden" value={JSON.stringify(items)} />
         <section className="panel">
           <div className="panel-heading">
@@ -142,21 +176,40 @@ export function ReceiptPurchaseForm({
           </div>
           <div className="record-form stack">
             <div className="form-grid">
-              <Field label="Vendor" name="vendor" maxLength={200} required />
-              <Field
-                label="Purchase date"
-                name="expense_date"
-                type="date"
-                defaultValue={date}
-                max={date}
-                required
-              />
-              <Field
-                label="Paid on (leave blank if unpaid)"
-                name="paid_on"
-                type="date"
-                max={date}
-              />
+              <label className="field">
+                Vendor
+                <FormInput
+                  name="vendor"
+                  aria-label="Vendor"
+                  required
+                  maxLength={200}
+                  value={vendor}
+                  onChange={(e) => setVendor(e.target.value)}
+                />
+              </label>
+              <label className="field">
+                Purchase date
+                <FormInput
+                  name="expense_date"
+                  aria-label="Purchase date"
+                  type="date"
+                  max={date}
+                  required
+                  value={purchaseDate}
+                  onChange={(e) => setPurchaseDate(e.target.value)}
+                />
+              </label>
+              <label className="field">
+                Paid on (leave blank if unpaid)
+                <FormInput
+                  name="paid_on"
+                  aria-label="Paid on (leave blank if unpaid)"
+                  type="date"
+                  max={date}
+                  value={paidOn}
+                  onChange={(e) => setPaidOn(e.target.value)}
+                />
+              </label>
               <label className="field">
                 Expense category for this receipt
                 <AppSelect
@@ -183,7 +236,26 @@ export function ReceiptPurchaseForm({
               Items retain their own descriptions and stock costs; they are not
               separate expense-category totals.
             </p>
-            <ReceiptPicker />
+            <ReceiptPicker
+              photoLimit={ocrPhotoLimit}
+              onPrepared={(file) => {
+                setPhoto(file);
+                setOcrRead(null);
+                setReviewed(false);
+              }}
+            />
+            <ReceiptOcrReader
+              photo={photo}
+              configured={ocrConfigured}
+              onBusy={setOcrBusy}
+              onApply={applyRead}
+            />
+            {ocrRead && (
+              <p className="notice">
+                Draft filled from receipt reading. Review every field;
+                quantities, units and tax eligibility were not inferred.
+              </p>
+            )}
             <HelpPanel title="How to enter receipt items">
               <p>
                 Enter each item's full line subtotal before receipt-wide
@@ -203,8 +275,8 @@ export function ReceiptPurchaseForm({
                 One saved expense holds this receipt and its total. Stock costs
                 include each item's allocated tax and discount. Later item
                 corrections are not yet supported; an untouched whole receipt
-                can be cancelled. The app does not recognize the receipt photo
-                automatically.
+                can be cancelled. Read receipt can fill a reviewable draft;
+                choosing a photo alone never sends it.
               </p>
             </HelpPanel>
           </div>
@@ -218,7 +290,11 @@ export function ReceiptPurchaseForm({
               <div className="panel-heading">
                 <h2>
                   Item {index + 1} ·{" "}
-                  {item.kind === "inventory" ? "Inventory" : "Expense only"}
+                  {item.kind === "inventory"
+                    ? "Inventory"
+                    : item.kind === "expense"
+                      ? "Expense only"
+                      : "Choose type"}
                 </h2>
                 <button
                   type="button"
@@ -235,6 +311,28 @@ export function ReceiptPurchaseForm({
               </div>
               <div className="record-form stack">
                 <div className="form-grid">
+                  <label className="field">
+                    Item type
+                    <AppSelect
+                      aria-label={`Type for item ${index + 1}`}
+                      required
+                      value={item.kind}
+                      onChange={(e) =>
+                        patch(item.id, {
+                          kind: e.target.value as "inventory" | "expense",
+                          product_id: "",
+                          unit_id: "",
+                          quantity: "",
+                        })
+                      }
+                    >
+                      <option value="" disabled>
+                        Choose item type
+                      </option>
+                      <option value="inventory">Inventory</option>
+                      <option value="expense">Expense only</option>
+                    </AppSelect>
+                  </label>
                   {item.kind === "inventory" && (
                     <>
                       <label className="field">
