@@ -9,6 +9,8 @@ export type FeedComparison = {
     issued_cents: number;
     draft_cents: number;
     unbilled_actual_cents: number;
+    package_cents: number;
+    adjustment_cents: number;
   };
   horses: {
     horse_id: string;
@@ -21,6 +23,8 @@ export type FeedComparison = {
     feeding_lines: number;
     feeding_days: number;
     unbilled_actual_cents: number;
+    package_cents: number;
+    adjustment_cents: number;
     included: boolean;
     has_unmatched: boolean;
     has_adjustments: boolean;
@@ -43,6 +47,8 @@ export type FeedComparison = {
       issue_date: string;
       cents: number;
       actual_cost: boolean;
+      package_cents: number | null;
+      adjustment_cents: number;
       has_adjustments: boolean;
     }[];
   }[];
@@ -93,17 +99,22 @@ export function FeedComparisonReport({
           which service dates are compared.
         </p>
         <p>
-          Drafts are shown separately and are not invoiced revenue. Payments and
-          invoice-wide adjustments are not allocated to feed. Manual feed lines
-          without source dates require review. Feed included in a training
-          package has no separately allocated revenue, so its margin is not
-          shown. This report is not cash profit and does not change any invoice.
+          Drafts are shown separately and are not invoiced revenue. Saved
+          package feed portions follow the invoice’s claimed training days,
+          weighted by calendar-month length. Manually assigned feed adjustments
+          follow the invoice’s supported gross feed revenue across all service
+          dates, with exact cent rounding; they restate the original service
+          period regardless of adjustment date. Zero-value source totals use
+          equal dated shares. Payments are not feed revenue. Unallocated
+          adjustments, manual lines without service dates and missing package
+          splits require review. This report is not cash profit and does not
+          change any invoice.
         </p>
       </HelpPanel>
       <div className="stats-grid">
         {[
           ["Recorded feed cost", report.totals.cost_cents],
-          ["Feed invoiced", report.totals.issued_cents],
+          ["Net feed revenue", report.totals.issued_cents],
           ["Feed on drafts", report.totals.draft_cents],
           ["At-cost feed not on invoices", report.totals.unbilled_actual_cents],
         ].map(([label, value]) => (
@@ -167,7 +178,7 @@ export function FeedComparisonReport({
       ) : (
         report.horses.map((h) => {
           const blocked = h.included
-            ? "Included in training"
+            ? "Package split needs review"
             : h.has_adjustments
               ? "Review invoice adjustments"
               : h.has_unmatched
@@ -202,9 +213,9 @@ export function FeedComparisonReport({
                   <p className="notice">
                     {blocked}.{" "}
                     {h.included
-                      ? "Bundled training revenue is not allocated to feed."
+                      ? "Some package charges lack a saved internal feed split."
                       : h.has_adjustments
-                        ? "This comparison excludes invoice-wide adjustments."
+                        ? "Some invoice adjustments lack a manual allocation or supported feed source dates."
                         : h.has_unmatched
                           ? "Some finalized feed charges lack dated service sources and are excluded."
                           : "Record actual feeding before judging the margin."}
@@ -213,7 +224,7 @@ export function FeedComparisonReport({
                 <dl className="feed-comparison-metrics">
                   {[
                     ["Recorded feed cost", money(h.cost_cents)],
-                    ["Feed invoiced", money(h.issued_cents)],
+                    ["Net feed revenue", money(h.issued_cents)],
                     [
                       "Recorded difference",
                       blocked ? "Not comparable" : money(h.difference_cents),
@@ -227,6 +238,12 @@ export function FeedComparisonReport({
                   ))}
                 </dl>
                 <div className="row-actions">
+                  <span className="tag">
+                    Package feed: {money(h.package_cents)}
+                  </span>
+                  <span className="tag">
+                    Feed adjustments: {money(h.adjustment_cents)}
+                  </span>
                   <span className="tag">
                     Draft feed: {money(h.draft_cents)}
                   </span>
@@ -293,8 +310,26 @@ export function FeedComparisonReport({
                         <p>
                           {i.customer_name} · {money(i.cents)} allocated ·{" "}
                           {i.status === "draft" ? "Draft" : "Finalized"} ·{" "}
-                          {i.actual_cost ? "Actual feed cost" : "Monthly feed"}
+                          {i.package_cents !== null
+                            ? "Includes package feed"
+                            : i.actual_cost
+                              ? "Actual feed cost"
+                              : "Monthly feed"}
                         </p>
+                        {i.adjustment_cents !== 0 && (
+                          <p className="muted">
+                            Includes {money(i.adjustment_cents)} manually
+                            allocated feed adjustments.
+                          </p>
+                        )}
+                        {i.has_adjustments && (
+                          <Link
+                            className="text-link"
+                            href={`/admin/invoices/${i.invoice_id}#invoice-corrections`}
+                          >
+                            Review adjustment allocations
+                          </Link>
+                        )}
                         {i.period_from && i.period_to && (
                           <small className="muted">
                             Invoice period: {dateLabel(i.period_from)} –{" "}

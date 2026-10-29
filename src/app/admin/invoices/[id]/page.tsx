@@ -1,3 +1,4 @@
+import { InvoiceAdjustmentReporting } from "@/components/invoice-adjustment-reporting";
 import { InvoiceCreditSummary } from "@/components/invoice-credit-summary";
 import { InvoiceRefunds } from "@/components/invoice-refunds";
 import { InvoiceRefundSummary } from "@/components/invoice-refund-summary";
@@ -990,6 +991,7 @@ export default async function Invoice({
             label: "Corrections",
             content: (
               <>
+                <InvoiceAdjustmentReporting invoice={id} />
                 <section className="panel">
                   <div className="panel-heading">
                     <h2>Adjustment history</h2>
