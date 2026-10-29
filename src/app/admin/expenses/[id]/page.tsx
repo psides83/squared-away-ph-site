@@ -1,3 +1,4 @@
+import { ExpenseServiceCosts } from "@/components/expense-service-costs";
 import { ReceiptPurchaseItems } from "@/components/receipt-purchase-items";
 import { ExpenseAbsorbedCosts } from "@/components/expense-absorbed-costs";
 import { ExpenseExchanges } from "@/components/expense-exchanges";
@@ -249,6 +250,11 @@ export default async function ExpenseRecord({
                   : "details"
             }
             sections={[
+              {
+                id: "service-costs",
+                label: "Service costs",
+                content: <ExpenseServiceCosts expense={id} />,
+              },
               ...(receiptPurchase
                 ? [
                     {

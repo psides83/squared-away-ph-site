@@ -185,24 +185,22 @@ export default async function StayRecord({
                             before generating more training lines.
                           </p>
                         )}
-                      {s.monthly_rate_cents > 0 &&
-                        (s.feed_billing === "included" ||
-                          s.boarding_billing === "included") && (
-                          <ActionPanel
-                            id="package-reporting"
-                            label="Set package reporting split"
-                          >
-                            <PackageReportingForm
-                              stay={id}
-                              monthly={s.monthly_rate_cents}
-                              current={
-                                allocation.data as PackageAgreement | undefined
-                              }
-                              feedIncluded={s.feed_billing === "included"}
-                              boardIncluded={s.boarding_billing === "included"}
-                            />
-                          </ActionPanel>
-                        )}
+                      {s.monthly_rate_cents > 0 && (
+                        <ActionPanel
+                          id="package-reporting"
+                          label="Set package reporting split"
+                        >
+                          <PackageReportingForm
+                            stay={id}
+                            monthly={s.monthly_rate_cents}
+                            current={
+                              allocation.data as PackageAgreement | undefined
+                            }
+                            feedIncluded={s.feed_billing === "included"}
+                            boardIncluded={s.boarding_billing === "included"}
+                          />
+                        </ActionPanel>
+                      )}
                     </>
                   )}
                   <h3>Private agreement notes</h3>

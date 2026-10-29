@@ -1,3 +1,5 @@
+import { ServiceProfitabilityReport } from "@/components/service-profitability-report";
+import type { ServiceProfitability } from "@/lib/service-profitability";
 import { PackageRevenueReport } from "@/components/package-revenue-report";
 import type { PackageRevenue } from "@/lib/package-reporting";
 import { validCashExportPeriod } from "@/lib/cash-export";
@@ -83,15 +85,16 @@ export default async function Reports({
   const from = query.from ?? `${date.slice(0, 4)}-01-01`;
   const to = query.to ?? date;
   const valid = validCashExportPeriod(from, to);
-  const [result, usage, comparison, recovery, packages] = valid
+  const [result, usage, comparison, recovery, packages, services] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
         db.rpc("inventory_usage_report", { p_from: from, p_to: to }),
         db.rpc("feed_charge_comparison", { p_from: from, p_to: to }),
         db.rpc("expense_recovery_report", { p_from: from, p_to: to }),
         db.rpc("package_revenue_report", { p_from: from, p_to: to }),
+        db.rpc("service_profitability", { p_from: from, p_to: to }),
       ])
-    : [null, null, null, null, null];
+    : [null, null, null, null, null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -176,6 +179,19 @@ export default async function Reports({
             label="Financial report sections"
             defaultTab="cash"
             sections={[
+              {
+                id: "service-margins",
+                label: "Service margins",
+                content: (
+                  <ServiceProfitabilityReport
+                    report={
+                      services?.error
+                        ? null
+                        : (services?.data as ServiceProfitability | null)
+                    }
+                  />
+                ),
+              },
               {
                 id: "package-revenue",
                 label: "Package revenue",
