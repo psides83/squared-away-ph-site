@@ -1,3 +1,5 @@
+import { PackageRevenueReport } from "@/components/package-revenue-report";
+import type { PackageRevenue } from "@/lib/package-reporting";
 import { validCashExportPeriod } from "@/lib/cash-export";
 import { CashExportButton } from "@/components/cash-export-button";
 import {
@@ -81,14 +83,15 @@ export default async function Reports({
   const from = query.from ?? `${date.slice(0, 4)}-01-01`;
   const to = query.to ?? date;
   const valid = validCashExportPeriod(from, to);
-  const [result, usage, comparison, recovery] = valid
+  const [result, usage, comparison, recovery, packages] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
         db.rpc("inventory_usage_report", { p_from: from, p_to: to }),
         db.rpc("feed_charge_comparison", { p_from: from, p_to: to }),
         db.rpc("expense_recovery_report", { p_from: from, p_to: to }),
+        db.rpc("package_revenue_report", { p_from: from, p_to: to }),
       ])
-    : [null, null, null, null];
+    : [null, null, null, null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -173,6 +176,19 @@ export default async function Reports({
             label="Financial report sections"
             defaultTab="cash"
             sections={[
+              {
+                id: "package-revenue",
+                label: "Package revenue",
+                content: (
+                  <PackageRevenueReport
+                    report={
+                      packages?.error
+                        ? null
+                        : (packages?.data as PackageRevenue | null)
+                    }
+                  />
+                ),
+              },
               {
                 id: "expense-recovery",
                 label: "Expense recovery",

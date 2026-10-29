@@ -1,3 +1,6 @@
+import { ActionPanel } from "@/components/action-panel";
+import { PackageReportingForm } from "@/components/package-reporting-form";
+import type { PackageAgreement } from "@/lib/package-reporting";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
@@ -39,7 +42,7 @@ export default async function StayRecord({
     1,
     Math.min(10000, Math.floor(Number(query.page) || 1)),
   );
-  const [horse, customer, invoices] = await Promise.all([
+  const [horse, customer, invoices, allocation] = await Promise.all([
     db.from("horses").select("barn_name").eq("id", s.horse_id).maybeSingle(),
     db
       .from("customers")
@@ -53,6 +56,12 @@ export default async function StayRecord({
       .order("created_at", { ascending: false })
       .order("id")
       .range((page - 1) * 25, page * 25 - 1),
+    db
+      .from("package_reporting_agreements")
+      .select("*")
+      .eq("stay_id", id)
+      .is("retired_at", null)
+      .maybeSingle(),
   ]);
   const date = today();
   const status =
@@ -141,6 +150,61 @@ export default async function StayRecord({
                     days. Actual-cost billing uses recorded consumption and
                     reviewed assigned costs.
                   </p>
+                  <h3>Package reporting split</h3>
+                  {allocation.error ? (
+                    <Notice error="Reporting agreement could not load. Check the latest migration." />
+                  ) : (
+                    <>
+                      {allocation.data ? (
+                        <p>
+                          Feed {money(allocation.data.feed_cents)} · Board{" "}
+                          {money(allocation.data.board_cents)} · Training{" "}
+                          {money(
+                            allocation.data.monthly_cents -
+                              allocation.data.feed_cents -
+                              allocation.data.board_cents,
+                          )}{" "}
+                          per month, based on a{" "}
+                          {money(allocation.data.monthly_cents)} package.
+                        </p>
+                      ) : (
+                        <p className="muted">
+                          No internal split saved. Package revenue remains
+                          unallocated.
+                        </p>
+                      )}
+                      {allocation.data &&
+                        (allocation.data.monthly_cents !==
+                          s.monthly_rate_cents ||
+                          (allocation.data.feed_cents > 0 &&
+                            s.feed_billing !== "included") ||
+                          (allocation.data.board_cents > 0 &&
+                            s.boarding_billing !== "included")) && (
+                          <p className="notice">
+                            The agreement changed. Save a new reporting split
+                            before generating more training lines.
+                          </p>
+                        )}
+                      {s.monthly_rate_cents > 0 &&
+                        (s.feed_billing === "included" ||
+                          s.boarding_billing === "included") && (
+                          <ActionPanel
+                            id="package-reporting"
+                            label="Set package reporting split"
+                          >
+                            <PackageReportingForm
+                              stay={id}
+                              monthly={s.monthly_rate_cents}
+                              current={
+                                allocation.data as PackageAgreement | undefined
+                              }
+                              feedIncluded={s.feed_billing === "included"}
+                              boardIncluded={s.boarding_billing === "included"}
+                            />
+                          </ActionPanel>
+                        )}
+                    </>
+                  )}
                   <h3>Private agreement notes</h3>
                   <p style={{ whiteSpace: "pre-wrap" }}>
                     {s.notes || "No agreement notes recorded."}
