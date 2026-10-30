@@ -1,3 +1,7 @@
+import {
+  StayFeedReport,
+  type StayFeedReportData,
+} from "@/components/stay-feed-report";
 import { ServiceEntityReport } from "@/components/service-entity-report";
 import type { EntityMargins } from "@/lib/service-assignments";
 import { ServiceProfitabilityReport } from "@/components/service-profitability-report";
@@ -84,6 +88,7 @@ export default async function Reports({
     to?: string;
     horse_service_page?: string;
     stay_service_page?: string;
+    stay_feed_page?: string;
   }>;
 }) {
   const { db } = await requireAdmin();
@@ -100,6 +105,10 @@ export default async function Reports({
     1,
     Math.min(10000, Math.floor(Number(query.stay_service_page) || 1)),
   );
+  const feedPage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.stay_feed_page) || 1)),
+  );
   const [
     result,
     usage,
@@ -109,6 +118,7 @@ export default async function Reports({
     services,
     horseServices,
     stayServices,
+    stayFeed,
   ] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
@@ -129,8 +139,13 @@ export default async function Reports({
           p_scope: "stay",
           p_page: stayPage,
         }),
+        db.rpc("stay_feed_margins", {
+          p_from: from,
+          p_to: to,
+          p_page: feedPage,
+        }),
       ])
-    : [null, null, null, null, null, null, null, null];
+    : [null, null, null, null, null, null, null, null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -216,7 +231,9 @@ export default async function Reports({
             defaultTab={
               query.horse_service_page || query.stay_service_page
                 ? "service-margins"
-                : "cash"
+                : query.stay_feed_page
+                  ? "feed-comparison"
+                  : "cash"
             }
             sections={[
               {
@@ -457,12 +474,41 @@ export default async function Reports({
                 id: "feed-comparison",
                 label: "Feed cost vs charges",
                 content: (
-                  <FeedComparisonReport
-                    report={
-                      comparison?.error
-                        ? null
-                        : (comparison?.data as FeedComparison | null)
-                    }
+                  <SectionTabs
+                    id="feed-comparison"
+                    label="Feed comparison scopes"
+                    defaultTab={query.stay_feed_page ? "stays" : "horses"}
+                    sections={[
+                      {
+                        id: "horses",
+                        label: "By horse",
+                        content: (
+                          <FeedComparisonReport
+                            report={
+                              comparison?.error
+                                ? null
+                                : (comparison?.data as FeedComparison | null)
+                            }
+                          />
+                        ),
+                      },
+                      {
+                        id: "stays",
+                        label: "By stay",
+                        content: (
+                          <StayFeedReport
+                            report={
+                              stayFeed?.error
+                                ? null
+                                : (stayFeed?.data as StayFeedReportData | null)
+                            }
+                            from={from}
+                            to={to}
+                            page={feedPage}
+                          />
+                        ),
+                      },
+                    ]}
                   />
                 ),
               },
