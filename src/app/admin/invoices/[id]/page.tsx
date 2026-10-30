@@ -1,3 +1,4 @@
+import { PackageReportingReviews } from "@/components/package-reporting-reviews";
 import { ManualFeedReporting } from "@/components/manual-feed-reporting";
 import { InvoiceAdjustmentReporting } from "@/components/invoice-adjustment-reporting";
 import { InvoiceCreditSummary } from "@/components/invoice-credit-summary";
@@ -51,6 +52,7 @@ export default async function Invoice({
     success?: string;
     refund_page?: string;
     manual_feed_page?: string;
+    package_review_page?: string;
   }>;
 }) {
   const { id } = await params;
@@ -286,7 +288,7 @@ export default async function Invoice({
         label="Invoice sections"
         printTab="invoice"
         defaultTab={
-          query.manual_feed_page
+          query.manual_feed_page || query.package_review_page
             ? "reporting"
             : query.refund_page
               ? "refunds"
@@ -297,16 +299,28 @@ export default async function Invoice({
             id: "reporting",
             label: "Reporting",
             content: (
-              <ManualFeedReporting
-                invoice={id}
-                page={Math.max(
-                  1,
-                  Math.min(
-                    10000,
-                    Math.floor(Number(query.manual_feed_page) || 1),
-                  ),
-                )}
-              />
+              <>
+                <PackageReportingReviews
+                  invoice={id}
+                  page={Math.max(
+                    1,
+                    Math.min(
+                      10000,
+                      Math.floor(Number(query.package_review_page) || 1),
+                    ),
+                  )}
+                />
+                <ManualFeedReporting
+                  invoice={id}
+                  page={Math.max(
+                    1,
+                    Math.min(
+                      10000,
+                      Math.floor(Number(query.manual_feed_page) || 1),
+                    ),
+                  )}
+                />
+              </>
             ),
           },
           {

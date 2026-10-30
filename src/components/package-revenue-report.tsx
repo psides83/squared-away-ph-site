@@ -28,7 +28,9 @@ export function PackageRevenueReport({
           Each newly generated training line retains the agreement’s monthly
           split. Feed and board use that line’s prorated proportions; training
           receives the remainder, including any rounding pennies. Later
-          agreement edits do not restate saved allocations. Drafts, void
+          agreement edits do not restate saved allocations. Deliberate
+          invoice-level reporting reviews can override those allocations while
+          preserving the original snapshot and review history. Drafts, void
           invoices, manual charges and separate feed or board charges are
           outside this report.
         </p>
@@ -164,8 +166,14 @@ export function PackageRevenueReport({
               </p>
               {l.feed_cents === null ? (
                 <p className="notice">
-                  No saved reporting split. Existing lines are not allocated
-                  from today’s agreement.
+                  No saved reporting split. Today’s agreement is not applied
+                  automatically.{" "}
+                  <Link
+                    className="text-link"
+                    href={`/admin/invoices/${l.invoice_id}#invoice-reporting`}
+                  >
+                    Review this charge in Invoice → Reporting
+                  </Link>
                 </p>
               ) : (
                 <dl className="feed-comparison-metrics">

@@ -6,11 +6,13 @@ export function ConfirmButton({
   children,
   message,
   destructive = false,
+  disabled = false,
   className = "button",
 }: {
   children: React.ReactNode;
   message: string;
   destructive?: boolean;
+  disabled?: boolean;
   className?: string;
 }) {
   const { pending } = useFormStatus();
@@ -24,7 +26,7 @@ export function ConfirmButton({
         ref={trigger}
         type="submit"
         className={className}
-        disabled={pending}
+        disabled={pending || disabled}
         aria-haspopup="dialog"
         onClick={(e) => {
           e.preventDefault();
@@ -64,7 +66,7 @@ export function ConfirmButton({
             <button
               type="button"
               className={`button ${destructive ? "button-danger" : ""}`}
-              disabled={pending}
+              disabled={pending || disabled}
               onClick={() => {
                 dialog.current?.close();
                 trigger.current?.form?.requestSubmit(trigger.current);
