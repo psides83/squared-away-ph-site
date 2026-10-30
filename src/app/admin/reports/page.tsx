@@ -1,4 +1,8 @@
 import {
+  CombinedEntityReport,
+  type CombinedEntityReportData,
+} from "@/components/combined-entity-report";
+import {
   CombinedServiceReport,
   type CombinedServiceReportData,
 } from "@/components/combined-service-report";
@@ -93,6 +97,8 @@ export default async function Reports({
     horse_service_page?: string;
     stay_service_page?: string;
     stay_feed_page?: string;
+    combined_horse_page?: string;
+    combined_stay_page?: string;
   }>;
 }) {
   const { db } = await requireAdmin();
@@ -113,6 +119,14 @@ export default async function Reports({
     1,
     Math.min(10000, Math.floor(Number(query.stay_feed_page) || 1)),
   );
+  const combinedHorsePage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.combined_horse_page) || 1)),
+  );
+  const combinedStayPage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.combined_stay_page) || 1)),
+  );
   const [
     result,
     usage,
@@ -124,6 +138,8 @@ export default async function Reports({
     stayServices,
     stayFeed,
     combined,
+    combinedHorses,
+    combinedStays,
   ] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
@@ -150,8 +166,20 @@ export default async function Reports({
           p_page: feedPage,
         }),
         db.rpc("combined_service_profitability", { p_from: from, p_to: to }),
+        db.rpc("combined_entity_profitability", {
+          p_from: from,
+          p_to: to,
+          p_scope: "horse",
+          p_page: combinedHorsePage,
+        }),
+        db.rpc("combined_entity_profitability", {
+          p_from: from,
+          p_to: to,
+          p_scope: "stay",
+          p_page: combinedStayPage,
+        }),
       ])
-    : [null, null, null, null, null, null, null, null, null, null];
+    : [null, null, null, null, null, null, null, null, null, null, null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -235,23 +263,76 @@ export default async function Reports({
             id="reports"
             label="Financial report sections"
             defaultTab={
-              query.horse_service_page || query.stay_service_page
-                ? "service-margins"
-                : query.stay_feed_page
-                  ? "feed-comparison"
-                  : "cash"
+              query.combined_horse_page || query.combined_stay_page
+                ? "combined-services"
+                : query.horse_service_page || query.stay_service_page
+                  ? "service-margins"
+                  : query.stay_feed_page
+                    ? "feed-comparison"
+                    : "cash"
             }
             sections={[
               {
                 id: "combined-services",
                 label: "Combined service results",
                 content: (
-                  <CombinedServiceReport
-                    report={
-                      combined?.error
-                        ? null
-                        : (combined?.data as CombinedServiceReportData | null)
+                  <SectionTabs
+                    id="combined-services"
+                    label="Combined service scopes"
+                    defaultTab={
+                      query.combined_horse_page
+                        ? "horses"
+                        : query.combined_stay_page
+                          ? "stays"
+                          : "business"
                     }
+                    sections={[
+                      {
+                        id: "business",
+                        label: "Business",
+                        content: (
+                          <CombinedServiceReport
+                            report={
+                              combined?.error
+                                ? null
+                                : (combined?.data as CombinedServiceReportData | null)
+                            }
+                          />
+                        ),
+                      },
+                      {
+                        id: "horses",
+                        label: "By horse",
+                        content: (
+                          <CombinedEntityReport
+                            report={
+                              combinedHorses?.error
+                                ? null
+                                : (combinedHorses?.data as CombinedEntityReportData | null)
+                            }
+                            from={from}
+                            to={to}
+                            page={combinedHorsePage}
+                          />
+                        ),
+                      },
+                      {
+                        id: "stays",
+                        label: "By stay",
+                        content: (
+                          <CombinedEntityReport
+                            report={
+                              combinedStays?.error
+                                ? null
+                                : (combinedStays?.data as CombinedEntityReportData | null)
+                            }
+                            from={from}
+                            to={to}
+                            page={combinedStayPage}
+                          />
+                        ),
+                      },
+                    ]}
                   />
                 ),
               },
