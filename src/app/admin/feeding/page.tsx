@@ -1,5 +1,8 @@
 import { FeedingHistory } from "@/components/feeding-history";
-import { type FeedingHistoryData } from "@/lib/feeding-history";
+import {
+  feedingHistoryFilters,
+  type FeedingHistoryData,
+} from "@/lib/feeding-history";
 import { redirect } from "next/navigation";
 import { FeedingTimeManager } from "@/components/feeding-time-manager";
 import { SectionTabs } from "@/components/section-tabs";
@@ -17,7 +20,11 @@ export default async function Feeding({
   searchParams,
 }: {
   searchParams: Promise<{
-    history_before?: string;
+    history_before?: string | string[];
+    history_from?: string | string[];
+    history_to?: string | string[];
+    history_horse?: string | string[];
+    history_q?: string | string[];
     edit?: string;
     new?: string;
     horse?: string;
@@ -28,14 +35,7 @@ export default async function Feeding({
 }) {
   const params = await searchParams;
   const { db } = await requireAdmin();
-  const historyBefore =
-    params.history_before &&
-    /^\d{4}-\d{2}-\d{2}$/.test(params.history_before) &&
-    !Number.isNaN(Date.parse(params.history_before)) &&
-    new Date(params.history_before).toISOString().slice(0, 10) ===
-      params.history_before
-      ? params.history_before
-      : undefined;
+  const historyFilters = feedingHistoryFilters(params);
   const [
     rations,
     horses,
@@ -49,7 +49,15 @@ export default async function Feeding({
     db.from("horses").select("id,barn_name").order("barn_name"),
     db.from("inventory_products").select("*").order("name"),
     db.from("inventory_units").select("*"),
-    db.rpc("feeding_confirmation_history", { p_before: historyBefore ?? null }),
+    historyFilters.error
+      ? Promise.resolve({ data: null, error: null })
+      : db.rpc("search_feeding_history", {
+          p_from: historyFilters.from || null,
+          p_to: historyFilters.to || null,
+          p_horse: historyFilters.horse || null,
+          p_query: historyFilters.query || null,
+          p_before: historyFilters.before ?? null,
+        }),
     db
       .from("feeding_confirmations")
       .select("id,horse_id,feeding_time_id")
@@ -61,6 +69,28 @@ export default async function Feeding({
       .order("time_of_day", { nullsFirst: false })
       .order("name"),
   ]);
+  const historyHorses = [...(horses.data ?? [])];
+  let historyHorseError: string | undefined;
+  if (
+    historyFilters.horse &&
+    !historyHorses.some((h) => h.id === historyFilters.horse)
+  ) {
+    const lookup = await db
+      .from("horses")
+      .select("id,barn_name")
+      .eq("id", historyFilters.horse)
+      .maybeSingle();
+    if (lookup.data) historyHorses.push(lookup.data);
+    else {
+      historyHorses.push({
+        id: historyFilters.horse,
+        barn_name: "Selected horse unavailable",
+      });
+      historyHorseError = lookup.error
+        ? "The selected horse could not load. Refresh or clear the filters."
+        : "Choose an existing horse or clear the filters.";
+    }
+  }
   const selected = rations.data?.find((r) => r.id === params.edit);
   if (selected)
     redirect(
@@ -73,7 +103,6 @@ export default async function Feeding({
     horses,
     products,
     units,
-    confirmations,
     todayConfirmations,
     times,
   ].some((r) => r.error);
@@ -117,27 +146,38 @@ export default async function Feeding({
               its scheduled feedings.
             </p>
           )}
-          {params.horse && (
-            <p className="notice">
-              Feeding plan for{" "}
-              {horses.data?.find((h) => h.id === params.horse)?.barn_name ??
-                "unknown horse"}
-              .{" "}
-              <Link className="text-link" href="/admin/feeding#feeding-rations">
-                Show all horses
-              </Link>
-            </p>
-          )}
           <SectionTabs
             id="feeding"
             label="Feeding sections"
-            defaultTab={params.history_before ? "history" : "rations"}
+            defaultTab={
+              params.history_before ||
+              params.history_from ||
+              params.history_to ||
+              params.history_horse ||
+              params.history_q
+                ? "history"
+                : "rations"
+            }
             sections={[
               {
                 id: "rations",
                 label: "Feed schedules",
                 content: (
                   <>
+                    {params.horse && (
+                      <p className="notice">
+                        Feeding plan for{" "}
+                        {horses.data?.find((h) => h.id === params.horse)
+                          ?.barn_name ?? "unknown horse"}
+                        .{" "}
+                        <Link
+                          className="text-link"
+                          href="/admin/feeding#feeding-rations"
+                        >
+                          Show all horses
+                        </Link>
+                      </p>
+                    )}
                     <SavedRations
                       horses={(horses.data ?? []).filter(
                         (h) => !params.horse || h.id === params.horse,
@@ -228,7 +268,16 @@ export default async function Feeding({
                         }) as FeedingHistoryData
                       }
                       times={times.data ?? []}
-                      before={historyBefore}
+                      filters={historyFilters}
+                      horses={historyHorses}
+                      planHorse={params.horse}
+                      error={
+                        historyFilters.error ||
+                        historyHorseError ||
+                        (confirmations.error
+                          ? "Feeding history could not load. Check the latest migration and refresh."
+                          : undefined)
+                      }
                     />
                   </>
                 ),
