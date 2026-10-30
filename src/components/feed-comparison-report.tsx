@@ -47,6 +47,7 @@ export type FeedComparison = {
       issue_date: string;
       cents: number;
       actual_cost: boolean;
+      manual_period?: boolean;
       package_cents: number | null;
       adjustment_cents: number;
       has_adjustments: boolean;
@@ -105,10 +106,11 @@ export function FeedComparisonReport({
           follow the invoice’s supported gross feed revenue across all service
           dates, with exact cent rounding; they restate the original service
           period regardless of adjustment date. Zero-value source totals use
-          equal dated shares. Payments are not feed revenue. Unallocated
-          adjustments, manual lines without service dates and missing package
-          splits require review. This report is not cash profit and does not
-          change any invoice.
+          equal dated shares. Reviewed manual feed lines use an equal share per
+          covered calendar day. They are not actual-cost feeding claims.
+          Payments are not feed revenue. Unallocated adjustments, manual lines
+          without service dates and missing package splits require review. This
+          report is not cash profit and does not change any invoice.
         </p>
       </HelpPanel>
       <div className="stats-grid">
@@ -147,7 +149,7 @@ export function FeedComparisonReport({
               <div key={l.line_id}>
                 <Link
                   className="text-link"
-                  href={`/admin/invoices/${l.invoice_id}`}
+                  href={`/admin/invoices/${l.invoice_id}#invoice-reporting`}
                 >
                   <FileText size={16} />
                   {l.invoice_number
@@ -209,6 +211,14 @@ export function FeedComparisonReport({
                 </Link>
               </div>
               <div className="record-form stack">
+                {h.unbilled_actual_cents > 0 &&
+                  h.invoices.some((i) => i.manual_period) && (
+                    <p className="notice">
+                      Manual feed charges do not reserve individual feeding
+                      entries. Review these charges before also billing the
+                      unclaimed actual feed costs.
+                    </p>
+                  )}
                 {blocked && (
                   <p className="notice">
                     {blocked}.{" "}
@@ -314,8 +324,15 @@ export function FeedComparisonReport({
                             ? "Includes package feed"
                             : i.actual_cost
                               ? "Actual feed cost"
-                              : "Monthly feed"}
+                              : i.manual_period
+                                ? "Manual feed"
+                                : "Monthly feed"}
                         </p>
+                        {i.manual_period && (
+                          <p className="muted">
+                            Includes reviewed manual feed dates.
+                          </p>
+                        )}
                         {i.adjustment_cents !== 0 && (
                           <p className="muted">
                             Includes {money(i.adjustment_cents)} manually

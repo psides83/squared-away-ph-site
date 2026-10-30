@@ -1,3 +1,4 @@
+import { ManualFeedReporting } from "@/components/manual-feed-reporting";
 import { InvoiceAdjustmentReporting } from "@/components/invoice-adjustment-reporting";
 import { InvoiceCreditSummary } from "@/components/invoice-credit-summary";
 import { InvoiceRefunds } from "@/components/invoice-refunds";
@@ -49,6 +50,7 @@ export default async function Invoice({
     error?: string;
     success?: string;
     refund_page?: string;
+    manual_feed_page?: string;
   }>;
 }) {
   const { id } = await params;
@@ -283,8 +285,30 @@ export default async function Invoice({
         id="invoice"
         label="Invoice sections"
         printTab="invoice"
-        defaultTab={query.refund_page ? "refunds" : "invoice"}
+        defaultTab={
+          query.manual_feed_page
+            ? "reporting"
+            : query.refund_page
+              ? "refunds"
+              : "invoice"
+        }
         sections={[
+          {
+            id: "reporting",
+            label: "Reporting",
+            content: (
+              <ManualFeedReporting
+                invoice={id}
+                page={Math.max(
+                  1,
+                  Math.min(
+                    10000,
+                    Math.floor(Number(query.manual_feed_page) || 1),
+                  ),
+                )}
+              />
+            ),
+          },
           {
             id: "invoice",
             label: "Invoice",
