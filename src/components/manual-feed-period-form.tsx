@@ -55,8 +55,9 @@ export function ManualFeedPeriodForm({
         ) : (
           <>
             <p>
-              Assign covered dates to this {money(context.amount ?? 0)} feed
-              charge for {line.horse_name ?? "the assigned horse"}.
+              Assign covered dates to this {money(context.amount ?? 0)} feed{" "}
+              {(context.amount ?? 0) < 0 ? "credit" : "charge"} for{" "}
+              {line.horse_name ?? "the assigned horse"}.
             </p>
             <div className="form-grid">
               <label>
@@ -79,10 +80,11 @@ export function ManualFeedPeriodForm({
               </label>
             </div>
             <p className="muted form-hint">
-              The full saved charge spreads evenly across these inclusive
-              calendar days; remaining pennies go to the earliest dates. These
-              dates do not claim feeding records or prove actual-cost
-              reimbursement. Any saved stay bounds still apply.
+              The full saved amount spreads evenly across these inclusive
+              calendar days. The sign is preserved and remaining pennies go to
+              the earliest dates. These dates do not claim feeding records or
+              prove actual-cost reimbursement. Any saved stay bounds still
+              apply.
             </p>
           </>
         )}

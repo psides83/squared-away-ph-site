@@ -215,7 +215,7 @@ test("changed horse assignments invalidate periods; stale and late requests cann
     await db.close();
   }
 });
-test("manual feed periods enforce stay bounds, current amounts, nonnegative manual source types and date limits", async () => {
+test("manual feed periods enforce stay bounds, current amounts, manual source types and date limits", async () => {
   const { db, c, h, line } = await fixture();
   try {
     await assert.rejects(
@@ -353,5 +353,115 @@ test("reusing a deleted draft line identifier on another invoice cannot inherit 
     );
   } finally {
     await db.close();
+  }
+});
+
+test("negative manual feed periods preserve sign, earliest-date pennies, original invoice amounts and positive-gross adjustment weights", async () => {
+  const { db, h, invoice, line } = await fixture();
+  try {
+    await db.query(
+      "select set_manual_feed_period($1,$2,null,$3,null,1001,'2026-01-30','2026-02-01','Charge dates',false)",
+      [crypto.randomUUID(), line, h],
+    );
+    const credit = crypto.randomUUID();
+    await db.query(
+      "select add_invoice_line($1,$2,'Feed credit',-1001,'feed')",
+      [credit, invoice],
+    );
+    const request = crypto.randomUUID();
+    const save = () =>
+      db.query(
+        "select set_manual_feed_period($1,$2,null,$3,null,-1001,'2026-01-31','2026-02-02','Credit covered days',false)",
+        [request, credit, h],
+      );
+    await save();
+    await save();
+    await db.query("select finalize_invoice($1)", [invoice]);
+    await assert.rejects(
+      db.query("select * from dated_feed_revenue"),
+      /permission denied/,
+    );
+    const report = async (from: string, to = from) =>
+      (
+        await db.query<{ r: Comparison }>(
+          "select feed_charge_comparison($1,$2) r",
+          [from, to],
+        )
+      ).rows[0].r;
+    assert.equal((await report("2026-01-30")).totals.issued_cents, 334);
+    assert.equal((await report("2026-01-31")).totals.issued_cents, 0);
+    assert.equal((await report("2026-02-01")).totals.issued_cents, -1);
+    assert.equal((await report("2026-02-02")).totals.issued_cents, -333);
+    assert.equal(
+      (await report("2026-01-30", "2026-02-02")).totals.issued_cents,
+      0,
+    );
+    const adj = crypto.randomUUID();
+    await db.query("select adjust_invoice($1,$2,101,'2026-03-02','Fee')", [
+      adj,
+      invoice,
+    ]);
+    await db.query(
+      "select set_adjustment_reporting($1,$2,null,0,101,0,0,'Feed')",
+      [crypto.randomUUID(), adj],
+    );
+    assert.equal((await report("2026-02-02")).totals.issued_cents, -333);
+    assert.equal(
+      (await report("2026-01-30", "2026-02-02")).totals.issued_cents,
+      101,
+    );
+    const combined = (
+      await db.query<{ r: { totals: { net_cents: number } } }>(
+        "select combined_service_profitability('2026-01-30','2026-02-02') r",
+      )
+    ).rows[0].r;
+    assert.equal(combined.totals.net_cents, 101);
+    assert.equal(
+      (
+        await db.query<{ n: number }>(
+          "select issued_total_cents n from invoices where id=$1",
+          [invoice],
+        )
+      ).rows[0].n,
+      0,
+    );
+    assert.equal(
+      (await db.query("select * from invoice_feed_claims")).rows.length,
+      0,
+    );
+    await db.query(
+      "select set_manual_feed_period($1,$2,$3,$4,null,-1001,'2026-01-31','2026-02-02','Clear credit dates',true)",
+      [crypto.randomUUID(), credit, request, h],
+    );
+    await save();
+    assert.equal(
+      (
+        await db.query<{ n: number }>(
+          "select count(*)::integer n from valid_manual_feed_periods where line_id=$1",
+          [credit],
+        )
+      ).rows[0].n,
+      0,
+    );
+  } finally {
+    await db.close();
+  }
+});
+test("signed manual feed input accepts bounded integer cents and rejects malformed or oversized amounts", () => {
+  const f = new FormData();
+  for (const [key, value] of Object.entries({
+    request_id: crypto.randomUUID(),
+    line_id: crypto.randomUUID(),
+    horse_id: crypto.randomUUID(),
+    from: "2026-01-01",
+    to: "2026-01-03",
+    reason: "Credit dates",
+    amount_cents: "-100000000",
+  }))
+    f.set(key, value);
+  assert.equal(manualFeedPeriodValues(f).p_amount, -100000000);
+  for (const v of ["-100000001", "100000001", "-1.5", "1e3", "--10"]) {
+    f.set("amount_cents", v);
+    assert.throws(() => manualFeedPeriodValues(f));
   }
 });

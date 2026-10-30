@@ -1,7 +1,7 @@
 import { dateValue, identifier, text } from "./validation.ts";
 export function manualFeedPeriodValues(f: FormData) {
-  const amount = text(f, "amount_cents", true, 9)!;
-  if (!/^\d+$/.test(amount) || Number(amount) > 100000000)
+  const amount = text(f, "amount_cents", true, 10)!;
+  if (!/^-?\d+$/.test(amount) || Math.abs(Number(amount)) > 100000000)
     throw Error("The saved charge must be a valid whole-cent amount.");
   return {
     p_request: identifier(f, "request_id", true),

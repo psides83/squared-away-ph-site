@@ -103,14 +103,16 @@ export function FeedComparisonReport({
           Drafts are shown separately and are not invoiced revenue. Saved
           package feed portions follow the invoice’s claimed training days,
           weighted by calendar-month length. Manually assigned feed adjustments
-          follow the invoice’s supported gross feed revenue across all service
-          dates, with exact cent rounding; they restate the original service
-          period regardless of adjustment date. Zero-value source totals use
-          equal dated shares. Reviewed manual feed lines use an equal share per
-          covered calendar day. They are not actual-cost feeding claims.
-          Payments are not feed revenue. Unallocated adjustments, manual lines
-          without service dates and missing package splits require review. This
-          report is not cash profit and does not change any invoice.
+          follow the invoice’s supported positive gross feed revenue across all
+          service dates, with exact cent rounding; they restate the original
+          service period regardless of adjustment date. Zero-value source totals
+          use equal dated shares. Negative manual feed credits retain their
+          reviewed dates and do not provide negative adjustment weights.
+          Reviewed manual feed lines use an equal share per covered calendar
+          day. They are not actual-cost feeding claims. Payments are not feed
+          revenue. Unallocated adjustments, manual lines without service dates
+          and missing package splits require review. This report is not cash
+          profit and does not change any invoice.
         </p>
       </HelpPanel>
       <div className="stats-grid">

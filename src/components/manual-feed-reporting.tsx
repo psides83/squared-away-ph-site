@@ -17,12 +17,12 @@ export function ManualFeedReportingContent({
   return (
     <section className="panel">
       <div className="panel-heading">
-        <h2>Manual feed charge periods</h2>
+        <h2>Manual feed charge & credit periods</h2>
       </div>
       <div className="record-form stack">
         <HelpPanel title="When should I assign a feed period?">
           <p>
-            Use this for a nonnegative manual invoice line categorized as feed.
+            Use this for a manual charge or credit line categorized as feed.
             Choose its actual covered dates; the invoice issue date alone does
             not establish them. Saved dates let the feed comparison distribute
             this charge across the selected service period.
@@ -30,9 +30,9 @@ export function ManualFeedReportingContent({
           <p>
             The invoice’s current horse assignment is used. A changed horse,
             stay or amount invalidates an earlier review until you save it
-            again. Negative manual lines and historical package splits need
-            separate workflows. These dates do not change customer invoices,
-            payments, stock, actual-cost claims or the training agreement.
+            again. Training and board periods use separate reporting workflows.
+            These dates do not change customer invoices, payments, stock,
+            actual-cost claims or the training agreement.
           </p>
         </HelpPanel>
         {!data.lines.length && (
@@ -65,7 +65,7 @@ export function ManualFeedReportingContent({
                   ? "This invoice is void. Its review history is retained and excluded from comparisons."
                   : line.has_saved_period
                     ? "The saved period no longer matches the invoice assignment, amount or stay dates. Review it again."
-                    : "This charge needs reviewed service dates before it can enter the feed comparison."}
+                    : "This charge or credit needs reviewed service dates before it can enter the feed comparison."}
               </p>
             )}
             {!line.horse_id && (
@@ -76,20 +76,18 @@ export function ManualFeedReportingContent({
                 Assign invoice to a horse
               </Link>
             )}
-            {line.status !== "void" &&
-              line.amount_cents >= 0 &&
-              line.horse_id && (
-                <ActionPanel
-                  id={`feed-period-${line.id}`}
-                  label={
-                    line.has_saved_period
-                      ? "Edit feed period"
-                      : "Assign feed period"
-                  }
-                >
-                  <ManualFeedPeriodForm line={line} />
-                </ActionPanel>
-              )}
+            {line.status !== "void" && line.horse_id && (
+              <ActionPanel
+                id={`feed-period-${line.id}`}
+                label={
+                  line.has_saved_period
+                    ? "Edit feed period"
+                    : "Assign feed period"
+                }
+              >
+                <ManualFeedPeriodForm line={line} />
+              </ActionPanel>
+            )}
             {line.status !== "void" && line.has_saved_period && (
               <ActionPanel
                 id={`clear-feed-period-${line.id}`}
@@ -97,12 +95,6 @@ export function ManualFeedReportingContent({
               >
                 <ManualFeedPeriodForm line={line} clear />
               </ActionPanel>
-            )}
-            {line.amount_cents < 0 && (
-              <p className="muted">
-                Negative manual feed lines remain excluded. Use reviewed invoice
-                adjustment allocations for separate discounts or credits.
-              </p>
             )}
             <details>
               <summary>Feed period review history</summary>
