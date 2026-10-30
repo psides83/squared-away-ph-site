@@ -101,10 +101,12 @@ export function ServiceCostForm({
               </label>
             </div>
             <p className="muted form-hint">
-              Each portion is spread evenly across these inclusive dates. Any
-              remaining pennies go to the earliest days. Both paid and unpaid
-              recorded costs are included; payment dates do not shift this
-              report.
+              This is the overall covered period. Unassigned portions spread
+              evenly across it; horse/stay portions follow their own reviewed
+              dates. Remaining pennies go to each portion’s earliest days. Both
+              paid and unpaid costs are included; payment dates do not shift
+              this report. Any existing horse/stay assignments need review after
+              revising this business split.
             </p>
           </>
         )}

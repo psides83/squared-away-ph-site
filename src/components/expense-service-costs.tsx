@@ -42,8 +42,9 @@ export async function ExpenseServiceCosts({ expense }: { expense: string }) {
       </div>
       <div className="record-form stack">
         <p className="muted">
-          This is a business-wide service allocation. Horse/stay expense
-          assignments, customer charges and cash reports remain separate.
+          Review business service totals here. Use the horse/stay assignments
+          below for service margins. Existing cash-cost splits, customer charges
+          and cash reports remain separate.
         </p>
         {eligible > 0 ? (
           <>

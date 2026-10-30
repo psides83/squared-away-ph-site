@@ -26,6 +26,12 @@ export type ServiceCost = {
   cleared: boolean;
 };
 export type ServiceProfitability = {
+  invalid_assignment_count?: number;
+  assignment_review?: {
+    expense_id: string;
+    vendor?: string | null;
+    expense_date?: string;
+  }[];
   services: {
     service: string;
     gross_cents: number;

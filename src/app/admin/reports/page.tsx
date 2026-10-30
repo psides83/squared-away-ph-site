@@ -1,3 +1,5 @@
+import { ServiceEntityReport } from "@/components/service-entity-report";
+import type { EntityMargins } from "@/lib/service-assignments";
 import { ServiceProfitabilityReport } from "@/components/service-profitability-report";
 import type { ServiceProfitability } from "@/lib/service-profitability";
 import { PackageRevenueReport } from "@/components/package-revenue-report";
@@ -77,7 +79,12 @@ type Report = {
 export default async function Reports({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{
+    from?: string;
+    to?: string;
+    horse_service_page?: string;
+    stay_service_page?: string;
+  }>;
 }) {
   const { db } = await requireAdmin();
   const query = await searchParams;
@@ -85,7 +92,24 @@ export default async function Reports({
   const from = query.from ?? `${date.slice(0, 4)}-01-01`;
   const to = query.to ?? date;
   const valid = validCashExportPeriod(from, to);
-  const [result, usage, comparison, recovery, packages, services] = valid
+  const horsePage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.horse_service_page) || 1)),
+  );
+  const stayPage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.stay_service_page) || 1)),
+  );
+  const [
+    result,
+    usage,
+    comparison,
+    recovery,
+    packages,
+    services,
+    horseServices,
+    stayServices,
+  ] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
         db.rpc("inventory_usage_report", { p_from: from, p_to: to }),
@@ -93,8 +117,20 @@ export default async function Reports({
         db.rpc("expense_recovery_report", { p_from: from, p_to: to }),
         db.rpc("package_revenue_report", { p_from: from, p_to: to }),
         db.rpc("service_profitability", { p_from: from, p_to: to }),
+        db.rpc("service_entity_margins", {
+          p_from: from,
+          p_to: to,
+          p_scope: "horse",
+          p_page: horsePage,
+        }),
+        db.rpc("service_entity_margins", {
+          p_from: from,
+          p_to: to,
+          p_scope: "stay",
+          p_page: stayPage,
+        }),
       ])
-    : [null, null, null, null, null, null];
+    : [null, null, null, null, null, null, null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -177,18 +213,73 @@ export default async function Reports({
           <SectionTabs
             id="reports"
             label="Financial report sections"
-            defaultTab="cash"
+            defaultTab={
+              query.horse_service_page || query.stay_service_page
+                ? "service-margins"
+                : "cash"
+            }
             sections={[
               {
                 id: "service-margins",
                 label: "Service margins",
                 content: (
-                  <ServiceProfitabilityReport
-                    report={
-                      services?.error
-                        ? null
-                        : (services?.data as ServiceProfitability | null)
+                  <SectionTabs
+                    id="service-margins"
+                    label="Service margin scopes"
+                    defaultTab={
+                      query.horse_service_page
+                        ? "horses"
+                        : query.stay_service_page
+                          ? "stays"
+                          : "business"
                     }
+                    sections={[
+                      {
+                        id: "business",
+                        label: "Business",
+                        content: (
+                          <ServiceProfitabilityReport
+                            report={
+                              services?.error
+                                ? null
+                                : (services?.data as ServiceProfitability | null)
+                            }
+                          />
+                        ),
+                      },
+                      {
+                        id: "horses",
+                        label: "By horse",
+                        content: (
+                          <ServiceEntityReport
+                            report={
+                              horseServices?.error
+                                ? null
+                                : (horseServices?.data as EntityMargins | null)
+                            }
+                            from={from}
+                            to={to}
+                            page={horsePage}
+                          />
+                        ),
+                      },
+                      {
+                        id: "stays",
+                        label: "By stay",
+                        content: (
+                          <ServiceEntityReport
+                            report={
+                              stayServices?.error
+                                ? null
+                                : (stayServices?.data as EntityMargins | null)
+                            }
+                            from={from}
+                            to={to}
+                            page={stayPage}
+                          />
+                        ),
+                      },
+                    ]}
                   />
                 ),
               },
