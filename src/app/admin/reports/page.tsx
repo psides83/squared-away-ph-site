@@ -1,4 +1,8 @@
 import {
+  CombinedServiceReport,
+  type CombinedServiceReportData,
+} from "@/components/combined-service-report";
+import {
   StayFeedReport,
   type StayFeedReportData,
 } from "@/components/stay-feed-report";
@@ -119,6 +123,7 @@ export default async function Reports({
     horseServices,
     stayServices,
     stayFeed,
+    combined,
   ] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
@@ -144,8 +149,9 @@ export default async function Reports({
           p_to: to,
           p_page: feedPage,
         }),
+        db.rpc("combined_service_profitability", { p_from: from, p_to: to }),
       ])
-    : [null, null, null, null, null, null, null, null, null];
+    : [null, null, null, null, null, null, null, null, null, null];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -236,6 +242,19 @@ export default async function Reports({
                   : "cash"
             }
             sections={[
+              {
+                id: "combined-services",
+                label: "Combined service results",
+                content: (
+                  <CombinedServiceReport
+                    report={
+                      combined?.error
+                        ? null
+                        : (combined?.data as CombinedServiceReportData | null)
+                    }
+                  />
+                ),
+              },
               {
                 id: "service-margins",
                 label: "Service margins",
