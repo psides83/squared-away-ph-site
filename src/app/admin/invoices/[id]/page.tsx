@@ -1,3 +1,4 @@
+import { ManualServiceReporting } from "@/components/manual-service-reporting";
 import { PackageReportingReviews } from "@/components/package-reporting-reviews";
 import { ManualFeedReporting } from "@/components/manual-feed-reporting";
 import { InvoiceAdjustmentReporting } from "@/components/invoice-adjustment-reporting";
@@ -52,6 +53,7 @@ export default async function Invoice({
     success?: string;
     refund_page?: string;
     manual_feed_page?: string;
+    manual_service_page?: string;
     package_review_page?: string;
   }>;
 }) {
@@ -288,7 +290,9 @@ export default async function Invoice({
         label="Invoice sections"
         printTab="invoice"
         defaultTab={
-          query.manual_feed_page || query.package_review_page
+          query.manual_feed_page ||
+          query.package_review_page ||
+          query.manual_service_page
             ? "reporting"
             : query.refund_page
               ? "refunds"
@@ -307,6 +311,16 @@ export default async function Invoice({
                     Math.min(
                       10000,
                       Math.floor(Number(query.package_review_page) || 1),
+                    ),
+                  )}
+                />
+                <ManualServiceReporting
+                  invoice={id}
+                  page={Math.max(
+                    1,
+                    Math.min(
+                      10000,
+                      Math.floor(Number(query.manual_service_page) || 1),
                     ),
                   )}
                 />

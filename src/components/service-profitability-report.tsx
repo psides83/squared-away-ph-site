@@ -26,9 +26,10 @@ export function ServiceProfitabilityReport({
           Finalized generated training/package amounts follow saved billable
           days and calendar-month weights. Separate monthly board follows saved
           boarding days. Actual-cost board follows the saved invoice claim’s
-          inclusive covered period, spread evenly. Drafts are separate. Manual
-          revenue without dated sources and missing package splits require
-          review.
+          inclusive covered period, spread evenly. Reviewed manual training uses
+          recorded worked/billable rest days; reviewed manual board uses covered
+          calendar days. Drafts are separate. Manual revenue without dated
+          sources and missing package splits require review.
         </p>
         <p>
           Reviewed costs include both paid and unpaid non-voided expenses and
@@ -44,12 +45,12 @@ export function ServiceProfitabilityReport({
         </p>
         <p>
           Manually allocated adjustments restate original service dates,
-          weighted by that invoice’s gross dated revenue for each service;
-          zero-valued sources use equal dated shares. Payments/refunds are not
-          counted again as revenue adjustments. These are business-wide margins
-          from assigned recorded activity, not net cash profit or proof that all
-          costs have been entered. Horse/stay service assignments use the same
-          dated costs; existing cash-cost splits remain separate.
+          weighted by that invoice’s positive gross dated revenue for each
+          service; zero-valued sources use equal dated shares. Payments/refunds
+          are not counted again as revenue adjustments. These are business-wide
+          margins from assigned recorded activity, not net cash profit or proof
+          that all costs have been entered. Horse/stay service assignments use
+          the same dated costs; existing cash-cost splits remain separate.
         </p>
       </HelpPanel>
       {blocked && (
