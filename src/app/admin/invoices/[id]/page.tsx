@@ -1,3 +1,4 @@
+import { OtherIncomeReview } from "@/components/other-income-review";
 import { ManualServiceReporting } from "@/components/manual-service-reporting";
 import { PackageReportingReviews } from "@/components/package-reporting-reviews";
 import { ManualFeedReporting } from "@/components/manual-feed-reporting";
@@ -54,6 +55,7 @@ export default async function Invoice({
     refund_page?: string;
     manual_feed_page?: string;
     manual_service_page?: string;
+    other_income_page?: string;
     package_review_page?: string;
   }>;
 }) {
@@ -292,6 +294,7 @@ export default async function Invoice({
         defaultTab={
           query.manual_feed_page ||
           query.package_review_page ||
+          query.other_income_page ||
           query.manual_service_page
             ? "reporting"
             : query.refund_page
@@ -311,6 +314,16 @@ export default async function Invoice({
                     Math.min(
                       10000,
                       Math.floor(Number(query.package_review_page) || 1),
+                    ),
+                  )}
+                />
+                <OtherIncomeReview
+                  invoice={id}
+                  page={Math.max(
+                    1,
+                    Math.min(
+                      10000,
+                      Math.floor(Number(query.other_income_page) || 1),
                     ),
                   )}
                 />

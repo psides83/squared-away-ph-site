@@ -1,3 +1,5 @@
+import { OtherIncomeReport } from "@/components/other-income-report";
+import type { OtherIncomeReportData } from "@/lib/other-income";
 import {
   CombinedEntityReport,
   type CombinedEntityReportData,
@@ -99,6 +101,7 @@ export default async function Reports({
     stay_feed_page?: string;
     combined_horse_page?: string;
     combined_stay_page?: string;
+    other_income_page?: string;
   }>;
 }) {
   const { db } = await requireAdmin();
@@ -127,6 +130,10 @@ export default async function Reports({
     1,
     Math.min(10000, Math.floor(Number(query.combined_stay_page) || 1)),
   );
+  const otherIncomePage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.other_income_page) || 1)),
+  );
   const [
     result,
     usage,
@@ -140,6 +147,7 @@ export default async function Reports({
     combined,
     combinedHorses,
     combinedStays,
+    otherIncome,
   ] = valid
     ? await Promise.all([
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
@@ -178,8 +186,27 @@ export default async function Reports({
           p_scope: "stay",
           p_page: combinedStayPage,
         }),
+        db.rpc("other_income_report", {
+          p_from: from,
+          p_to: to,
+          p_page: otherIncomePage,
+        }),
       ])
-    : [null, null, null, null, null, null, null, null, null, null, null, null];
+    : [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ];
   const report = result?.data?.business as Report | null;
   const horseReport = result?.data?.horse as HorseReport | null;
   const stayReport = result?.data?.stay as StayReport | null;
@@ -263,15 +290,33 @@ export default async function Reports({
             id="reports"
             label="Financial report sections"
             defaultTab={
-              query.combined_horse_page || query.combined_stay_page
-                ? "combined-services"
-                : query.horse_service_page || query.stay_service_page
-                  ? "service-margins"
-                  : query.stay_feed_page
-                    ? "feed-comparison"
-                    : "cash"
+              query.other_income_page
+                ? "other-income"
+                : query.combined_horse_page || query.combined_stay_page
+                  ? "combined-services"
+                  : query.horse_service_page || query.stay_service_page
+                    ? "service-margins"
+                    : query.stay_feed_page
+                      ? "feed-comparison"
+                      : "cash"
             }
             sections={[
+              {
+                id: "other-income",
+                label: "Other income",
+                content: (
+                  <OtherIncomeReport
+                    report={
+                      otherIncome?.error
+                        ? null
+                        : (otherIncome?.data as OtherIncomeReportData | null)
+                    }
+                    from={from}
+                    to={to}
+                    page={otherIncomePage}
+                  />
+                ),
+              },
               {
                 id: "combined-services",
                 label: "Combined service results",
