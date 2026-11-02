@@ -9,7 +9,7 @@ export async function saveManualServicePeriod(
   const { db } = await requireAdmin();
   try {
     const { error } = await db.rpc(
-      "set_manual_service_period",
+      "set_manual_package_period",
       manualServicePeriodValues(form),
     );
     if (error)

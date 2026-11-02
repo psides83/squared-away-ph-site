@@ -20,8 +20,9 @@ export function PackageRevenueReport({
   return (
     <div className="stack">
       <p className="muted">
-        Internal revenue allocation for finalized generated training charges,
-        using invoice issue dates in the selected period.
+        Internal revenue allocation for finalized generated training and
+        reviewed manual package charges, using invoice issue dates in the
+        selected period.
       </p>
       <HelpPanel title="How package revenue is allocated">
         <p>
@@ -31,8 +32,10 @@ export function PackageRevenueReport({
           agreement edits do not restate saved allocations. Deliberate
           invoice-level reporting reviews can override those allocations while
           preserving the original snapshot and review history. Drafts, void
-          invoices, manual charges and separate feed or board charges are
-          outside this report.
+          invoices, ordinary manual charges and separate feed or board charges
+          are outside this report. Reviewed manual packages use their explicitly
+          entered saved-charge portions; current monthly rates are never
+          inferred.
         </p>
         <p>
           These are gross invoiced amounts, not cash received or net profit.

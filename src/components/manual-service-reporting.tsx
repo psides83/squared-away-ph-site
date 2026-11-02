@@ -17,7 +17,7 @@ export function ManualServiceReportingContent({
   return (
     <section className="panel">
       <div className="panel-heading">
-        <h2>Manual training & board periods</h2>
+        <h2>Manual training, board & package reporting</h2>
       </div>
       <div className="record-form stack">
         <HelpPanel title="How are manual service periods used?">
@@ -31,9 +31,12 @@ export function ManualServiceReportingContent({
             The invoice’s current horse assignment is used. A changed horse,
             stay or amount invalidates an earlier review until you save it
             again. Training uses recorded worked and billable rest days and
-            requires a stay. Board uses all covered calendar days. These dates
-            do not change customer invoices, payments, stock, actual-cost claims
-            or the training agreement.
+            requires a stay. Manual training packages can have explicit feed and
+            board portions of the saved charge, with training receiving the
+            remainder; those feed/board portions use all covered physical
+            boarding days. Board uses all covered calendar days. These dates do
+            not change customer invoices, payments, stock, actual-cost claims or
+            the training agreement.
           </p>
         </HelpPanel>
         {!data.lines.length && (
@@ -54,6 +57,19 @@ export function ManualServiceReportingContent({
                   ? "Finalized"
                   : "Void"}
             </p>
+            {line.current?.package_reviewed && !line.current.cleared && (
+              <p className="muted">
+                {line.valid ? "Reviewed package" : "Previous package review"}:
+                feed {money(line.current.feed_cents ?? 0)} · board{" "}
+                {money(line.current.board_cents ?? 0)} · training{" "}
+                {money(
+                  line.current.amount_cents -
+                    (line.current.feed_cents ?? 0) -
+                    (line.current.board_cents ?? 0),
+                )}
+                . Feed/board use all covered boarding days.
+              </p>
+            )}
             {line.valid ? (
               <p>
                 <span className="tag">Reviewed dates</span>{" "}
@@ -120,6 +136,9 @@ export function ManualServiceReportingContent({
                       {h.cleared ? "Cleared period" : "Reviewed period"} ·{" "}
                       {dateLabel(h.covered_from)} – {dateLabel(h.covered_to)} ·{" "}
                       {money(h.amount_cents)}
+                      {h.package_reviewed
+                        ? ` · feed ${money(h.feed_cents ?? 0)} · board ${money(h.board_cents ?? 0)}`
+                        : ""}
                       {h.service === "training" && h.days
                         ? ` · ${h.days.filter((d) => d.status === "worked" || d.status === "rest").length} billable days`
                         : ""}

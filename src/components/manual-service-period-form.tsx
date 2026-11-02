@@ -1,6 +1,9 @@
 "use client";
 import { useActionState, useState, startTransition } from "react";
 import { saveManualServicePeriod } from "@/app/admin/invoices/manual-service-actions";
+import { AppSelect } from "@/components/app-select";
+import { FormInput } from "@/components/form-input";
+import { moneyCents } from "@/lib/receipt-purchase";
 import { Field, Notice } from "@/components/ui";
 import { TemporalInput } from "@/components/temporal-input";
 import { ConfirmButton } from "@/components/confirm-button";
@@ -23,6 +26,27 @@ export function ManualServicePeriodForm({
     from: line.current?.covered_from ?? line.period_from ?? "",
     to: line.current?.covered_to ?? line.period_to ?? "",
   }));
+  const [isPackage, setIsPackage] = useState(
+    clear
+      ? Boolean(line.current?.package_reviewed)
+      : line.service === "training" &&
+          (context.amount ?? 0) >= 0 &&
+          Boolean(line.current?.package_reviewed && !line.current.cleared),
+  );
+  const [feed, setFeed] = useState(
+    line.current?.package_reviewed
+      ? ((line.current.feed_cents ?? 0) / 100).toFixed(2)
+      : "",
+  );
+  const [board, setBoard] = useState(
+    line.current?.package_reviewed
+      ? ((line.current.board_cents ?? 0) / 100).toFixed(2)
+      : "",
+  );
+  let remainder: number | null = null;
+  try {
+    remainder = (context.amount ?? 0) - moneyCents(feed) - moneyCents(board);
+  } catch {}
   const [state, action, pending] = useActionState(saveManualServicePeriod, {});
   return (
     <form
@@ -44,6 +68,13 @@ export function ManualServicePeriodForm({
         <input name="stay_id" type="hidden" value={context.stay ?? ""} />
         <input name="amount_cents" type="hidden" value={context.amount ?? ""} />
         <input name="clear" type="hidden" value={clear ? "yes" : "no"} />
+        <input name="package" type="hidden" value={isPackage ? "yes" : "no"} />
+        {clear && (
+          <>
+            <input name="feed" type="hidden" value={feed} />
+            <input name="board" type="hidden" value={board} />
+          </>
+        )}
         {clear ? (
           <>
             <p>
@@ -62,6 +93,70 @@ export function ManualServicePeriodForm({
               {(context.amount ?? 0) < 0 ? "credit" : "charge"} for{" "}
               {line.horse_name ?? "the assigned horse"}.
             </p>
+            {line.service === "training" && (context.amount ?? 0) >= 0 && (
+              <label>
+                Reporting allocation
+                <AppSelect
+                  value={isPackage ? "package" : "training"}
+                  onChange={(e) => setIsPackage(e.target.value === "package")}
+                >
+                  <option value="training">Training only</option>
+                  <option value="package">
+                    Training, feed & board package
+                  </option>
+                </AppSelect>
+              </label>
+            )}
+            {isPackage && (
+              <div className="stack">
+                <div className="form-grid">
+                  <label>
+                    Feed portion
+                    <FormInput
+                      name="feed"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      prefix="$"
+                      value={feed}
+                      onChange={(e) => setFeed(e.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Board portion
+                    <FormInput
+                      name="board"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      prefix="$"
+                      value={board}
+                      onChange={(e) => setBoard(e.target.value)}
+                      required
+                    />
+                  </label>
+                </div>
+                <p
+                  className={
+                    remainder !== null && remainder >= 0
+                      ? "notice"
+                      : "notice error"
+                  }
+                >
+                  Training remainder:{" "}
+                  {remainder !== null
+                    ? money(remainder)
+                    : "Enter valid amounts"}
+                </p>
+                <p className="muted form-hint">
+                  Enter portions of this actual saved charge, not monthly rates.
+                  Feed and board spread across every covered physical boarding
+                  day, including nonbillable training days. Explicit zero
+                  portions are saved. Current agreement rates are not copied.
+                </p>
+              </div>
+            )}
             <div className="form-grid">
               <label>
                 Covered from
@@ -84,7 +179,7 @@ export function ManualServicePeriodForm({
             </div>
             <p className="muted form-hint">
               {line.service === "training"
-                ? "Classify every covered stay day first. The saved amount spreads evenly across recorded worked and billable rest days; nonbillable days receive no revenue. Changed classifications require another review."
+                ? `Classify every covered stay day first. The ${isPackage ? "training remainder" : "saved amount"} spreads evenly across recorded worked and billable rest days; nonbillable days receive no revenue. Changed classifications require another review.`
                 : "The saved amount spreads evenly across all covered calendar days. Any assigned stay bounds apply."}{" "}
               The sign is preserved and remaining pennies go to earliest
               eligible dates. This review does not reserve billing days or
@@ -100,10 +195,15 @@ export function ManualServicePeriodForm({
         />
         <div className="form-actions">
           <ConfirmButton
+            disabled={
+              !clear && isPackage && (remainder === null || remainder < 0)
+            }
             message={
               clear
                 ? "Clear this internal service-period assignment while retaining its history?"
-                : "Save these covered dates for reporting? Invoice charges, payments and inventory will remain unchanged."
+                : isPackage
+                  ? `Save these covered dates and reporting portions: feed ${money(remainder === null ? 0 : moneyCents(feed))}, board ${money(remainder === null ? 0 : moneyCents(board))}, training ${money(remainder ?? 0)}? Customer charges, payments and inventory remain unchanged.`
+                  : "Save these covered dates for reporting? Invoice charges, payments and inventory will remain unchanged."
             }
           >
             {pending

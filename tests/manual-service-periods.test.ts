@@ -323,3 +323,261 @@ test("manual service input retains signed cents and an exact source token", () =
   f.set("source_token", "old");
   assert.throws(() => manualServicePeriodValues(f));
 });
+
+test("manual packages reconcile every cent with feed/board on physical days and training only on worked/rest days", async () => {
+  const { db, stay, invoice, line, options, report } = await fixture();
+  try {
+    await db.query(
+      "update training_stays set feed_billing='included',boarding_billing='included' where id=$1",
+      [stay],
+    );
+    await db.query(
+      "select set_training_days($1,'2026-01-01','2026-01-01','worked')",
+      [stay],
+    );
+    await db.query(
+      "select set_training_days($1,'2026-01-02','2026-01-02','rest')",
+      [stay],
+    );
+    await db.query(
+      "select set_training_days($1,'2026-01-03','2026-01-03','nonbillable')",
+      [stay],
+    );
+    const id = await line("training"),
+      req = crypto.randomUUID();
+    const l = (await options()).lines[0];
+    const token = l.source_token!;
+    const save = (
+      feed = 201,
+      board = 301,
+      current: string | null = null,
+      request = req,
+      clear = false,
+    ) =>
+      db.query(
+        "select set_manual_package_period($1,$2,$3,$4,$5,1001,'2026-01-01','2026-01-03','Actual package portions',$6,$7,$8,$9,true)",
+        [
+          request,
+          id,
+          current,
+          l.horse_id,
+          l.stay_id,
+          clear,
+          token,
+          feed,
+          board,
+        ],
+      );
+    await save();
+    await save();
+    await assert.rejects(
+      db.query(
+        "select set_manual_service_period($1,$2,$3,$4,$5,1001,'2026-01-01','2026-01-03','Old client',false,$6)",
+        [crypto.randomUUID(), id, req, l.horse_id, l.stay_id, token],
+      ),
+      /current package editor/,
+    );
+    await assert.rejects(save(202), /different values/);
+    assert.equal(
+      (await report()).services.find((x) => x.service === "training")
+        ?.draft_cents,
+      499,
+    );
+    await db.query("select finalize_invoice($1)", [invoice]);
+    const r = await report();
+    assert.equal(
+      r.services.find((x) => x.service === "training")?.gross_cents,
+      499,
+    );
+    assert.equal(
+      r.services.find((x) => x.service === "board")?.gross_cents,
+      301,
+    );
+    for (const [day, training, board] of [
+      ["01", 250, 101],
+      ["02", 249, 100],
+      ["03", 0, 100],
+    ] as const) {
+      const x = await report(`2026-01-${day}`, `2026-01-${day}`);
+      assert.equal(
+        x.services.find((s) => s.service === "training")?.gross_cents,
+        training,
+      );
+      assert.equal(
+        x.services.find((s) => s.service === "board")?.gross_cents,
+        board,
+      );
+      const feed = (
+        await db.query<{
+          r: {
+            totals: { issued_cents: number };
+            horses: { included: boolean; package_cents: number }[];
+          };
+        }>("select feed_charge_comparison($1,$1) r", [`2026-01-${day}`])
+      ).rows[0].r;
+      assert.equal(feed.totals.issued_cents, 67);
+      assert.equal(feed.horses[0].included, false);
+    }
+    const stayFeed = (
+      await db.query<{
+        r: { rows: { package_review: boolean; issued_cents: number }[] };
+      }>("select stay_feed_margins('2026-01-01','2026-01-03') r")
+    ).rows[0].r;
+    assert.equal(stayFeed.rows[0].package_review, false);
+    assert.equal(stayFeed.rows[0].issued_cents, 201);
+    const combined = (
+      await db.query<{ r: { totals: { net_cents: number } } }>(
+        "select combined_service_profitability('2026-01-01','2026-01-03') r",
+      )
+    ).rows[0].r;
+    assert.equal(combined.totals.net_cents, 1001);
+    const pkg = (
+      await db.query<{
+        r: {
+          totals: {
+            feed_cents: number;
+            board_cents: number;
+            training_cents: number;
+          };
+        };
+      }>("select package_revenue_report('2026-03-01','2026-03-31') r")
+    ).rows[0].r;
+    assert.deepEqual(pkg.totals, {
+      feed_cents: 201,
+      board_cents: 301,
+      training_cents: 499,
+      unallocated_cents: 0,
+    });
+    assert.equal(
+      (await db.query("select * from invoice_day_claims")).rows.length,
+      0,
+    );
+    assert.equal(
+      (await db.query("select * from invoice_feed_claims")).rows.length,
+      0,
+    );
+    assert.equal(
+      (
+        await db.query<{ n: number }>(
+          "select issued_total_cents n from invoices where id=$1",
+          [invoice],
+        )
+      ).rows[0].n,
+      1001,
+    );
+    const adjustment = crypto.randomUUID();
+    await db.query(
+      "select adjust_invoice($1,$2,-101,'2026-03-04','Discount')",
+      [adjustment, invoice],
+    );
+    await db.query(
+      "select set_adjustment_reporting($1,$2,null,51,30,20,0,'Manual categories')",
+      [crypto.randomUUID(), adjustment],
+    );
+    const adjusted = (
+      await db.query<{ r: { totals: { net_cents: number } } }>(
+        "select combined_service_profitability('2026-01-01','2026-01-03') r",
+      )
+    ).rows[0].r;
+    assert.equal(adjusted.totals.net_cents, 900);
+    await save(201, 301, req, crypto.randomUUID(), true);
+    await save();
+    assert.equal((await options()).lines[0].valid, false);
+    const staleFeed = (
+      await db.query<{ r: { horses: { has_unmatched: boolean }[] } }>(
+        "select feed_charge_comparison('2026-01-01','2026-01-03') r",
+      )
+    ).rows[0].r;
+    assert.equal(staleFeed.horses[0].has_unmatched, true);
+  } finally {
+    await db.close();
+  }
+});
+test("manual package caps and classification changes reject stale reviews; explicit zero portions remain supported", async () => {
+  const { db, stay, invoice, line, options } = await fixture();
+  try {
+    await db.query(
+      "select set_training_days($1,'2026-01-01','2026-01-03','worked')",
+      [stay],
+    );
+    const id = await line("training");
+    let l = (await options()).lines[0];
+    const token = l.source_token!;
+    const set = (
+      request: string,
+      current: string | null,
+      feed = 0,
+      board = 0,
+      t = token,
+    ) =>
+      db.query(
+        "select set_manual_package_period($1,$2,$3,$4,$5,1001,'2026-01-01','2026-01-03','Reviewed',$6,$7,$8,$9,true)",
+        [request, id, current, l.horse_id, l.stay_id, false, t, feed, board],
+      );
+    await assert.rejects(set(crypto.randomUUID(), null, 800, 300), /within/);
+    const req = crypto.randomUUID();
+    await set(req, null);
+    await db.query("select finalize_invoice($1)", [invoice]);
+    let f = (
+      await db.query<{ r: { horses: { included: boolean }[] } }>(
+        "select feed_charge_comparison('2026-01-01','2026-01-03') r",
+      )
+    ).rows[0].r;
+    assert.equal(f.horses[0].included, false);
+    await db.query(
+      "select set_training_days($1,'2026-01-02','2026-01-02','nonbillable')",
+      [stay],
+    );
+    assert.equal((await options()).lines[0].valid, false);
+    await assert.rejects(set(crypto.randomUUID(), req), /changed/);
+    const feed = (
+      await db.query<{ r: { unmatched_count: number } }>(
+        "select feed_charge_comparison('2026-01-01','2026-01-03') r",
+      )
+    ).rows[0].r;
+    assert.equal(feed.unmatched_count, 1);
+    l = (await options()).lines[0];
+    const next = crypto.randomUUID();
+    await set(next, req, 0, 0, l.source_token!);
+    assert.equal((await options()).lines[0].valid, true);
+    await set(req, null);
+    assert.equal((await options()).lines[0].current?.id, next);
+    await assert.rejects(
+      db.query("select * from manual_package_review_queue"),
+      /permission denied/,
+    );
+    await login(db, outsiderId);
+    await assert.rejects(set(crypto.randomUUID(), next), /Administrator/);
+  } finally {
+    await db.close();
+  }
+});
+
+test("manual package form requires explicit exact portions and caps them at the saved charge", () => {
+  const f = new FormData();
+  for (const [k, v] of Object.entries({
+    request_id: crypto.randomUUID(),
+    line_id: crypto.randomUUID(),
+    horse_id: crypto.randomUUID(),
+    amount_cents: "1001",
+    from: "2026-01-01",
+    to: "2026-01-03",
+    reason: "Package review",
+    source_token: "a".repeat(32),
+    package: "yes",
+  }))
+    f.set(k, v);
+  assert.throws(() => manualServicePeriodValues(f));
+  f.set("feed", "2.01");
+  f.set("board", "3.01");
+  assert.equal(manualServicePeriodValues(f).p_feed, 201);
+  assert.equal(manualServicePeriodValues(f).p_board, 301);
+  assert.equal(manualServicePeriodValues(f).p_package, true);
+  f.set("board", "9.00");
+  assert.throws(() => manualServicePeriodValues(f), /fit/);
+  f.set("board", "0");
+  f.set("feed", "0");
+  assert.equal(manualServicePeriodValues(f).p_feed, 0);
+  f.set("amount_cents", "-1");
+  assert.throws(() => manualServicePeriodValues(f), /fit/);
+});
