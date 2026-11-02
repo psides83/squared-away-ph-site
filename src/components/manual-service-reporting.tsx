@@ -15,9 +15,9 @@ export function ManualServiceReportingContent({
   data: ManualServiceOptions;
 }) {
   return (
-    <section className="panel">
+    <section className="panel" id="service-period-reviews">
       <div className="panel-heading">
-        <h2>Manual training, board & package reporting</h2>
+        <h2>Service dates & package reporting</h2>
       </div>
       <div className="record-form stack">
         <HelpPanel title="How are manual service periods used?">
@@ -41,14 +41,18 @@ export function ManualServiceReportingContent({
         </HelpPanel>
         {!data.lines.length && (
           <p className="muted">
-            No manual training or board lines on this page. Generated and
-            historical source reviews are separate.
+            No manual service charges or eligible historical generated training
+            charges on this page. Generated charges with saved billing days use
+            their existing package review.
           </p>
         )}
         {data.lines.map((line) => (
           <div className="stack" key={line.id}>
             <h3>{line.description}</h3>
             <p>
+              {line.source_kind === "training"
+                ? "Historical generated charge · "
+                : ""}
               {money(line.amount_cents)} ·{" "}
               {line.horse_name ?? "No horse assigned"} ·{" "}
               {line.status === "draft"
@@ -67,7 +71,10 @@ export function ManualServiceReportingContent({
                     (line.current.feed_cents ?? 0) -
                     (line.current.board_cents ?? 0),
                 )}
-                . Feed/board use all covered boarding days.
+                .{" "}
+                {line.current.source_kind === "training"
+                  ? "All portions use eligible training days and calendar-month weights."
+                  : "Feed/board use all covered boarding days."}
               </p>
             )}
             {line.valid ? (
@@ -83,9 +90,11 @@ export function ManualServiceReportingContent({
               <p className="notice">
                 {line.status === "void"
                   ? "This invoice is void. Its review history is retained and excluded from comparisons."
-                  : line.has_saved_period
-                    ? "The saved period no longer matches the invoice assignment, amount or stay dates. Review it again."
-                    : "This charge or credit needs reviewed service dates before it can enter the service reports."}
+                  : line.source_kind === "training" && line.has_billing_days
+                    ? "Saved billing-day claims now exist. Clear the obsolete reporting-only period to use the generated charge’s saved sources."
+                    : line.has_saved_period
+                      ? "The saved period no longer matches the invoice assignment, amount, stay dates or training classifications. Review it again."
+                      : "This charge or credit needs reviewed service dates before it can enter the service reports."}
               </p>
             )}
             {(!line.horse_id ||
@@ -107,6 +116,7 @@ export function ManualServiceReportingContent({
             )}
             {line.status !== "void" &&
               line.horse_id &&
+              line.source_token &&
               (line.service === "board" || line.stay_id) && (
                 <ActionPanel
                   id={`service-period-${line.id}`}
@@ -196,8 +206,7 @@ export async function ManualServiceReporting({
   if (result.error || !result.data)
     return (
       <p className="notice error" role="alert">
-        Manual service periods could not load. Check the latest reporting
-        migration.
+        Service periods could not load. Check the latest reporting migration.
       </p>
     );
   return (

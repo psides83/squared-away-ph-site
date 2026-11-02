@@ -218,9 +218,9 @@ export function FeedComparisonReport({
                 {h.unbilled_actual_cents > 0 &&
                   h.invoices.some((i) => i.manual_period) && (
                     <p className="notice">
-                      Manual feed charges do not reserve individual feeding
-                      entries. Review these charges before also billing the
-                      unclaimed actual feed costs.
+                      Reviewed service-period charges do not reserve individual
+                      feeding entries. Review these charges before also billing
+                      the unclaimed actual feed costs.
                     </p>
                   )}
                 {blocked && (
@@ -334,7 +334,7 @@ export function FeedComparisonReport({
                         </p>
                         {i.manual_period && (
                           <p className="muted">
-                            Includes reviewed manual feed dates.
+                            Includes reviewed reporting-only service dates.
                           </p>
                         )}
                         {i.adjustment_cents !== 0 && (

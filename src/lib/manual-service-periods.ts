@@ -25,6 +25,7 @@ export function manualServicePeriodValues(f: FormData) {
   };
 }
 export type ManualServicePeriod = ManualFeedPeriod & {
+  source_kind?: "manual" | "training";
   source_token: string;
   service: "training" | "board";
   feed_cents?: number;
@@ -33,6 +34,8 @@ export type ManualServicePeriod = ManualFeedPeriod & {
   days: { day: string; status: string }[] | null;
 };
 export type ManualServiceLine = Omit<ManualFeedLine, "current" | "history"> & {
+  source_kind?: "manual" | "training";
+  has_billing_days?: boolean;
   source_token: string | null;
   service: "training" | "board";
   current: ManualServicePeriod | null;

@@ -31,11 +31,13 @@ export function PackageRevenueReport({
           receives the remainder, including any rounding pennies. Later
           agreement edits do not restate saved allocations. Deliberate
           invoice-level reporting reviews can override those allocations while
-          preserving the original snapshot and review history. Drafts, void
-          invoices, ordinary manual charges and separate feed or board charges
-          are outside this report. Reviewed manual packages use their explicitly
-          entered saved-charge portions; current monthly rates are never
-          inferred.
+          preserving the original snapshot and review history. Older generated
+          charges without saved day claims can receive explicit portions and
+          reconstructed reporting dates; billing reservations are not created.
+          Drafts, void invoices, ordinary manual charges and separate feed or
+          board charges are outside this report. Reviewed manual packages use
+          their explicitly entered saved-charge portions; current monthly rates
+          are never inferred.
         </p>
         <p>
           These are gross invoiced amounts, not cash received or net profit.

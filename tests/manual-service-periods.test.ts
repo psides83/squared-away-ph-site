@@ -4,6 +4,7 @@ import {
   inventoryDatabase,
   login,
   outsiderId,
+  adminId,
 } from "./helpers/inventory-database.ts";
 import type { ManualServiceOptions } from "../src/lib/manual-service-periods.ts";
 import { manualServicePeriodValues } from "../src/lib/manual-service-periods.ts";
@@ -580,4 +581,225 @@ test("manual package form requires explicit exact portions and caps them at the 
   assert.equal(manualServicePeriodValues(f).p_feed, 0);
   f.set("amount_cents", "-1");
   assert.throws(() => manualServicePeriodValues(f), /fit/);
+});
+
+test("historical generated training reviews reconstruct dated reporting with original month weights and never create billing reservations", async () => {
+  const { db, c, h, stay, report } = await fixture();
+  try {
+    await db.query(
+      "update training_stays set departure_date='2026-02-01',monthly_rate_cents=31000,feed_billing='included',boarding_billing='included' where id=$1",
+      [stay],
+    );
+    await db.query(
+      "select set_package_reporting($1,$2,null,6200,9300,'Original terms')",
+      [crypto.randomUUID(), stay],
+    );
+    for (const [day, status] of [
+      ["2026-01-30", "worked"],
+      ["2026-01-31", "nonbillable"],
+      ["2026-02-01", "rest"],
+    ])
+      await db.query("select set_training_days($1,$2,$2,$3)", [
+        stay,
+        day,
+        status,
+      ]);
+    const invoice = crypto.randomUUID(),
+      line = crypto.randomUUID();
+    await db.query(
+      "select create_invoice($1,$2,$3,'2026-03-01','2026-03-08','2026-01-30','2026-02-01')",
+      [invoice, c, stay],
+    );
+    // A legacy generated charge can exist without the claim rows required by today's generator.
+    await db.exec("reset role");
+    await db.query(
+      "insert into invoice_lines(id,invoice_id,description,amount_cents,kind,billing_category,source_snapshot) values($1,$2,'Legacy generated training',1001,'training','training','{\"monthly_rate_cents\":31000}')",
+      [line, invoice],
+    );
+    await login(db, adminId);
+    const opts = async () =>
+      (
+        await db.query<{ r: ManualServiceOptions }>(
+          "select manual_service_reporting($1) r",
+          [invoice],
+        )
+      ).rows[0].r;
+    const l = (await opts()).lines[0];
+    assert.equal(l.source_kind, "training");
+    assert.equal(l.has_billing_days, false);
+    const req = crypto.randomUUID();
+    const save = (
+      clear = false,
+      current: string | null = null,
+      request = req,
+    ) =>
+      db.query(
+        "select set_manual_package_period($1,$2,$3,$4,$5,1001,'2026-01-30','2026-02-01','Reconstructed historical dates',$6,$7,201,301,true)",
+        [request, line, current, h, stay, clear, l.source_token],
+      );
+    await assert.rejects(
+      db.query(
+        "select set_manual_service_period($1,$2,null,$3,$4,1001,'2026-01-30','2026-02-01','Not a split',false,$5)",
+        [crypto.randomUUID(), line, h, stay, l.source_token],
+      ),
+      /explicit feed and board/,
+    );
+    await save();
+    await save();
+    assert.equal((await opts()).lines[0].valid, true);
+    await db.query("select finalize_invoice($1)", [invoice]);
+    for (const [day, training, board, feed] of [
+      ["2026-01-30", 237, 143, 95],
+      ["2026-01-31", 0, 0, 0],
+      ["2026-02-01", 262, 158, 106],
+    ] as const) {
+      const r = await report(day, day);
+      assert.equal(
+        r.services.find((s) => s.service === "training")?.gross_cents,
+        training,
+      );
+      assert.equal(
+        r.services.find((s) => s.service === "board")?.gross_cents,
+        board,
+      );
+      const f = (
+        await db.query<{ r: { totals: { issued_cents: number } } }>(
+          "select feed_charge_comparison($1,$1) r",
+          [day],
+        )
+      ).rows[0].r;
+      assert.equal(f.totals.issued_cents, feed);
+    }
+    const full = (
+      await db.query<{ r: { totals: { net_cents: number } } }>(
+        "select combined_service_profitability('2026-01-30','2026-02-01') r",
+      )
+    ).rows[0].r;
+    assert.equal(full.totals.net_cents, 1001);
+    assert.equal(
+      (
+        await db.query("select * from invoice_day_claims where line_id=$1", [
+          line,
+        ])
+      ).rows.length,
+      0,
+    );
+    assert.equal(
+      (
+        await db.query("select * from invoice_feed_claims where line_id=$1", [
+          line,
+        ])
+      ).rows.length,
+      0,
+    );
+    const before = (
+      await db.query<{ n: number }>(
+        "select issued_total_cents n from invoices where id=$1",
+        [invoice],
+      )
+    ).rows[0].n;
+    assert.equal(before, 1001);
+    await save(true, req, crypto.randomUUID());
+    await save();
+    assert.equal((await opts()).lines[0].valid, false);
+    assert.equal(
+      (
+        await db.query("select * from invoice_day_claims where line_id=$1", [
+          line,
+        ])
+      ).rows.length,
+      0,
+    );
+  } finally {
+    await db.close();
+  }
+});
+test("historical date reviews go stale on classification changes and can be cleared when real billing claims supersede them", async () => {
+  const { db, c, h, stay } = await fixture();
+  try {
+    await db.query(
+      "update training_stays set monthly_rate_cents=31000,proration='calendar_days' where id=$1",
+      [stay],
+    );
+    await db.query(
+      "select set_training_days($1,'2026-01-01','2026-01-03','worked')",
+      [stay],
+    );
+    const invoice = crypto.randomUUID();
+    await db.query(
+      "select create_invoice($1,$2,$3,'2026-03-01','2026-03-08','2026-01-01','2026-01-03')",
+      [invoice, c, stay],
+    );
+    await db.query("select add_calendar_training($1)", [invoice]);
+    const line = (
+      await db.query<{ id: string }>(
+        "select id from invoice_lines where invoice_id=$1 and kind='training'",
+        [invoice],
+      )
+    ).rows[0].id;
+    await db.exec("reset role");
+    await db.query("delete from invoice_day_claims where line_id=$1", [line]);
+    await login(db, adminId);
+    const opts = async () =>
+      (
+        await db.query<{ r: ManualServiceOptions }>(
+          "select manual_service_reporting($1) r",
+          [invoice],
+        )
+      ).rows[0].r;
+    const l = (await opts()).lines[0],
+      req = crypto.randomUUID();
+    const save = (
+      request = req,
+      current: string | null = null,
+      token = l.source_token,
+      clear = false,
+    ) =>
+      db.query(
+        "select set_manual_package_period($1,$2,$3,$4,$5,3000,'2026-01-01','2026-01-03','Historical review',$6,$7,0,0,true)",
+        [request, line, current, h, stay, clear, token],
+      );
+    await save();
+    await db.query("select finalize_invoice($1)", [invoice]);
+    await db.query(
+      "select set_training_days($1,'2026-01-02','2026-01-02','nonbillable')",
+      [stay],
+    );
+    assert.equal((await opts()).lines[0].valid, false);
+    await assert.rejects(save(crypto.randomUUID(), req), /changed/);
+    const next = crypto.randomUUID();
+    await save(next, req, (await opts()).lines[0].source_token);
+    const current = (await opts()).lines[0].current!;
+    await db.exec("reset role");
+    await db.query(
+      "insert into invoice_day_claims(stay_id,day,line_id) values($1,'2026-01-01',$2)",
+      [stay, line],
+    );
+    await login(db, adminId);
+    const superseded = (await opts()).lines[0];
+    assert.equal(superseded.has_billing_days, true);
+    assert.equal(superseded.valid, false);
+    assert.equal(superseded.source_token, null);
+    await save(crypto.randomUUID(), next, current.source_token, true);
+    assert.equal((await opts()).lines.length, 0);
+    assert.equal(
+      (
+        await db.query("select * from invoice_day_claims where line_id=$1", [
+          line,
+        ])
+      ).rows.length,
+      1,
+    );
+    await save();
+    assert.equal(
+      (
+        await db.query("select * from invoice_day_claims where line_id=$1", [
+          line,
+        ])
+      ).rows.length,
+      1,
+    );
+  } finally {
+    await db.close();
+  }
 });

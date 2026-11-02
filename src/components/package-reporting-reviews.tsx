@@ -57,7 +57,7 @@ export function PackageReportingReviewsContent({
                 {dateLabel(l.first_day!)} and {dateLabel(l.last_day!)}.
               </p>
             )}
-            {l.effective ? (
+            {l.effective && l.day_count > 0 ? (
               <p>
                 Feed {money(l.effective.feed_cents)} · Board{" "}
                 {money(l.effective.board_cents)} · Training{" "}
@@ -95,8 +95,12 @@ export function PackageReportingReviewsContent({
             )}
             {!l.day_count && l.status !== "void" && (
               <p className="notice">
-                Saved training days are missing. A split alone cannot establish
-                service dates.
+                Saved billing-day claims are missing. Use the reporting-only
+                historical editor below; it will not create billing
+                reservations.{" "}
+                <Link className="text-link" href="#service-period-reviews">
+                  Review historical service dates
+                </Link>
               </p>
             )}
             <details>

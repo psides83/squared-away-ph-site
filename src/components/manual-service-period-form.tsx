@@ -29,9 +29,10 @@ export function ManualServicePeriodForm({
   const [isPackage, setIsPackage] = useState(
     clear
       ? Boolean(line.current?.package_reviewed)
-      : line.service === "training" &&
-          (context.amount ?? 0) >= 0 &&
-          Boolean(line.current?.package_reviewed && !line.current.cleared),
+      : line.source_kind === "training" ||
+          (line.service === "training" &&
+            (context.amount ?? 0) >= 0 &&
+            Boolean(line.current?.package_reviewed && !line.current.cleared)),
   );
   const [feed, setFeed] = useState(
     line.current?.package_reviewed
@@ -87,26 +88,34 @@ export function ManualServicePeriodForm({
           </>
         ) : (
           <>
+            {line.source_kind === "training" && (
+              <p className="notice">
+                Historical generated charge: this review restores reporting
+                dates, never billing reservations.
+              </p>
+            )}
             <p>
               Assign covered dates to this {money(context.amount ?? 0)}{" "}
               {line.service === "training" ? "training" : "board"}{" "}
               {(context.amount ?? 0) < 0 ? "credit" : "charge"} for{" "}
               {line.horse_name ?? "the assigned horse"}.
             </p>
-            {line.service === "training" && (context.amount ?? 0) >= 0 && (
-              <label>
-                Reporting allocation
-                <AppSelect
-                  value={isPackage ? "package" : "training"}
-                  onChange={(e) => setIsPackage(e.target.value === "package")}
-                >
-                  <option value="training">Training only</option>
-                  <option value="package">
-                    Training, feed & board package
-                  </option>
-                </AppSelect>
-              </label>
-            )}
+            {line.source_kind !== "training" &&
+              line.service === "training" &&
+              (context.amount ?? 0) >= 0 && (
+                <label>
+                  Reporting allocation
+                  <AppSelect
+                    value={isPackage ? "package" : "training"}
+                    onChange={(e) => setIsPackage(e.target.value === "package")}
+                  >
+                    <option value="training">Training only</option>
+                    <option value="package">
+                      Training, feed & board package
+                    </option>
+                  </AppSelect>
+                </label>
+              )}
             {isPackage && (
               <div className="stack">
                 <div className="form-grid">
@@ -150,10 +159,10 @@ export function ManualServicePeriodForm({
                     : "Enter valid amounts"}
                 </p>
                 <p className="muted form-hint">
-                  Enter portions of this actual saved charge, not monthly rates.
-                  Feed and board spread across every covered physical boarding
-                  day, including nonbillable training days. Explicit zero
-                  portions are saved. Current agreement rates are not copied.
+                  {line.source_kind === "training"
+                    ? "Enter explicit portions of this historical generated charge, including known zeros. All three portions follow recorded worked/billable rest days and calendar-month weighting, matching generated-charge reporting. Nonbillable dates receive no package revenue."
+                    : "Enter portions of this actual saved charge, not monthly rates. Feed and board spread across every covered physical boarding day, including nonbillable training days. Explicit zero portions are saved."}{" "}
+                  Current agreement rates are not copied.
                 </p>
               </div>
             )}
@@ -178,9 +187,11 @@ export function ManualServicePeriodForm({
               </label>
             </div>
             <p className="muted form-hint">
-              {line.service === "training"
-                ? `Classify every covered stay day first. The ${isPackage ? "training remainder" : "saved amount"} spreads evenly across recorded worked and billable rest days; nonbillable days receive no revenue. Changed classifications require another review.`
-                : "The saved amount spreads evenly across all covered calendar days. Any assigned stay bounds apply."}{" "}
+              {line.source_kind === "training"
+                ? "Classify every covered stay day first. All portions use recorded worked/billable rest days weighted by calendar-month length. Nonbillable dates receive no revenue. Changed classifications require another review."
+                : line.service === "training"
+                  ? `Classify every covered stay day first. The ${isPackage ? "training remainder" : "saved amount"} spreads evenly across recorded worked and billable rest days; nonbillable days receive no revenue. Changed classifications require another review.`
+                  : "The saved amount spreads evenly across all covered calendar days. Any assigned stay bounds apply."}{" "}
               The sign is preserved and remaining pennies go to earliest
               eligible dates. This review does not reserve billing days or
               costs.
