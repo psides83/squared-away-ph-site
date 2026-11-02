@@ -1,3 +1,5 @@
+import { BusinessProfitReport } from "@/components/business-profit-report";
+import type { BusinessProfitData } from "@/lib/business-profit";
 import { OtherIncomeReport } from "@/components/other-income-report";
 import type { OtherIncomeReportData } from "@/lib/other-income";
 import {
@@ -135,6 +137,7 @@ export default async function Reports({
     Math.min(10000, Math.floor(Number(query.other_income_page) || 1)),
   );
   const [
+    businessProfit,
     result,
     usage,
     comparison,
@@ -150,6 +153,7 @@ export default async function Reports({
     otherIncome,
   ] = valid
     ? await Promise.all([
+        db.rpc("recorded_business_profit", { p_from: from, p_to: to }),
         db.rpc("financial_report_bundle", { p_from: from, p_to: to }),
         db.rpc("inventory_usage_report", { p_from: from, p_to: to }),
         db.rpc("feed_charge_comparison", { p_from: from, p_to: to }),
@@ -193,6 +197,7 @@ export default async function Reports({
         }),
       ])
     : [
+        null,
         null,
         null,
         null,
@@ -301,6 +306,21 @@ export default async function Reports({
                       : "cash"
             }
             sections={[
+              {
+                id: "profit",
+                label: "Business profit",
+                content: (
+                  <BusinessProfitReport
+                    report={
+                      businessProfit?.error
+                        ? null
+                        : (businessProfit?.data as BusinessProfitData | null)
+                    }
+                    from={from}
+                    to={to}
+                  />
+                ),
+              },
               {
                 id: "other-income",
                 label: "Other income",

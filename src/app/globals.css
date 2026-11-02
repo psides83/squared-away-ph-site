@@ -4074,3 +4074,13 @@ input[type="search"]::-webkit-search-decoration {
     align-items: flex-start;
   }
 }
+
+/* Compact financial metrics stay legible within narrow native-style cards. */
+.business-profit-summary .stat-card {
+  min-width: 0;
+}
+.business-profit-summary .stat-card strong {
+  font-size: clamp(1.25rem, 4vw, 1.8rem);
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
