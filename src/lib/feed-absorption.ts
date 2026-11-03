@@ -21,6 +21,8 @@ export type AbsorptionRow = {
   claimed: boolean;
   claim_invoice_id?: string | null;
   needs_review: boolean;
+  invoice_review_count?: number;
+  pending_invoice_ids?: string[];
   absorbed_cents: number;
   current: FeedAbsorption | null;
   history: FeedAbsorption[];
@@ -31,6 +33,7 @@ export type AbsorptionReport = {
     cost_cents: number;
     absorbed_cents: number;
     review_count: number;
+    invoice_review_count?: number;
     supported_unbilled_cents: number;
   };
   rows: AbsorptionRow[];
@@ -51,5 +54,6 @@ export function feedAbsorptionValues(f: FormData) {
     p_mode: mode,
     p_cents: amount,
     p_reason: text(f, "reason", true, 2000),
+    p_invoice_review: f.get("invoice_review_ack") === "yes",
   };
 }

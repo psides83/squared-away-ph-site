@@ -8,10 +8,8 @@ export async function saveFeedAbsorption(
 ): Promise<{ error?: string; success?: string }> {
   const { db } = await requireAdmin();
   try {
-    const { error } = await db.rpc(
-      "set_feed_absorption",
-      feedAbsorptionValues(f),
-    );
+    const values = feedAbsorptionValues(f);
+    const { error } = await db.rpc("set_feed_absorption", values);
     if (error)
       throw Error(
         error.code === "P0001"
@@ -20,8 +18,9 @@ export async function saveFeedAbsorption(
       );
     revalidatePath("/admin", "layout");
     return {
-      success:
-        "Feed billing decision processed. Full feeding cost remains in profit reports; existing invoice amounts are unchanged.",
+      success: values.p_invoice_review
+        ? "Feed decision recorded. Any billed amount change is flagged on its invoice for manual review. No adjustment, refund or payment was created."
+        : "Feed billing decision processed. Full feeding cost remains in profit reports; existing invoice amounts are unchanged.",
     };
   } catch (e) {
     return {

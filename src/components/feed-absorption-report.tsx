@@ -48,6 +48,13 @@ export function FeedAbsorptionReport({
           records.
         </p>
       )}
+      {!!r.totals.invoice_review_count && (
+        <p className="notice error">
+          {r.totals.invoice_review_count} billed-feed decisions await manual
+          invoice review. Open the affected invoice, enter any corrections
+          yourself, then record your resolution.
+        </p>
+      )}
       <HelpPanel title="How do absorbed feed costs affect billing and profit?">
         <p>
           The at-cost remainder includes unreserved records under actual-cost
@@ -67,11 +74,11 @@ export function FeedAbsorptionReport({
         </p>
         <p>
           Cost changes require review. Unbilled designations can be revised or
-          cleared explicitly. Already-billed decisions permit only reconfirming
-          the same fixed amount when it still fits the corrected cost; invoice
-          cost-review flags must be resolved separately. If a billed amount no
-          longer fits, use the existing invoice correction workflow before
-          revising the designation. Historical invoices are never silently
+          cleared explicitly. Changed billed amounts require an explicit
+          acknowledgement and flag their invoice for manual review. No credit,
+          extra charge or refund is created automatically. Record any
+          corrections yourself and then resolve the invoice review. Inventory
+          cost-review flags are separate. Historical invoices are never silently
           repriced.
         </p>
       </HelpPanel>
@@ -123,21 +130,19 @@ export function FeedAbsorptionReport({
                   : "Not reserved on an actual-cost invoice."}
               </p>
               <div className="row-actions">
-                {(!s.claimed || (active && s.needs_review)) && (
-                  <ActionPanel
-                    id={`absorb-${s.movement_id}`}
-                    label={
-                      s.claimed
-                        ? "Review saved amount"
-                        : active
-                          ? "Edit absorbed cost"
-                          : "Absorb feed cost"
-                    }
-                  >
-                    <FeedAbsorptionForm row={s} />
-                  </ActionPanel>
-                )}
-                {active && !s.claimed && (
+                <ActionPanel
+                  id={`absorb-${s.movement_id}`}
+                  label={
+                    s.claimed
+                      ? "Review billed feed decision"
+                      : active
+                        ? "Edit absorbed cost"
+                        : "Absorb feed cost"
+                  }
+                >
+                  <FeedAbsorptionForm row={s} />
+                </ActionPanel>
+                {active && (
                   <ActionPanel
                     id={`clear-absorb-${s.movement_id}`}
                     label="Clear designation"
@@ -145,14 +150,25 @@ export function FeedAbsorptionReport({
                     <FeedAbsorptionForm row={s} clear />
                   </ActionPanel>
                 )}
-                {s.claim_invoice_id && (
+                {s.pending_invoice_ids?.map((invoice, n) => (
                   <Link
                     className="button secondary"
-                    href={`/admin/invoices/${s.claim_invoice_id}`}
+                    key={invoice}
+                    href={`/admin/invoices/${invoice}#invoice-feed-absorption-reviews`}
                   >
-                    View invoice
+                    Review invoice
+                    {s.pending_invoice_ids!.length > 1 ? ` ${n + 1}` : ""}
                   </Link>
-                )}
+                ))}
+                {s.claim_invoice_id &&
+                  !s.pending_invoice_ids?.includes(s.claim_invoice_id) && (
+                    <Link
+                      className="button secondary"
+                      href={`/admin/invoices/${s.claim_invoice_id}#invoice-feed-absorption-reviews`}
+                    >
+                      View invoice
+                    </Link>
+                  )}
               </div>
               <details>
                 <summary>Decision history</summary>

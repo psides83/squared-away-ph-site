@@ -11,6 +11,7 @@ export type FeedComparison = {
     unbilled_actual_cents: number;
     absorbed_cents?: number;
     absorption_review_count?: number;
+    billing_review_count?: number;
     package_cents: number;
     adjustment_cents: number;
   };
@@ -27,6 +28,7 @@ export type FeedComparison = {
     unbilled_actual_cents: number;
     absorbed_cents?: number;
     absorption_review_count?: number;
+    billing_review_count?: number;
     package_cents: number;
     adjustment_cents: number;
     included: boolean;
@@ -128,6 +130,15 @@ export function FeedComparisonReport({
           still count in margins.{" "}
           <Link className="text-link" href="/admin/feeding/absorption">
             Review feed billing decisions
+          </Link>
+        </p>
+      )}
+      {!!report.totals.billing_review_count && (
+        <p className="notice error">
+          {report.totals.billing_review_count} absorbed-feed billing changes
+          need manual invoice review. Related margins are withheld.{" "}
+          <Link className="text-link" href="/admin/feeding/absorption">
+            Review affected records
           </Link>
         </p>
       )}

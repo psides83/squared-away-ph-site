@@ -1,3 +1,4 @@
+import { FeedAbsorptionInvoiceReview } from "@/components/feed-absorption-invoice-review";
 import { InvoiceCashSplit } from "@/components/invoice-cash-split";
 import { ActualCostRecovery } from "@/components/actual-cost-recovery";
 import { MonthlyServiceReporting } from "@/components/monthly-service-reporting";
@@ -292,6 +293,7 @@ export default async function Invoice({
           )}
         </div>
       </div>
+      <FeedAbsorptionInvoiceReview invoice={id} />
       <SectionTabs
         id="invoice"
         label="Invoice sections"

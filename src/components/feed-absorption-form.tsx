@@ -24,13 +24,14 @@ export function FeedAbsorptionForm({
   const [mode, setMode] = useState<string>(
     clear
       ? "clear"
-      : context.claimed || (current && context.needs_review)
+      : (context.claimed && current) || (current && context.needs_review)
         ? "review"
         : (current?.mode ?? "full"),
   );
   const [amount, setAmount] = useState(
     current ? (current.amount_cents / 100).toFixed(2) : "",
   );
+  const [acknowledgement, setAcknowledgement] = useState("");
   const [state, action, pending] = useActionState(saveFeedAbsorption, {});
   let absorbed = 0,
     invalid = false;
@@ -78,20 +79,9 @@ export function FeedAbsorptionForm({
           <>
             <input type="hidden" name="mode" value="clear" />
             <p>
-              Remove this protection from future actual-cost invoices? Decision
-              history remains; this does not change stock or existing invoice
-              amounts.
-            </p>
-          </>
-        ) : context.claimed ? (
-          <>
-            <input type="hidden" name="mode" value="review" />
-            <p className="notice">
-              This feeding is already on an invoice. You can reconfirm only the
-              same saved absorbed amount, {money(current?.amount_cents ?? 0)},
-              after checking the corrected cost. Existing invoice amounts and
-              their saved protected portions remain unchanged. Resolve invoice
-              cost-review flags separately.
+              Remove this protected designation? Existing invoice amounts remain
+              unchanged. If billed, the invoice will be flagged for your manual
+              review. Decision history is retained.
             </p>
           </>
         ) : (
@@ -134,6 +124,30 @@ export function FeedAbsorptionForm({
             </p>
           </>
         )}
+        {context.claimed && (
+          <>
+            <p className="notice">
+              This feeding is already invoiced. A changed protected amount will
+              flag the invoice for manual review. It will not create a credit,
+              extra charge, refund or payment. Enter any billing corrections
+              separately.
+            </p>
+            <label>
+              Invoice follow-up
+              <AppSelect
+                name="invoice_review_ack"
+                required
+                value={acknowledgement}
+                onChange={(e) => setAcknowledgement(e.target.value)}
+              >
+                <option value="">Choose review acknowledgement</option>
+                <option value="yes">
+                  Flag invoice; I will review billing manually
+                </option>
+              </AppSelect>
+            </label>
+          </>
+        )}
         {invalid ? (
           <p
             className={
@@ -143,7 +157,7 @@ export function FeedAbsorptionForm({
             }
           >
             {context.claimed
-              ? "The saved amount exceeds the current cost. Resolve this feeding’s invoice before changing the protected amount."
+              ? "The saved amount exceeds the current cost. Choose a new fixed partial amount or full recorded cost and acknowledge manual invoice review."
               : "Enter a positive partial amount no greater than the unrounded cost, or choose full recorded cost."}
           </p>
         ) : (
@@ -160,11 +174,11 @@ export function FeedAbsorptionForm({
         />
         <div className="form-actions">
           <ConfirmButton
-            disabled={invalid}
+            disabled={invalid || (context.claimed && acknowledgement !== "yes")}
             message={
               clear
-                ? "Remove this unbilled feeding’s absorbed-cost protection while retaining history?"
-                : "Save this fixed feed billing decision? Full feeding cost remains a business cost. Existing invoice amounts and stock will not change."
+                ? "Remove this feeding’s absorbed-cost protection? If billed, its invoice will be flagged for manual correction. History is retained."
+                : "Save this fixed feed billing decision? Any billed amount change will flag its invoice for manual correction; invoice amounts, stock and payments will not change."
             }
           >
             {pending
@@ -172,7 +186,7 @@ export function FeedAbsorptionForm({
               : clear
                 ? "Clear absorbed amount"
                 : context.claimed
-                  ? "Review saved amount"
+                  ? "Save billed feed decision"
                   : "Save feed decision"}
           </ConfirmButton>
         </div>
