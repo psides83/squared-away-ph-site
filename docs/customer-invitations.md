@@ -2,6 +2,12 @@
 
 The app accepts owner-issued Supabase invitation links at `/auth/invite`. It does not yet send invitations or create accounts from the customer record. No invitation was sent or live account created during implementation.
 
+## Current delivery limitation
+
+The owner confirmed on November 3, 2026 that the project still uses Supabase’s default email service. Supabase documents that this service sends only to project-team email addresses and is intended for testing. Customer invitation and password-reset delivery to ordinary customer addresses requires a configured custom SMTP sender (or another separately implemented delivery integration). Do not treat the acceptance route as production-ready email delivery. No sender/account was configured and no email was sent during this work.
+
+Reference: [Supabase custom SMTP and default-service restrictions](https://supabase.com/docs/guides/auth/auth-smtp).
+
 ## Provider setup
 
 1. Keep the Supabase Site URL aligned with the production app’s canonical HTTPS origin, currently `https://squaredawayperformancehorses.vercel.app`.

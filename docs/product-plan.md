@@ -560,6 +560,8 @@ These are retained for a later phase; they are not current financial build commi
 
 ## Agreed decisions (implementation remains planned unless listed above)
 
+- Customer delivery and upload cleanup (November 3, 2026): Supabase still uses its default email sender, which limits delivery to project-team addresses; live customer invitations/recovery need custom SMTP setup. The owner chose automatic permanent cleanup after a retention period for abandoned unattached video uploads; the retention duration is awaiting confirmation. Saved horse videos must remain excluded. Cleanup is not implemented or enabled yet; no files were deleted.
+
 - Financial scope closeout (November 3, 2026): no boarding outside training. Table billing automation and automatic invoice delivery; use manual invoice preparation/review and PDF distribution for now. Table online payment/refund execution, retaining Venmo and PayPal links. Existing implemented code is retained; live automation settings were not changed by this decision. Advanced historical repair and receipt refinements remain later improvements. Production verification remains outstanding.
 
 - Billed feed corrections (November 3, 2026): flag invoices and let the owner enter corrections manually when feed costs or protected amounts change. Do not propose or automatically create credits/additional charges, refunds or payments. A separate manual resolution records the owner’s review. Implemented above.
