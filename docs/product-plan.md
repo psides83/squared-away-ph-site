@@ -6,6 +6,14 @@ Traditional western branding for a Granbury, Texas horse training business. Serv
 
 Build the admin experience first, for one administrator and up to ten horses in training. Use Next.js, TypeScript, Tailwind CSS, Supabase, GitHub, and Vercel. Customer access and the marketing site follow. No offline editing requirement.
 
+## Financial phase scope — November 3, 2026
+
+The core financial implementation phase is closed for the current operating scope: horses board only while in training; the administrator prepares/reviews invoices, distributes them manually through Print / save PDF, and records payments received outside the app. Settings already supports Venmo and PayPal links, and finalized invoices retain their saved payment instructions. PDF export currently uses the device’s print/save-PDF interface rather than a separate generated-file download.
+
+Billing automation, automatic invoice delivery/email and online payment/refund execution are deferred. Existing off-by-default automation code is retained; this scope decision neither enables automation nor proves any existing production setting is off. Production enablement is not part of this phase. Venmo/PayPal links remain in scope, without payment-provider processing or automatic payment confirmation.
+
+Boarding without training is not offered; separate boarding-only occupancy records are removed from product scope. Advanced historical repair, larger inventory corrections, source-association extensions and receipt refinements are retained below as later improvements, not blockers for this financial implementation phase. Production migration checks, authenticated end-to-end financial verification and physical-device/PDF checks remain outstanding and are not represented as completed.
+
 ## Implemented
 
 - Single-month historical feed/board date reviews: the known `physical_days` format produced by the manual monthly-charge generator now supports the same reporting-only review as `calendar_segments`. Reviewed dates must stay within one calendar month, enforced by both save validation and active-review eligibility. Saved review dates take priority; otherwise the form suggests original charge snapshot dates before invoice header dates. A clear single-month badge and notice explain the constraint. Source tokens, private history, exact retries, stay bounds and original-source precedence remain in effect. No invoice amounts, snapshots, payments, stock or billing/source reservations change. Other unrecognized formats and unsupported actual-cost recovery remain planned. Requires migration `20261103009500_physical_day_monthly_reviews.sql`; production verification is separate below.
@@ -501,19 +509,20 @@ Features in this section are present in the application source. A feature being 
 
 ## Planned (not implemented)
 
-### Expenses, receipts, billing, and profitability
+### Deferred financial improvements
+
+These are retained for a later phase; they are not current financial build commitments.
 
 - Email delivery remains planned; preferred reminder times and interval-based supplier follow-up cadences are implemented above; device-push delivery code is implemented above and production setup is separate; physical stock returns and received-cash refund recording are implemented above. Cost-only purchase/opening/inbound recalculation and untouched entry replacement are implemented above. Larger histories (over 2,000 movements), ambiguous historical recording order, historical actual-cost lines missing original identifiers, incompatible/extraneous source links, mismatched source totals and other unrecognized monthly formats need further correction/review workflows. Retained original-ID recovery for exact matches is implemented above. Recognized historical monthly date reviews are implemented above. Reviewed historical splits for generated training lines with saved days are implemented above. Reviewed periods for signed manual feed charges/credits are implemented above.
-- Additional scheduler automation policies and independent missed-run/outage monitoring. Device-push failure delivery code is implemented above; production configuration/device delivery remain separate verification work. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
-- Public-page contact/payment details from business settings and invoice delivery/email.
-- Online refund execution remains planned. Completed cash refunds of unused account credit/advance balances and explicit credit-funded expense-recovery assignments are implemented above. Customer credit balances with both advance receipts and paid-invoice reductions, manual applications, and corrections are implemented above. Completed invoice-payment refund recording with a per-refund invoice-effect choice is implemented above.
+- Billing automation setup/enablement, additional scheduler automation policies and independent missed-run/outage monitoring are deferred. Device-push failure delivery code is implemented above; production configuration/device delivery remain separate verification work. Daily scheduling code/configuration and in-app monitoring are implemented; production credential setup, migration, enablement and verification remain deployment work. Manual/no-proration agreements retain explicit manual review.
+- Public-page contact/payment details from business settings remain deferred with the marketing site. Automatic invoice delivery/email is deferred; current distribution is manual using Print / save PDF.
+- Online payment and refund execution are deferred; Venmo and PayPal links remain supported for payments outside the app. Completed cash refunds of unused account credit/advance balances and explicit credit-funded expense-recovery assignments are implemented above. Customer credit balances with both advance receipts and paid-invoice reductions, manual applications, and corrections are implemented above. Completed invoice-payment refund recording with a per-refund invoice-effect choice is implemented above.
 
 #### Feed, boarding, and profitability details
 
 - Recovery for older actual-cost feed/board charges missing original identifiers, incompatible/extraneous source links, unsupported snapshots or more than 2,000 feedings; correction/reconciliation of mismatched source totals; and other unrecognized historical monthly formats. Retained original-ID source recovery for exact matches is implemented above. Recognized monthly feed/board date reviews are implemented above. Historical generated training reviews are implemented above. Reviewed manual package splits are implemented above. Manual training/board periods are implemented above. Reviewed line-level historical package splits with retained training days are implemented above. Reviewed covered periods for signed manual feed lines are implemented above. Saved package feed revenue and manually allocated adjustments now participate in the service-date feed comparison; invoice-level adjustment editors are available beyond generated-training cohorts. Business-wide board/training margins from reviewed costs are implemented above; per-stay feed margins are implemented above; combined business service results are implemented above; combined horse/stay views are implemented above; recorded business-profit views are implemented above; broader historical source workflows remain planned. Board/training service margins by horse/stay are implemented above. Unsupported sources remain flagged rather than assigned invented margins.
 
 - Explicit source associations for free-form manual invoice charges and absorbed costs remain unsupported; future source/allocation work must not infer those links. Stock purchases continue through consumption rather than expense absorption. Unbilled/billed feed decisions, flagged manual invoice review, expense/boarding absorption and supported dated reporting are implemented above; unsupported historical source recovery remains planned.
-- Add persistent boarding occupancy records for horses outside training stays if useful; their actual boarding days can currently be entered in each shared-cost allocation.
 
 ### Horse records and customer portal
 
@@ -532,7 +541,7 @@ Features in this section are present in the application source. A feature being 
 
 - Extend bulk entry to other workflows as their batch requirements are defined. Bulk expense bills, training sessions and daily/extra/partial feeding are implemented above; manual multi-item inventory/expense receipt batches are implemented above; basic free photo reading is implemented above; more robust extraction/mapping and similarity-based duplicate checks remain planned; exact-file review is implemented above. Different per-horse training details can be entered individually.
 
-- Optional online payment processing, additional notification channels (including email), and dedicated accounting-software integrations after core workflows are established. Generic cash-ledger CSV export is implemented above. Device-push supplier/scheduler delivery code is implemented above.
+- Online payment processing is deferred; current payment support is external Venmo/PayPal links and manually recorded receipts. Additional notification channels (including email) and dedicated accounting-software integrations remain later improvements. Generic cash-ledger CSV export is implemented above. Device-push supplier/scheduler delivery code is implemented above.
 
 ## Implementation conventions
 
@@ -548,6 +557,8 @@ Features in this section are present in the application source. A feature being 
 - On every completed feature, move its delivered scope from Planned to Implemented in the same change. Split partially completed items so only unfinished work remains under Planned; do not leave completed features duplicated there. Update the next build sequence and record verification/deployment limitations below.
 
 ## Agreed decisions (implementation remains planned unless listed above)
+
+- Financial scope closeout (November 3, 2026): no boarding outside training. Table billing automation and automatic invoice delivery; use manual invoice preparation/review and PDF distribution for now. Table online payment/refund execution, retaining Venmo and PayPal links. Existing implemented code is retained; live automation settings were not changed by this decision. Advanced historical repair and receipt refinements remain later improvements. Production verification remains outstanding.
 
 - Billed feed corrections (November 3, 2026): flag invoices and let the owner enter corrections manually when feed costs or protected amounts change. Do not propose or automatically create credits/additional charges, refunds or payments. A separate manual resolution records the owner’s review. Implemented above.
 
@@ -614,9 +625,11 @@ Features in this section are present in the application source. A feature being 
 
 ## Next build sequence
 
-Remaining admin expense/reporting improvements (production push setup/device verification and remaining financial refinements) → remaining customer onboarding refinements and media improvements. Public marketing content is deferred until the owner returns to it. Expand expense/inventory corrections and reporting as needed alongside billing.
+Current financial implementation scope is closed. Next: verify production migrations and the manual financial workflow (expenses/inventory → feeding/training → invoice review → Print / save PDF → external-payment recording → reports), then continue customer onboarding refinements and media improvements. Device-push setup/device verification remains separate. Billing automation, invoice email delivery, online payment/refund execution and advanced financial refinements are deferred. Public marketing content stays deferred until the owner returns to it.
 
 ## Verification and deployment status
+
+- Financial scope closeout (November 3, 2026): source inspection confirms the invoice Print / save PDF action uses the system print interface, and Settings/invoice rendering support HTTPS Venmo/PayPal links. This closeout changes roadmap scope only; no runtime code, database migration, automation setting or financial record changed. The prior 376-test/type/build results apply to the preceding code increment; no new runtime checks were needed for this documentation-only change. Live PDF output, configured payment links, migration application and end-to-end production financial workflows remain unverified.
 
 - Single-month historical reporting increment (November 3, 2026): migration `20261103009500_physical_day_monthly_reviews.sql` extends reviewed historical monthly dates to the manual generator’s `physical_days` snapshots. Three added integration tests cover feed/board exact-cent reconciliation, single-calendar-month rejection with no partial writes, original date suggestions, changed/unknown source formats, real generator snapshots, unchanged invoice amounts/snapshots, no recreated billing reservations and original source precedence without duplicate revenue. All ten monthly-review tests and all 376 project tests pass, along with TypeScript checks and the production build. A 390-pixel synthetic mobile preview verifies original charge dates take priority over invoice dates, the single-month notice, padded date/reason controls, styled confirmation and cancellation preserving entered values; no review or production record was saved. Production migration 095, authenticated live reporting, production concurrency and physical-device checks remain unverified; code push does not establish successful migration or deployment.
 
