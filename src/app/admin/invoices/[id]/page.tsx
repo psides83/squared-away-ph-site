@@ -1,3 +1,4 @@
+import { InvoiceCashSplit } from "@/components/invoice-cash-split";
 import { ActualCostRecovery } from "@/components/actual-cost-recovery";
 import { MonthlyServiceReporting } from "@/components/monthly-service-reporting";
 import { OtherIncomeReview } from "@/components/other-income-review";
@@ -312,68 +313,130 @@ export default async function Invoice({
             id: "reporting",
             label: "Reporting",
             content: (
-              <>
-                <PackageReportingReviews
-                  invoice={id}
-                  page={Math.max(
-                    1,
-                    Math.min(
-                      10000,
-                      Math.floor(Number(query.package_review_page) || 1),
+              <SectionTabs
+                id="invoice-reports"
+                label="Invoice reporting sections"
+                defaultTab={
+                  query.package_review_page
+                    ? "packages"
+                    : query.other_income_page
+                      ? "other"
+                      : query.actual_recovery_page
+                        ? "sources"
+                        : "services"
+                }
+                sections={[
+                  {
+                    id: "services",
+                    label: "Service dates",
+                    content: (
+                      <>
+                        {" "}
+                        <MonthlyServiceReporting
+                          invoice={id}
+                          page={Math.max(
+                            1,
+                            Math.min(
+                              10000,
+                              Math.floor(
+                                Number(query.monthly_service_page) || 1,
+                              ),
+                            ),
+                          )}
+                        />
+                        <ManualServiceReporting
+                          invoice={id}
+                          page={Math.max(
+                            1,
+                            Math.min(
+                              10000,
+                              Math.floor(
+                                Number(query.manual_service_page) || 1,
+                              ),
+                            ),
+                          )}
+                        />
+                        <ManualFeedReporting
+                          invoice={id}
+                          page={Math.max(
+                            1,
+                            Math.min(
+                              10000,
+                              Math.floor(Number(query.manual_feed_page) || 1),
+                            ),
+                          )}
+                        />
+                      </>
                     ),
-                  )}
-                />
-                <OtherIncomeReview
-                  invoice={id}
-                  page={Math.max(
-                    1,
-                    Math.min(
-                      10000,
-                      Math.floor(Number(query.other_income_page) || 1),
+                  },
+                  {
+                    id: "packages",
+                    label: "Package splits",
+                    content: (
+                      <>
+                        {" "}
+                        <PackageReportingReviews
+                          invoice={id}
+                          page={Math.max(
+                            1,
+                            Math.min(
+                              10000,
+                              Math.floor(
+                                Number(query.package_review_page) || 1,
+                              ),
+                            ),
+                          )}
+                        />
+                      </>
                     ),
-                  )}
-                />
-                <ActualCostRecovery
-                  invoice={id}
-                  page={Math.max(
-                    1,
-                    Math.min(
-                      10000,
-                      Math.floor(Number(query.actual_recovery_page) || 1),
+                  },
+                  {
+                    id: "other",
+                    label: "Other income",
+                    content: (
+                      <>
+                        {" "}
+                        <OtherIncomeReview
+                          invoice={id}
+                          page={Math.max(
+                            1,
+                            Math.min(
+                              10000,
+                              Math.floor(Number(query.other_income_page) || 1),
+                            ),
+                          )}
+                        />
+                      </>
                     ),
-                  )}
-                />
-                <MonthlyServiceReporting
-                  invoice={id}
-                  page={Math.max(
-                    1,
-                    Math.min(
-                      10000,
-                      Math.floor(Number(query.monthly_service_page) || 1),
+                  },
+                  {
+                    id: "sources",
+                    label: "Source recovery",
+                    content: (
+                      <>
+                        {" "}
+                        <ActualCostRecovery
+                          invoice={id}
+                          page={Math.max(
+                            1,
+                            Math.min(
+                              10000,
+                              Math.floor(
+                                Number(query.actual_recovery_page) || 1,
+                              ),
+                            ),
+                          )}
+                        />
+                      </>
                     ),
-                  )}
-                />
-                <ManualServiceReporting
-                  invoice={id}
-                  page={Math.max(
-                    1,
-                    Math.min(
-                      10000,
-                      Math.floor(Number(query.manual_service_page) || 1),
-                    ),
-                  )}
-                />
-                <ManualFeedReporting
-                  invoice={id}
-                  page={Math.max(
-                    1,
-                    Math.min(
-                      10000,
-                      Math.floor(Number(query.manual_feed_page) || 1),
-                    ),
-                  )}
-                />
-              </>
+                  },
+                  {
+                    id: "cash",
+                    label: "Cash allocation",
+                    content: <InvoiceCashSplit invoice={id} />,
+                  },
+                ]}
+              />
             ),
           },
           {

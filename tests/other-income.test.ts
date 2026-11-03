@@ -53,7 +53,11 @@ async function fixture() {
     clear = false,
     oldToken?: string,
   ) => {
-    const l = (await options()).lines.find((x) => x.id === id)!;
+    const firstPage = await options();
+    let l = firstPage.lines.find((x) => x.id === id);
+    for (let page = 2; !l && page <= Math.ceil(firstPage.count / 25); page++)
+      l = (await options(page)).lines.find((x) => x.id === id);
+    assert.ok(l, "The income source must be present in the paginated editor");
     const ctx = clear ? l.current! : l;
     return db.query(
       "select set_other_income_period($1,$2,$3,$4,$5,$6,$7,$8,'Covered service dates',$9,$10)",

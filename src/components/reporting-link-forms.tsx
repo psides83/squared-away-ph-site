@@ -39,9 +39,11 @@ export function InvoiceReportingForm({
       <input name="request_id" type="hidden" value={request} />
       <input name="invoice_id" type="hidden" value={invoice} />
       <p>
-        Choose the horse this invoice was for. Its payments will count as income
-        for that horse. You can also choose a training visit for the same horse
-        and billing customer. One invoice can currently be matched to one horse.
+        Choose the horse this invoice was for. Cash uses this match when no
+        separate cash split is active. You can also choose a training visit for
+        the same horse and billing customer. This single-horse match is separate
+        from the proportional cash split under Invoice → Reporting. An active
+        cash split takes priority for cash reports.
       </p>
       <div className="form-grid">
         <label>

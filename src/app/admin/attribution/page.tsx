@@ -419,7 +419,8 @@ export default async function Attribution({
         <p>
           Only invoices created without a training stay appear here. Choose the
           horse for their payments, and a training visit if one applies.
-          Previously matched invoices stay listed so you can review them.
+          Previously matched invoices stay listed so you can review them. Cash
+          splits under Invoice → Reporting take priority for cash reports only.
         </p>
         <div className="table-scroll">
           <table>
