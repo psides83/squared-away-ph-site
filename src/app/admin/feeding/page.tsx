@@ -260,6 +260,14 @@ export default async function Feeding({
                 content: (
                   <>
                     {" "}
+                    <div className="row-actions">
+                      <Link
+                        className="button secondary"
+                        href="/admin/feeding/absorption"
+                      >
+                        Review feed billing decisions
+                      </Link>
+                    </div>
                     <FeedingHistory
                       data={
                         (confirmations.data ?? {

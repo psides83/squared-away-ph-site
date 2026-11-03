@@ -18,7 +18,7 @@ export function InvoiceServices({
   invoice: string;
   stay: { feed_billing: string; boarding_billing: string };
   options: {
-    feed: { count: number; amount_cents: number };
+    feed: { count: number; amount_cents: number; review_count?: number };
     boarding: BoardingSource[];
   } | null;
 }) {
@@ -42,11 +42,22 @@ export function InvoiceServices({
             <p>
               {options?.feed.count ?? 0} unbilled feeding records in this period
               · {money(Number(options?.feed.amount_cents ?? 0))} at saved
-              weighted cost. Only actual consumption counts; purchases and waste
-              do not. Reversed feeding is excluded. Costs are summed before
-              rounding once to cents.
+              weighted cost after reviewed absorbed amounts. Only actual
+              consumption counts; purchases and waste do not. Reversed feeding
+              is excluded. Costs are summed before rounding once to cents.
             </p>
-            <SubmitButton>Add actual feed consumption cost</SubmitButton>
+            {!!options?.feed.review_count && (
+              <p className="notice error">
+                {options.feed.review_count} feeding records have changed
+                absorbed costs. Review them before generating charges.{" "}
+                <Link className="text-link" href="/admin/feeding/absorption">
+                  Review feed billing decisions
+                </Link>
+              </p>
+            )}
+            {!options?.feed.review_count && (
+              <SubmitButton>Add actual feed consumption cost</SubmitButton>
+            )}
           </form>
         ) : (
           <p>
@@ -93,7 +104,9 @@ export function InvoiceServices({
               automatically filtered by expense date. Do not select feed
               purchases recovered through consumed feed, or unrelated
               vet/farrier costs.{" "}
-              <Link className="inline-link" href="/admin/attribution">Review cost assignments</Link>{" "}
+              <Link className="inline-link" href="/admin/attribution">
+                Review cost assignments
+              </Link>{" "}
               first.
             </p>
             <SubmitButton>Add selected boarding cost</SubmitButton>

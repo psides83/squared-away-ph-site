@@ -9,6 +9,8 @@ export type FeedComparison = {
     issued_cents: number;
     draft_cents: number;
     unbilled_actual_cents: number;
+    absorbed_cents?: number;
+    absorption_review_count?: number;
     package_cents: number;
     adjustment_cents: number;
   };
@@ -23,6 +25,8 @@ export type FeedComparison = {
     feeding_lines: number;
     feeding_days: number;
     unbilled_actual_cents: number;
+    absorbed_cents?: number;
+    absorption_review_count?: number;
     package_cents: number;
     adjustment_cents: number;
     included: boolean;
@@ -117,12 +121,26 @@ export function FeedComparisonReport({
           change any invoice.
         </p>
       </HelpPanel>
+      {!!report.totals.absorption_review_count && (
+        <p className="notice error">
+          {report.totals.absorption_review_count} feed absorption decisions need
+          review. Unbilled estimates exclude these records. Full feeding costs
+          still count in margins.{" "}
+          <Link className="text-link" href="/admin/feeding/absorption">
+            Review feed billing decisions
+          </Link>
+        </p>
+      )}
       <div className="stats-grid">
         {[
           ["Recorded feed cost", report.totals.cost_cents],
           ["Net feed revenue", report.totals.issued_cents],
           ["Feed on drafts", report.totals.draft_cents],
-          ["At-cost feed not on invoices", report.totals.unbilled_actual_cents],
+          [
+            "Supported at-cost feed not on invoices",
+            report.totals.unbilled_actual_cents,
+          ],
+          ["Reviewed absorbed feed cost", report.totals.absorbed_cents ?? 0],
         ].map(([label, value]) => (
           <div className="stat-card" key={String(label)}>
             <div className="stat-top">{label}</div>
