@@ -20,8 +20,12 @@ export function MonthlyServicePeriodForm({
     horse: clear ? line.current?.horse_id : line.horse_id,
     stay: clear ? line.current?.stay_id : line.stay_id,
     amount: clear ? line.current?.amount_cents : line.amount_cents,
-    from: line.current?.covered_from ?? line.period_from ?? "",
-    to: line.current?.covered_to ?? line.period_to ?? "",
+    from:
+      line.current?.covered_from ??
+      line.original_from ??
+      line.period_from ??
+      "",
+    to: line.current?.covered_to ?? line.original_to ?? line.period_to ?? "",
   }));
   const [state, action, pending] = useActionState(saveMonthlyServicePeriod, {});
   return (
@@ -63,6 +67,12 @@ export function MonthlyServicePeriodForm({
               {(context.amount ?? 0) < 0 ? "credit" : "charge"} for{" "}
               {line.horse_name ?? "the assigned horse"}.
             </p>
+            {line.basis === "physical_days" && (
+              <p className="notice">
+                Single-month charge: review elapsed boarding dates within one
+                calendar month. Check any dates prefilled from the saved charge.
+              </p>
+            )}
             <div className="form-grid">
               <label>
                 Covered from

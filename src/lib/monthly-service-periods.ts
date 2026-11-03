@@ -22,6 +22,9 @@ export type MonthlyServiceLine = Omit<
   "current" | "history" | "has_saved_period"
 > & {
   source_token: string;
+  basis?: "physical_days" | "calendar_segments";
+  original_from?: string | null;
+  original_to?: string | null;
   service: "feed" | "boarding";
   missing_sources: boolean;
   current: MonthlyServicePeriod | null;

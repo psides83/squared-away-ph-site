@@ -350,3 +350,167 @@ test("stay-bound changes invalidate monthly dates and reviewed zero-dollar lines
     await f.db.close();
   }
 });
+
+test("physical-day monthly source reviews accept feed and board, reconcile exact cents and enforce a single calendar month", async () => {
+  const f = await fixture();
+  try {
+    const feed = await f.line("feed", 1001, "physical_days"),
+      board = await f.line("boarding", 1001, "physical_days");
+    assert.equal((await f.options()).count, 2);
+    assert.equal(
+      (await f.options()).lines.every((x) => x.basis === "physical_days"),
+      true,
+    );
+    await assert.rejects(f.save(feed), /one calendar month/);
+    assert.equal(
+      (await f.db.query("select * from monthly_service_periods")).rows.length,
+      0,
+    );
+    await f.save(feed, "2026-01-30", "2026-01-31");
+    await f.save(board, "2026-01-30", "2026-01-31");
+    await f.db.query("select finalize_invoice($1)", [f.inv]);
+    assert.equal(
+      (await f.report("2026-01-30", "2026-01-30")).totals.income_cents,
+      1002,
+    );
+    assert.equal(
+      (await f.report("2026-01-31", "2026-01-31")).totals.income_cents,
+      1000,
+    );
+    assert.equal((await f.report()).totals.income_cents, 2002);
+    assert.equal(
+      (await f.db.query("select * from invoice_service_days")).rows.length,
+      0,
+    );
+    assert.equal(
+      (await f.db.query("select * from invoice_feed_claims")).rows.length,
+      0,
+    );
+  } finally {
+    await f.db.close();
+  }
+});
+test("physical-day original source dates are suggested without replacing a saved review; basis changes invalidate old reviews and unknown formats stay unsupported", async () => {
+  const f = await fixture();
+  try {
+    const line = await f.line("boarding", 1001, "physical_days");
+    await f.db.exec("reset role");
+    await f.db.query(
+      'update invoice_lines set source_snapshot=source_snapshot||\'{"period_from":"2026-01-10","period_to":"2026-01-12"}\'::jsonb where id=$1',
+      [line],
+    );
+    await login(f.db, adminId);
+    const row = (await f.options()).lines[0];
+    assert.equal(row.original_from, "2026-01-10");
+    assert.equal(row.original_to, "2026-01-12");
+    assert.equal(row.period_to, "2026-02-01");
+    await f.save(line, "2026-01-10", "2026-01-12");
+    await f.db.exec("reset role");
+    await f.db.query(
+      'update invoice_lines set source_snapshot=source_snapshot||\'{"basis":"calendar_segments"}\'::jsonb where id=$1',
+      [line],
+    );
+    await login(f.db, adminId);
+    assert.equal((await f.options()).lines[0].valid, false);
+    await f.save(line);
+    assert.equal((await f.options()).lines[0].valid, true);
+    await f.db.exec("reset role");
+    await f.db.query(
+      'update invoice_lines set source_snapshot=source_snapshot||\'{"basis":"physical_days"}\'::jsonb where id=$1',
+      [line],
+    );
+    await login(f.db, adminId);
+    assert.equal((await f.options()).lines[0].valid, false);
+    await assert.rejects(f.save(line), /one calendar month/);
+    await f.line("feed", 1001, "unrecognized_monthly");
+    assert.equal((await f.options()).count, 1);
+  } finally {
+    await f.db.close();
+  }
+});
+test("native manual monthly-generator snapshots can recover missing dates without changing customer charges or recreating billing reservations", async () => {
+  const f = await fixture();
+  try {
+    await f.db.query(
+      "update training_stays set feed_billing='separate_monthly',feed_monthly_cents=31000,boarding_billing='separate_monthly',boarding_monthly_cents=62000 where id=$1",
+      [f.stay],
+    );
+    const invoice = crypto.randomUUID();
+    await f.db.query(
+      "select create_invoice($1,$2,$3,'2026-03-01','2026-03-08','2026-01-30','2026-01-31')",
+      [invoice, f.c, f.stay],
+    );
+    const feed = (
+        await f.db.query<{ id: string }>(
+          "select add_monthly_service($1,'feed') id",
+          [invoice],
+        )
+      ).rows[0].id,
+      board = (
+        await f.db.query<{ id: string }>(
+          "select add_monthly_service($1,'boarding') id",
+          [invoice],
+        )
+      ).rows[0].id;
+    const before = (
+      await f.db.query(
+        "select id,amount_cents,source_snapshot from invoice_lines where invoice_id=$1 order by id",
+        [invoice],
+      )
+    ).rows;
+    await f.db.exec("reset role");
+    await f.db.query(
+      "delete from invoice_service_days where line_id in ($1,$2)",
+      [feed, board],
+    );
+    await login(f.db, adminId);
+    const opts = async () =>
+      (
+        await f.db.query<{ r: MonthlyServiceOptions }>(
+          "select monthly_service_reporting($1) r",
+          [invoice],
+        )
+      ).rows[0].r;
+    for (const line of (await opts()).lines) {
+      assert.equal(line.basis, "physical_days");
+      assert.equal(line.original_from, "2026-01-30");
+      await f.db.query(
+        "select set_monthly_service_period($1,$2,null,$3,$4,$5,'2026-01-30','2026-01-31','Original monthly source date review',false,$6)",
+        [
+          crypto.randomUUID(),
+          line.id,
+          line.horse_id,
+          line.stay_id,
+          line.amount_cents,
+          line.source_token,
+        ],
+      );
+    }
+    await f.db.query("select finalize_invoice($1)", [invoice]);
+    assert.equal((await f.report()).totals.income_cents, 6000);
+    assert.deepEqual(
+      (
+        await f.db.query(
+          "select id,amount_cents,source_snapshot from invoice_lines where invoice_id=$1 order by id",
+          [invoice],
+        )
+      ).rows,
+      before,
+    );
+    assert.equal(
+      (await f.db.query("select * from invoice_service_days")).rows.length,
+      0,
+    );
+    // Existing sources take precedence again when recovered separately.
+    await f.db.exec("reset role");
+    await f.db.query(
+      "insert into invoice_service_days(stay_id,service,day,line_id) values($1,'feed','2026-01-30',$2),($1,'feed','2026-01-31',$2)",
+      [f.stay, feed],
+    );
+    await login(f.db, adminId);
+    assert.equal((await opts()).lines.find((x) => x.id === feed)!.valid, false);
+    assert.equal((await f.report()).totals.income_cents, 6000);
+  } finally {
+    await f.db.close();
+  }
+});

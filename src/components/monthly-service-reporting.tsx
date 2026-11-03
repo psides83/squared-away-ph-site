@@ -28,7 +28,9 @@ export function MonthlyServiceReportingContent({
             Use this when an older generated monthly feed or board charge has no
             saved service-day sources. Review its actual physical boarding
             dates. Current rates and training classifications do not replace
-            historical dates.
+            historical dates. Single-month charges require reviewed dates within
+            one calendar month. Confirm any prefilled dates against the actual
+            covered boarding days.
           </p>
           <p>
             The full saved amount is distributed using calendar-month day
@@ -48,6 +50,9 @@ export function MonthlyServiceReportingContent({
         {data.lines.map((l) => (
           <article className="stack separated" key={l.id}>
             <h3>{l.description}</h3>
+            {l.basis === "physical_days" && (
+              <span className="tag">Single-month charge</span>
+            )}
             <p>
               {money(l.amount_cents)} ·{" "}
               {l.service === "feed" ? "Feed" : "Board"} ·{" "}
