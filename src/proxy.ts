@@ -37,5 +37,6 @@ export const config = {
     "/forgot-password",
     "/reset-password",
     "/auth/recovery",
+    "/auth/invite",
   ],
 };
