@@ -1,3 +1,4 @@
+import { CustomerInvitationForm } from "@/components/customer-invitation-form";
 import { HelpPanel } from "@/components/help-panel";
 import { AppSelect } from "@/components/app-select";
 import { ActionPanel } from "@/components/action-panel";
@@ -12,6 +13,7 @@ export default async function CustomerAccess({
 }: {
   searchParams: Promise<{
     customer?: string;
+    invitation_page?: string;
     error?: string;
     success?: string;
   }>;
@@ -36,6 +38,28 @@ export default async function CustomerAccess({
           .limit(20)
       : Promise.resolve({ data: [], error: null }),
   ]);
+  const invitationPage = Math.max(
+    1,
+    Math.min(10000, Math.floor(Number(query.invitation_page) || 1)),
+  );
+  const invitations = id
+    ? await db
+        .from("customer_invitation_attempts")
+        .select("id,email,state,created_at,completed_at", { count: "exact" })
+        .eq("customer_id", id)
+        .order("created_at", { ascending: false })
+        .order("id")
+        .range((invitationPage - 1) * 10, invitationPage * 10 - 1)
+    : null;
+  const inviteReady =
+    process.env.CUSTOMER_INVITES_ENABLED === "true" &&
+    process.env.VERCEL_ENV === "production" &&
+    Boolean(
+      process.env.NEXT_PUBLIC_SITE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      (process.env.SUPABASE_SECRET_KEY ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY),
+    );
   const customer = customers.data?.find((c) => c.id === id);
   const account = accounts.data?.find((a) => a.customer_id === id);
   const grants = access.data?.filter((a) => a.customer_id === id) ?? [];
@@ -59,11 +83,13 @@ export default async function CustomerAccess({
       />
       <HelpPanel title="How customer access works">
         <p>
-          Create the customer’s sign-in account in Supabase Authentication
-          first, then link its exact email here. This screen does not send email
-          invitations. A customer sees only their own billing. Horse updates
-          require a separate manual grant; ownership changes do not grant or
-          revoke it. Review these grants whenever a horse is sold.
+          Use Send customer invitation after email setup, or create the sign-in
+          account in Supabase Authentication first. Then link its exact email
+          here. Provider acceptance of an invitation does not confirm email
+          delivery or grant customer access. A customer sees only their own
+          billing. Horse updates require a separate manual grant; ownership
+          changes do not grant or revoke it. Review these grants whenever a
+          horse is sold.
         </p>
       </HelpPanel>
       <section className="panel">
@@ -88,6 +114,97 @@ export default async function CustomerAccess({
       </section>
       {!failed && customer && (
         <>
+          <section className="panel">
+            <div className="panel-heading">
+              <h2>Account invitations</h2>
+            </div>
+            <div className="record-form stack">
+              {!account && (
+                <ActionPanel
+                  id="invite-customer"
+                  label="Send customer invitation"
+                >
+                  <CustomerInvitationForm
+                    customer={customer.id}
+                    email={customer.email ?? ""}
+                    ready={inviteReady}
+                  />
+                </ActionPanel>
+              )}
+              {account && (
+                <p className="muted">
+                  An account is already linked. Manage sign-in access below.
+                </p>
+              )}
+              <HelpPanel title="Invitation history">
+                <p>
+                  Accepted means the email service accepted the request, not
+                  that the customer received or accepted it. Pending or Review
+                  required attempts must be checked in Authentication before
+                  another attempt; emails are never automatically retried.
+                </p>
+                {invitations?.error ? (
+                  <p className="notice error">
+                    Invitation history could not load. Check the latest
+                    migration.
+                  </p>
+                ) : (
+                  <>
+                    {!invitations?.data?.length && (
+                      <p className="muted">
+                        No invitation attempts on this page.
+                      </p>
+                    )}
+                    {invitations?.data?.map((attempt) => (
+                      <article className="separated" key={attempt.id}>
+                        <strong>{attempt.email}</strong>
+                        <p>
+                          {attempt.state === "accepted"
+                            ? "Accepted by email service"
+                            : attempt.state === "pending"
+                              ? "Pending — check provider"
+                              : "Review required"}
+                        </p>
+                        <p className="muted">
+                          {new Date(attempt.created_at).toLocaleString(
+                            "en-US",
+                            { timeZone: "America/Chicago" },
+                          )}{" "}
+                          Central
+                        </p>
+                      </article>
+                    ))}
+                    <nav
+                      className="log-pagination"
+                      aria-label="Invitation history pages"
+                    >
+                      {invitationPage > 1 ? (
+                        <Link
+                          className="button secondary"
+                          href={`?customer=${id}&invitation_page=${invitationPage - 1}`}
+                        >
+                          Previous
+                        </Link>
+                      ) : (
+                        <span />
+                      )}
+                      <span>Page {invitationPage}</span>
+                      {invitationPage * 10 < (invitations?.count ?? 0) ? (
+                        <Link
+                          className="button secondary"
+                          href={`?customer=${id}&invitation_page=${invitationPage + 1}`}
+                        >
+                          Next
+                        </Link>
+                      ) : (
+                        <span />
+                      )}
+                    </nav>
+                  </>
+                )}
+              </HelpPanel>
+            </div>
+          </section>
           <ActionPanel id="sign-in-access" label="Manage sign-in access">
             <div className="panel-heading">
               <h2>{customer.name} · sign-in access</h2>

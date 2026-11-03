@@ -34,7 +34,7 @@ export function VideoUploadStatusForm({
       <p className="muted">
         {abandoned
           ? "Return this upload to Pending uploads to resume its transfer or finish its private save."
-          : "Remove this unfinished upload from the pending queue. Its record and any stored video are retained, and you can restore it later. An active transfer may still finish in storage."}
+          : "Remove this unfinished upload from the pending queue. You can restore it before cleanup starts. When automatic cleanup is enabled, uploads set aside for 30 days enter permanent cleanup, followed by a 48-hour transfer safety wait. The upload record remains."}
       </p>
       {state.error && (
         <p className="notice error" role="alert">
@@ -55,7 +55,7 @@ export function VideoUploadStatusForm({
             message={
               abandoned
                 ? "Restore this upload to the pending queue? It stays private."
-                : "Set aside this upload? Its record and stored video will be retained. Saving and resuming through the app will be blocked until it is restored."
+                : "Set aside this upload? Saving and resuming are blocked until restored. When automatic cleanup is enabled, the file enters permanent cleanup after 30 days, followed by a 48-hour transfer safety wait. Its record remains."
             }
           >
             {abandoned ? "Restore to pending" : "Set aside upload"}

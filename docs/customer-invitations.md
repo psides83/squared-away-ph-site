@@ -1,6 +1,6 @@
 # Customer invitation setup
 
-The app accepts owner-issued Supabase invitation links at `/auth/invite`. It does not yet send invitations or create accounts from the customer record. No invitation was sent or live account created during implementation.
+The app accepts owner-issued Supabase invitation links at `/auth/invite`. Admin → Customer portal access now offers a deliberate Send customer invitation action for customers without a linked account. It stays disabled until production email setup is explicitly enabled. No invitation was sent or live account created during implementation.
 
 ## Current delivery limitation
 
@@ -13,7 +13,7 @@ Reference: [Supabase custom SMTP and default-service restrictions](https://supab
 1. Keep the Supabase Site URL aligned with the production app’s canonical HTTPS origin, currently `https://squaredawayperformancehorses.vercel.app`.
 2. In Authentication → Email Templates → Invite user, use `supabase/templates/invite.html`. It points directly to `/auth/invite?token_hash=…&type=invite` using `SiteURL` and `TokenHash`. Default confirmation URLs with browser-fragment sessions are not handled by this flow.
 3. If the provider invitation operation supplies a redirect, allow only the exact production `/auth/invite` URL. Use a separate test project for localhost testing. Verify mail delivery settings and provider limits before inviting real customers.
-4. Issue an invitation using the provider’s administrator tools. The customer opens the email, deliberately accepts, chooses a matching 12–128 character password, then signs in. Tokens expire and are single-use under Supabase’s rules; a reused/expired link requires a new invitation from the owner.
+4. Apply migration `20261103009700_customer_invitation_attempts.sql`, configure the existing server-only Supabase credential and set `CUSTOMER_INVITES_ENABLED=true` only after custom SMTP and the invitation template are verified in production. Then select the customer under Admin → Customer portal access and use Send customer invitation. The saved customer email must match the reviewed email; existing sign-in accounts must be linked/recovered instead. The provider creates the sign-in account when accepting a new invitation. Alternatively issue an invitation using the provider’s administrator tools. The customer opens the email, deliberately accepts, chooses a matching 12–128 character password, then signs in. Tokens expire and are single-use under Supabase’s rules; a reused/expired link requires a new invitation from the owner.
 5. Assign the verified account to its customer using the existing admin access workflow. Grant horse access deliberately. Accepting an invitation does not create a customer link, horse grant or administrator role. Unassigned accounts reach the existing access-needed screen.
 
 ## Safety and limitations
@@ -22,7 +22,10 @@ Reference: [Supabase custom SMTP and default-service restrictions](https://supab
 - Recovery links retain their separate recovery-only route. Caller-controlled redirects are not accepted. Failures return to a token-free fixed URL with a generic message.
 - The session proxy covers `/auth/invite` with private/no-store, no-referrer and noindex headers. Keep token pages free from analytics, and never copy real tokens/passwords into logs or screenshots.
 - Existing password setup verifies the current identity, attempts global sign-out after a successful update and returns to sign-in. Existing signed-in accounts can also set their own password; this is not an additional role or permission grant.
-- In-app invitation sending, customer account provisioning, delivery history/resend and email changes remain separate future work. No service-role credential is added to the browser.
+- In-app sending reserves an administrator-owned request against the reviewed saved email before calling the provider. Exact retries do not resend. Reservations serialize duplicate email/request checks, reject linked/existing accounts, limit the same email to one attempt per ten minutes and all invitations to twenty per rolling day. No customer link or horse access is created.
+- The administrator history shows ten attempts per page: Pending, Accepted by email service, or Review required. Provider acceptance does not prove inbox delivery or customer acceptance. Network/provider failures and incomplete result recording are never automatically retried. The reservation remains pending or under review so a second request cannot silently send again. Check Authentication/provider delivery records before manual recovery. There is no app resend or review-resolution tool yet; an existing account should use the recovery flow after email setup. No raw provider errors, passwords or invite tokens are stored in this history.
+- The server alone holds the existing private Supabase credential; the browser receives no service-role key. Preview/nonproduction sending is rejected even if the enable flag is set. Default false leaves customer email untouched.
+- In-app resend, resolving uncertain attempts, delivery tracking and email changes remain future work.
 - Production template configuration, actual invitation/expiry/reuse behavior, email delivery, customer assignment and physical-device checks remain unverified. No database migration is required for this route.
 
 References: [Supabase email templates](https://supabase.com/docs/guides/auth/auth-email-templates), [Supabase OTP verification](https://supabase.com/docs/reference/javascript/auth-verifyotp).
