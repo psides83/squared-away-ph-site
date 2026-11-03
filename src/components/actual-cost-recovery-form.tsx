@@ -47,6 +47,11 @@ export function ActualCostRecoveryForm({ line: l }: { line: RecoveryLine }) {
           {l.service === "feed" ? "feeding record(s)" : "expense assignment(s)"}{" "}
           · {l.from && dateLabel(l.from)} – {l.to && dateLabel(l.to)}
         </p>
+        <p>
+          {l.linked_count ?? 0} already linked ·{" "}
+          {l.missing_count ?? l.sources.length} missing link(s) to restore.
+          Existing valid links are retained.
+        </p>
         <p className="notice">
           Restoring these links reserves the original sources against duplicate
           billing. Later corrections must follow the existing invoice correction
@@ -59,8 +64,8 @@ export function ActualCostRecoveryForm({ line: l }: { line: RecoveryLine }) {
           maxLength={2000}
         />
         <div className="form-actions">
-          <ConfirmButton message="Restore these original billing-source links? They will be protected from duplicate billing and ordinary reversal. The saved invoice amount will not change.">
-            {pending ? "Restoring…" : "Restore original links"}
+          <ConfirmButton message="Restore the missing original billing-source links while retaining existing valid links? They will be protected from duplicate billing and ordinary reversal. The saved invoice amount will not change.">
+            {pending ? "Restoring…" : "Restore missing links"}
           </ConfirmButton>
         </div>
       </fieldset>

@@ -26,9 +26,10 @@ export function ActualCostRecoveryContent({
         <HelpPanel title="When should I restore original links?">
           <p>
             Use this for an older generated actual-cost charge that retains
-            original feeding or expense identifiers but has no billing-source
-            links. Only those original records can be restored; dates alone are
-            not evidence of an actual-cost charge.
+            original feeding or expense identifiers and has missing
+            billing-source links. Complete original matches are required,
+            including any existing links. Only those original records can be
+            restored; dates alone are not evidence of an actual-cost charge.
           </p>
           <p>
             Feedings must match the invoice horse and original period and be
@@ -64,6 +65,11 @@ export function ActualCostRecoveryContent({
                 </dd>
               </div>
             </dl>
+            <p className="muted">
+              {l.linked_count ?? 0} already linked ·{" "}
+              {l.missing_count ?? l.sources.length} missing link(s). Valid
+              existing links are retained.
+            </p>
             {l.ready ? (
               <p className="notice">
                 Original records match. Review the source evidence before
@@ -87,6 +93,9 @@ export function ActualCostRecoveryContent({
                     <p>
                       {s.date && dateLabel(s.date)} ·{" "}
                       {s.label || "Original source"} · {money(s.cost_cents)}
+                      {s.linked !== undefined && (
+                        <> · {s.linked ? "Linked" : "Missing link"}</>
+                      )}
                     </p>
                     {s.expense_id && (
                       <Link
@@ -132,6 +141,13 @@ export function ActualCostRecoveryContent({
                     {dateLabel(h.created_at.slice(0, 10))}
                   </p>
                   <p className="muted">{h.reason}</p>
+                  {h.captured_source?.missing_count !== undefined && (
+                    <p className="muted">
+                      {h.captured_source.missing_count} restored ·{" "}
+                      {h.captured_source.linked_count ?? 0} existing links
+                      retained
+                    </p>
+                  )}
                 </div>
               ))}
               {data.history.length === 10 && (

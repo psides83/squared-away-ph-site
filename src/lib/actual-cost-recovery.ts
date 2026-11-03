@@ -1,5 +1,6 @@
 import { identifier, text } from "./validation.ts";
 export type RecoverySource = {
+  linked?: boolean;
   movement_id?: string;
   split_id?: string;
   expense_id?: string;
@@ -19,6 +20,8 @@ export type RecoveryLine = {
   reason: string | null;
   from: string | null;
   to: string | null;
+  linked_count?: number;
+  missing_count?: number;
   sources: RecoverySource[];
 };
 export type RecoveryOptions = {
@@ -29,6 +32,7 @@ export type RecoveryOptions = {
     line_id: string;
     reason: string;
     created_at: string;
+    captured_source?: { linked_count?: number; missing_count?: number };
   }[];
 };
 export function actualRecoveryValues(f: FormData) {
