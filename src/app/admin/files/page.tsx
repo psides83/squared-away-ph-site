@@ -62,9 +62,12 @@ export default async function HorseFiles({
   );
   let asideQuery = db
     .from("horse_video_uploads")
-    .select("id,horse_id,title,file_name,abandoned_at,abandoned_reason", {
-      count: "exact",
-    })
+    .select(
+      "id,horse_id,title,file_name,abandoned_at,abandoned_reason,cleanup_started_at,cleaned_at",
+      {
+        count: "exact",
+      },
+    )
     .not("abandoned_at", "is", null)
     .order("abandoned_at", { ascending: false })
     .order("id")
@@ -596,8 +599,10 @@ export default async function HorseFiles({
                 <div className="record-form">
                   <h2>Set-aside uploads</h2>
                   <p className="muted">
-                    Retained uploads you can restore to the pending queue.
-                    Stored files have not been deleted.
+                    Set-aside uploads can be restored until permanent cleanup
+                    starts. When automatic cleanup is enabled, uploads set aside
+                    for 30 days enter cleanup, followed by a 48-hour transfer
+                    safety wait. Saved horse videos are excluded.
                   </p>
                   {horse && (
                     <p className="muted">
@@ -634,7 +639,11 @@ export default async function HorseFiles({
                               className="button secondary"
                               href={`/admin/files/uploads/${upload.id}`}
                             >
-                              Review / restore
+                              {upload.cleaned_at
+                                ? "Review deletion"
+                                : upload.cleanup_started_at
+                                  ? "Review cleanup"
+                                  : "Review / restore"}
                             </Link>
                           </article>
                         ))}

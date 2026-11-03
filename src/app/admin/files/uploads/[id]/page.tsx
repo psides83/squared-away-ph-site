@@ -24,7 +24,7 @@ export default async function UploadDetails({
     db
       .from("horse_video_uploads")
       .select(
-        "id,horse_id,title,file_name,size_bytes,created_at,attached_at,abandoned_at,abandoned_reason,revision",
+        "id,horse_id,title,file_name,size_bytes,created_at,attached_at,abandoned_at,abandoned_reason,revision,cleanup_started_at,cleaned_at,cleanup_checked_at,cleanup_attempts,cleanup_failed",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -102,7 +102,35 @@ export default async function UploadDetails({
                       <p>{upload.abandoned_reason}</p>
                     </div>
                   )}
-                  {!upload.attached_at && (
+                  {upload.cleanup_started_at && (
+                    <div className="notice">
+                      <p>
+                        {upload.cleaned_at
+                          ? "Abandoned video permanently deleted"
+                          : "Permanent cleanup in progress"}
+                      </p>
+                      <p>
+                        Cleanup started {timestamp(upload.cleanup_started_at)}.
+                        Saved horse videos are excluded.
+                      </p>
+                      {upload.cleaned_at && (
+                        <p>
+                          File deleted {timestamp(upload.cleaned_at)}. This
+                          upload record and its history are retained.
+                        </p>
+                      )}
+                      {upload.cleanup_checked_at && (
+                        <p>
+                          Last attempt {timestamp(upload.cleanup_checked_at)} ·{" "}
+                          {upload.cleanup_attempts} attempts
+                          {upload.cleanup_failed
+                            ? " · Will retry after a failed attempt"
+                            : ""}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {!upload.attached_at && !upload.cleanup_started_at && (
                     <ActionPanel
                       id="change-upload-status"
                       label={abandoned ? "Restore upload" : "Set aside upload"}

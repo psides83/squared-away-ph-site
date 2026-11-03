@@ -1,3 +1,4 @@
+import { cleanupAbandonedVideos } from "@/lib/video-cleanup";
 import { pushConfig } from "@/lib/web-push";
 import { deliverAdminPush } from "@/lib/push-delivery";
 import { createClient } from "@supabase/supabase-js";
@@ -33,6 +34,54 @@ export async function GET(request: Request) {
         result = data;
       } catch {
         result = { state: "error" };
+      }
+      if (process.env.MEDIA_CLEANUP_ENABLED === "true") {
+        try {
+          const media = createClient(url!, key!, {
+            auth: {
+              persistSession: false,
+              autoRefreshToken: false,
+              detectSessionInUrl: false,
+            },
+            global: {
+              fetch: (input, init) =>
+                fetch(input, {
+                  ...init,
+                  signal: AbortSignal.any([
+                    AbortSignal.timeout(5000),
+                    ...(init?.signal ? [init.signal] : []),
+                  ]),
+                }),
+            },
+          });
+          const cleanup = await cleanupAbandonedVideos({
+            claim: async () => {
+              const { data, error } = await media
+                .rpc("claim_abandoned_video_cleanup")
+                .abortSignal(AbortSignal.timeout(10000));
+              if (error) throw Error("Cleanup unavailable");
+              return data;
+            },
+            remove: async (path) => {
+              const { error } = await media.storage
+                .from("horse-videos")
+                .remove([path]);
+              return !error;
+            },
+            record: async (id, success) => {
+              const { error } = await media
+                .rpc("record_abandoned_video_cleanup", {
+                  p_id: id,
+                  p_success: success,
+                })
+                .abortSignal(AbortSignal.timeout(10000));
+              if (error) throw Error("Cleanup result unavailable");
+            },
+          });
+          if (cleanup.failed) result = { ...result, state: "error" };
+        } catch {
+          result = { ...result, state: "error" };
+        }
       }
       const config = pushConfig(process.env);
       if (config) {
